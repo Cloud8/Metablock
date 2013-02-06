@@ -1,0 +1,8 @@
+PREFIX  dc: <http://purl.org/dc/elements/1.1/>
+PREFIX  dini: <http://www.d-nb.de/standards/xmetadissplus/type/>
+
+SELECT (COUNT(*) AS ?subject) 
+  { 
+      ?s dc:identifier ?o .
+      # ?s dini:PublType "doctoralThesis" 
+  }

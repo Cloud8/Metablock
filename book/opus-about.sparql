@@ -1,0 +1,40 @@
+PREFIX  dc: <http://purl.org/dc/elements/1.1/>
+PREFIX  dcterms: <http://purl.org/dc/terms/>
+
+PREFIX  fabio: <http://purl.org/spar/fabio/>
+PREFIX  foaf: <http://xmlns.com/foaf/0.1/>
+
+PREFIX  gnd: <http://d-nb.info/gnd/>
+PREFIX  thesis: <http://www.ndltd.org/standards/metadata/etdms/1.0/>
+# PREFIX  cc: <http://www.d-nb.de/standards/cc/>
+# PREFIX  pc: <http://www.d-nb.de/standards/pc/>
+PREFIX  urn: <http://www.d-nb.de/standards/urn/>
+# PREFIX  hdl: <http://www.d-nb.de/standards/hdl/>
+PREFIX  ddb: <http://www.d-nb.de/standards/ddb/>
+PREFIX  dini: <http://www.d-nb.de/standards/xmetadissplus/type/>
+# PREFIX  xMetaDiss: <http://www.d-nb.de/standards/xmetadissplus/>
+PREFIX  dcmitype: <http://purl.org/dc/dcmitype/>
+# PREFIX  bibo: <http://purl.org/ontology/bibo/>
+PREFIX  dcq: <http://purl.org/dc/qualifier/1.0/>
+
+construct 
+{
+    %param% ?p1 ?o1 .
+    ?o1 ?x ?y . 
+    ?journal ?p2 ?o2
+} 
+# from ...
+where {
+  {
+     %param% ?p1 ?o1 .
+     optional {
+       ?o1 ?x ?y 
+       FILTER (isBlank(?o1) && !isBlank(?y))
+     }
+  } 
+  optional {
+    %param% dcterms:isPartOf ?journal .
+    ?journal ?p2 ?o2
+  }
+} 
+

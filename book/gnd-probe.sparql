@@ -1,0 +1,14 @@
+#
+# GND data 2013-01
+#
+
+PREFIX  dcterms: <http://purl.org/dc/terms/>
+PREFIX  dc: <http://purl.org/dc/elements/1.1/>
+PREFIX  gnd: <http://d-nb.info/standards/elementset/gnd#>
+
+SELECT (COUNT(*) AS ?subject) 
+where
+  { 
+    ?s gnd:gndIdentifier ?o  
+  }
+

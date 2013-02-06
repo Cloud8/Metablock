@@ -1,0 +1,2 @@
+Main-Class: org.shanghai.main.Launcher
+Class-Path: .:lib:lib/*
