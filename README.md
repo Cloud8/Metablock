@@ -2,7 +2,7 @@ Shanghai
 ========
 
   This is about building a solr index from a jena triple store.
-  Indexing can be done in three steps:
+  Indexing from jena to solr can be done in three steps:
 
   1. list all resources that should be indexed,
 
@@ -12,12 +12,9 @@ Shanghai
 
   There is an example in the book folder whith some sparql queries.
 
+  Step 1. and 2. needs a sparql query, step 3 works with XSLT.
 
-  To find out information about a dataset, you may want to:
 
-  1. make props : list all predicates
-  2. make fetch : fetch some identifiers to test if index.sparql works
-  3. make probe : fetch a random record  to test if about.sparql works
-  4. make index : start indexing process
+  This is the first initial realease and test code.
 
 ____________________________________________________________________________
