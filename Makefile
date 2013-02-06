@@ -20,6 +20,7 @@ J4OPT := -Dlog4j.configuration=lib/log4j.properties
 PACKT := shanghai
 
 # run
+DIRS := /srv/archiv/diss/2013 /srv/archiv/eb/2013 /srv/archiv/es/2013
 MAIN := org.shanghai.jena.Main -prop book/gnd.properties
 MAIN := org.shanghai.jena.Main -prop book/opus.properties
 
