@@ -13,11 +13,11 @@ Shanghai
   3. transform the result to solr index format.
 
 
-  Step 1. and 2. needs a sparql query, step 3 works with XSLT.
-  There is an example in the book folder whith some sparql queries.
+  Step 1. and 2. needs a sparql query, step 3 works with XSLT. <br/>
+  See the book folder for some example queries.
 
 
-  This is the first initial realease and test code.
+  This is the first initial realease and considered test code.
 
 ##TODO
   Lots of things.
