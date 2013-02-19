@@ -13,14 +13,14 @@ import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
 
 import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A little File Crawl Class
-   @date 2013-01-22
+   @title The File Crawl Class
+   @date 2013-02-19
 */
-
 
 public class FileCrawl {
 
@@ -28,14 +28,15 @@ public class FileCrawl {
 	int depth = 0;
 	int count = 0;
 
-    public FileCrawl(Properties prop) {
-		transporter = new RDFTransporter(prop);
+    private static final Logger logger =
+                         Logger.getLogger(FileUtil.class.getName());
+
+    private void log(String msg) {
+        logger.info(msg);    
     }
 
-    public void crawl(String start, String pref, String suf, int maxDepth) {
-	    File f = new File(start);
-        // prop.list(System.out);
-		crawl(f, pref, suf, maxDepth);
+    public FileCrawl(Properties prop) {
+		transporter = new RDFTransporter(prop);
     }
 
     public void create() {
@@ -46,17 +47,19 @@ public class FileCrawl {
         transporter.dispose();
     }
 
-    private void log(String msg) {
-        System.out.println(msg);
+    public void crawl(String start, String pref, String suf, int maxDepth) {
+	    File f = new File(start);
+        //prop.list(System.out);
+		crawl(f, pref, suf, maxDepth);
     }
 
-    public void crawl(File f, String pref, String suf, int maxDepth) {
+    private void crawl(File f, String pref, String suf, int maxDepth) {
         if (depth>maxDepth)
             return;
     	if (f.isDirectory()) {
         	File[] subFiles = f.listFiles();
 			if (subFiles==null) {
-    	        System.out.println("" + count + " problem: " + f.getName());
+    	        log(" problem: " + f.getName() + " " + count);
             } else {
 		        depth++;
         	    for (int i = 0; i < subFiles.length; i++) {
@@ -75,19 +78,4 @@ public class FileCrawl {
         }
     }
 
-    public static void main(String[] args) {
-        long start = System.currentTimeMillis();
-		Properties prop = new Properties();
-		try {
-		    prop.load(
-			RDFTransporter.class.getResourceAsStream("/shanghai.properties"));
-		} catch(IOException e) { e.printStackTrace(); }
-	    FileCrawl myself = new FileCrawl(prop);
-        myself.log(args[0]);
-	    myself.crawl(args[0], "rdf-", ".xml", 3);
-        long end = System.currentTimeMillis();
-        System.out.println("indexed " + myself.count + " records in "
-                       + ((end - start)/1000) + " sec");
-
-	}
 }

@@ -1,3 +1,5 @@
+
+
 Shanghai
 ========
 
@@ -10,11 +12,18 @@ Shanghai
 
   3. transform the result to solr index format.
 
-  There is an example in the book folder whith some sparql queries.
 
   Step 1. and 2. needs a sparql query, step 3 works with XSLT.
+  There is an example in the book folder whith some sparql queries.
 
 
   This is the first initial realease and test code.
 
+##TODO
+  Lots of things.
+
+##Collaboration
+  We're *very* open to pull requests! If you'd like to collaborate, 
+  offer feedback, or best of all - better code, feel free to do so. 
+  Please use the issues section on this github repository.
 ____________________________________________________________________________

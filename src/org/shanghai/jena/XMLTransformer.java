@@ -59,15 +59,12 @@ public class XMLTransformer {
     }
 
     public void create() {
-        // try {
-        // } catch(IOException e) { log(e); }
+        // try {} catch(IOException e) { log(e); }
     }
 
-    public void dispose() {
-    }
+    public void dispose() {}
 
     public String transform( String xmlString ) {
-	    //log(xmlString);
 		transformer.reset();
 	    String result = null;
 	    try {
@@ -77,7 +74,6 @@ public class XMLTransformer {
 			                     new StreamResult(writer));
           result = writer.toString();
         } catch(TransformerException e) { log(e); }
-          //catch(UnsupportedEncodingException e) { log(e); }
           finally {
           return result;
         }
@@ -94,23 +90,6 @@ public class XMLTransformer {
             Source xslt = new StreamSource(in);
             transformer = factory.newTransformer(xslt);
             transformer.setOutputProperty("omit-xml-declaration", "yes");
-            if (in!=null) in.close();
-        } catch(TransformerConfigurationException e) { log(e); }
-          catch(IOException e) { log(e); }
-    }
-
-    private void loadXSLT(String filename) {
-        log("loading " + filename);
-        try {
-            TransformerFactory factory = TransformerFactory.newInstance();
-            // load from dlib:
-            InputStream in = this.getClass().getResourceAsStream("/"+filename);
-            if (in==null) {
-                log ("xslt " + filename + " not found");
-                return;
-            }
-            Source xslt = new StreamSource(in);
-            transformer = factory.newTransformer(xslt);
             if (in!=null) in.close();
         } catch(TransformerConfigurationException e) { log(e); }
           catch(IOException e) { log(e); }

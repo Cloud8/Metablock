@@ -41,22 +41,23 @@ import com.hp.hpl.jena.rdf.arp.JenaReader;
 */
 public class TDBReader {
 
-    private static String tdbData = "/ub01/data/gnd.tdb";
+    private static String tdbData;
     private static final Logger logger =
                          Logger.getLogger(TDBReader.class.getName());
 
-    Model model;
-    Dataset dataset;
-    int count = 0;
+    private Model model;
+    private Dataset dataset;
+    private int count = 0;
 
-    Location location;
+    private Location location;
     //DatasetGraph dsg;
-    String uri = null;
+    private String uri = null;
 
     public TDBReader(String tdbData) {
         this.tdbData = tdbData;
     }
 
+    /** just to be prepared to graphs */
     public TDBReader(String tdbData, String uri) {
         this.tdbData = tdbData;
         this.uri = uri;
@@ -64,9 +65,9 @@ public class TDBReader {
 
     private void log(String msg) {
         logger.info(msg);    
-        //System.out.println(msg);
     }
 
+    /** shit happens */
     private void log(Exception e) {
         log(e.toString());
         e.printStackTrace(System.out);
@@ -97,7 +98,6 @@ public class TDBReader {
     public String[] getSubjects(String q, int offset, int limit) {
         String[] result = new String[limit];
         String lquery = q + " offset " + offset + " limit " + limit;
-        // log(lquery);
         Query query = QueryFactory.create(lquery);
         QueryExecution qexec = QueryExecutionFactory.create(query, model);
         try {
@@ -105,16 +105,9 @@ public class TDBReader {
             while ( results.hasNext() ) {
 	           int i = results.getRowNumber();
                QuerySolution soln = results.nextSolution();
-		   	   // showSolution( soln );
-               // String identifier = "" + soln.get("identifier");
-			   // log("identifier " + i + ": " + soln.get("identifier"));
                String subject = getSubject(soln);
-			   // log("subject " + i + ": " + subject);
-			   // log(varName + ": " + soln.get(varName));
                if (subject!=null)
                    result[i] = subject;
-               // else 
-               //  result[i] = identifier;
            }
          } catch(Exception e) { log(e); }
            finally {
@@ -123,10 +116,8 @@ public class TDBReader {
          }
     }
 
-    /** return a concise bounded description for the subject as xml string 
-      */
+    /** return a hopefully concise bounded description for the subject */
     public String getDescription(String query, String subject) {
-         // String desc = query + " DESCRIBE <" + subject + ">\n";
          String desc = query.replace("%param%", "<" + subject + ">");
          return getData(desc);
     }
@@ -139,27 +130,11 @@ public class TDBReader {
 
     /** execute query and return first row first subject */
     public String query(String query) {
-        //log(query);
-        //Query selectQuery = QueryFactory.create(query);
-        //QueryExecution qe = QueryExecutionFactory
-        //               .sparqlService(Constant.SPARQL_ENDPOINT, selectQuery);
         QueryExecution qe = QueryExecutionFactory.create(query, model);
         ResultSet results=qe.execSelect();
         QuerySolution soln = results.next();
         String result = soln.getLiteral("subject").getString();
         return result;
-    }
-
-    private String getDescription(String subject) {
-       String q = "# concise bounded description\n"
-                + "PREFIX  dcterms: <http://purl.org/dc/terms/>\n"
-                + "PREFIX  dc: <http://purl.org/dc/elements/1.1/>\n"
-                + "PREFIX  gnd: <http://d-nb.info/gnd/>\n"
-    + "PREFIX  thesis: <http://www.ndltd.org/standards/metadata/etdms/1.0/>\n"
-    + "PREFIX  dini: <http://www.d-nb.de/standards/xmetadissplus/type/>\n"
-                + "DESCRIBE <" + subject + ">\n";
-          //  + "DESCRIBE <http://archiv.ub.uni-marburg.de/diss/z2010/0061>\n";
-       return getData(q);
     }
 
     /** return sparql query result as xml */
@@ -168,218 +143,19 @@ public class TDBReader {
         Query query = QueryFactory.create(q);
         QueryExecution qexec = QueryExecutionFactory.create(query, model);
         try {
-            //ResultSet results = qexec.execSelect();
             Model model;
-            if (q.contains("DESCRIBE")) {
-                model = qexec.execDescribe();
-            } else {
+            // if (q.contains("DESCRIBE")) {
+            //     model = qexec.execDescribe();
+            // } else {
                 model = qexec.execConstruct();
-            }
+            // }
             StringWriter out = new StringWriter();
             model.write(out, "RDF/XML-ABBREV");
             result = out.toString();
-         } catch(Exception e) { log(e); }
+         } catch(Exception e) { log(q); log(e); }
            finally {
            qexec.close();
            return result;
-         }
-    }
-
-    private String getSubject(QuerySolution soln) {
-        // Return the value of the named variable in this binding, 
-        // casting to a Resource. 
-        // A return of null indicates that the variable is not present 
-        // in this solution. 
-        // An exception indicates it was present but not a resource.
-        Resource subject = soln.getResource("s");
-        if (subject==null)
-            subject = soln.getResource("subject");
-        if (subject==null)
-            subject = soln.getResource("identifier");
-        if (subject==null)
-            return null;
-        return subject.toString();
-    }
-
-    /** return sparql qeury result as xml */
-    /****
-    private HashMap<String,String> getRecord(String identifier) {
-        String q = "PREFIX  dcterms: <http://purl.org/dc/terms/>"
-                 + "PREFIX  dc: <http://purl.org/dc/elements/1.1/>"
-                 + " select ?s ?p ?o where {"
-                 + " ?s ?p ?o ."
-                 + " ?s dc:identifier '" + identifier + "'"
-                 + "}";
-	    HashMap<String,String> hash = new HashMap<String,String>();
-        ResultSet results = null;
-        Query query = QueryFactory.create(q);
-        QueryExecution qexec = QueryExecutionFactory.create(query, model);
-        try {
-            results = qexec.execSelect();
-            //this works, but after close result is gone
-			count = 0;
-            for ( ; results.hasNext() ; ) {
-                QuerySolution soln = results.nextSolution() ;
-				//testSolution(soln);
-		        //Resource p = soln.getResource("p");
-		        //Resource o = soln.getResource("o");
-				//log(p.getLocalName() + ": " + o.toString());
-				String[] result = getSolution(soln);
-				hash.put(result[0], result[1]);
-            }
-            //showResult(results); 
-         } finally {
-           qexec.close();
-           return hash;
-         }
-    }
-    **/
-
-    /**
-    private String[] getSolution(QuerySolution soln) {
-	    String[] result = new String[2];
-        if (count==0) {
-		    count++;
-            RDFNode z = soln.get("s"); 
-            if (z.isResource()) {
-		        Resource o = soln.getResource("s");
-			    //log("resource s " + count + " " + o.toString());
-                result[0] = "url";
-		        result[1] = o.toString();
-                return result;
-            } else if (z.isLiteral()) {
-		    	log("literal s " + count + " " + z.toString());
-		    	// log("literal " + count);
-		        //result[1] = y.toString();
-		    } else {
-		    	log("nothing s " + count + " " + z.toString());
-		        //result[1] = y.toString();
-            }
-        }
-
-		count++;
-        RDFNode x = soln.get("p"); 
-        if (x.isLiteral()) {
-			log("literal " + count);
-        } else if (x.isResource()) {
-		    Resource r = soln.getResource("p");
-		    result[0] = r.getLocalName();
-			// log("resource p " + count + " " + r.getLocalName());
-        } else if (x.isAnon()) {
-			log("anon " + count);
-		} else {
-            log("nothing " + count); 
-		}
-
-        RDFNode y = soln.get("o"); 
-        if (y.isResource()) {
-		    Resource o = soln.getResource("o");
-		    result[1] = o.toString();
-			log("resource o " + count + " " + o.getLocalName());
-        } else if (y.isLiteral()) {
-			// log("literal " + count);
-		    result[1] = y.toString();
-		} else {
-			log("no resource o " + count + " " + y.toString());
-		    result[1] = y.toString();
-		}
-
-		return result;
-	}
-    **/
-
-    private void testSolution(QuerySolution soln) {
-		count++;
-        // log("nothing " + count++); 
-        // RDFNode x = soln.get("varName"); // Get a result variable by name.
-        // Resource r = soln.getResource("VarR");// - must be a resource
-        // Literal l = soln.getLiteral("VarL") ;// - must be a literal
-        RDFNode x = soln.get("p"); 
-        if (x.isLiteral()) {
-			log("literal " + count);
-        } else if (x.isResource()) {
-		    Resource r = soln.getResource("p");
-			log("resource " + count + " " + r.getLocalName());
-        } else if (x.isAnon()) {
-			log("anon " + count);
-		} else {
-            log("nothing " + count); 
-		}
-	    Iterator<String> iter = soln.varNames();
-		while ( iter.hasNext() ) {
-		     String varName = iter.next();
-             // Literal literal = soln.getLiteral(varName);
-             // Resource resource = soln.getResource(varName);
-			 // log(literal.getString());
-			 // log(resource.toString());
-			 log(varName + " [" + count + "]" + ": " + soln.get(varName));
-	    }
-	}
-
-    // directly work with the data
-    private void showSolution(QuerySolution soln) {
-	     Iterator<String> iter = soln.varNames();
-		 while ( iter.hasNext() ) {
-		     String varName = iter.next();
-             // Literal literal = soln.getLiteral(varName);
-             // Resource resource = soln.getResource(varName);
-			 // log(literal.getString());
-			 // log(resource.toString());
-			 log("solution " + varName + ": " + soln.get(varName));
-		 }
-	}
-
-    /** test */
-    void test() {
-        String q = "PREFIX  dcterms: <http://purl.org/dc/terms/>"
-                 + "PREFIX  dc: <http://purl.org/dc/elements/1.1/>"
-                 + " select ?s ?identifier  where {"
-                 + " ?s dc:identifier ?identifier"
-                 + "}"
-                 + "";
-        String result[] = getSubjects(q,1117,32);
-        for (String identifier : result) {
-             System.out.println(identifier);
-        }
-        int count = result.length;
-        //showRecord(result[count-1]);
-        String subject = result[count-1];
-        log( getDescription(subject) );
-    }
-
-    /**
-    private void showRecord(String identifier) {
-        HashMap<String,String> hash = getRecord(identifier);
-		Iterator it = hash.keySet().iterator();
-		log("solution:");
-		while (it.hasNext()) {
-			String p = (String)it.next();
-			String o = hash.get(p);
-			if (!"abstract".equals(p))
-                log(p + ": " + o);
-	    }
-    }
-    **/
-
-    public void dump(int what, String identifier) {
-        log("dump " + what);
-        String q = "PREFIX  dcterms: <http://purl.org/dc/terms/>"
-                 + " select ?s ?p ?o where {"
-                 + " ?s ?p ?o"
-                 + " . ?s dc:identifier '" + identifier + "' "
-                 + "}";
-        Query query = QueryFactory.create(q);
-        QueryExecution qexec = QueryExecutionFactory.create(query, model);
-        try {
-            ResultSet results = qexec.execSelect();
-            if (what==0)
-                ResultSetFormatter.out(System.out, results, query) ;
-            if (what==1) {
-                String res = ResultSetFormatter.asXMLString(results);
-                log(res);
-            }
-         } finally {
-            qexec.close();
          }
     }
 
@@ -414,6 +190,77 @@ public class TDBReader {
             model.commit();
         }
         return true;
+    }
+
+    private String getSubject(QuerySolution soln) {
+        // Return the value of the named variable in this binding, 
+        // casting to a Resource. 
+        // A return of null indicates that the variable is not present 
+        // in this solution. 
+        // An exception indicates it was present but not a resource.
+        Resource subject = soln.getResource("s");
+        if (subject==null)
+            subject = soln.getResource("subject");
+        if (subject==null)
+            subject = soln.getResource("identifier");
+        if (subject==null)
+            return null;
+        return subject.toString();
+    }
+
+    private void testSolution(QuerySolution soln) {
+		count++;
+        RDFNode x = soln.get("p"); 
+        if (x.isLiteral()) {
+			log("literal " + count);
+        } else if (x.isResource()) {
+		    Resource r = soln.getResource("p");
+			log("resource " + count + " " + r.getLocalName());
+        } else if (x.isAnon()) {
+			log("anon " + count);
+		} else {
+            log("nothing " + count); 
+		}
+	    Iterator<String> iter = soln.varNames();
+		while ( iter.hasNext() ) {
+		     String varName = iter.next();
+			 log(varName + " [" + count + "]" + ": " + soln.get(varName));
+	    }
+	}
+
+    // directly work with the data
+    private void showSolution(QuerySolution soln) {
+	     Iterator<String> iter = soln.varNames();
+		 while ( iter.hasNext() ) {
+		     String varName = iter.next();
+             // Literal literal = soln.getLiteral(varName);
+             // Resource resource = soln.getResource(varName);
+			 // log(literal.getString());
+			 // log(resource.toString());
+			 log("solution " + varName + ": " + soln.get(varName));
+		 }
+	}
+
+    private void dump(int what, String identifier) {
+        log("dump " + what);
+        String q = "PREFIX  dcterms: <http://purl.org/dc/terms/>"
+                 + " select ?s ?p ?o where {"
+                 + " ?s ?p ?o"
+                 + " . ?s dc:identifier '" + identifier + "' "
+                 + "}";
+        Query query = QueryFactory.create(q);
+        QueryExecution qexec = QueryExecutionFactory.create(query, model);
+        try {
+            ResultSet results = qexec.execSelect();
+            if (what==0)
+                ResultSetFormatter.out(System.out, results, query) ;
+            if (what==1) {
+                String res = ResultSetFormatter.asXMLString(results);
+                log(res);
+            }
+         } finally {
+            qexec.close();
+         }
     }
 
     /** return a reasonable subject */
@@ -470,6 +317,7 @@ public class TDBReader {
         }
     }
 
+    /** test support */
     public static void main(String[] args) {
 	    TDBReader myself = new TDBReader(TDBReader.tdbData);
         int argc=0;
@@ -479,10 +327,7 @@ public class TDBReader {
 			if (args.length>argc)
                  myself.dump(0, args[argc]);
 			else myself.dump(0, "000000019");
-        } else if (args.length>argc && args[argc].endsWith("-test")) {
-		    argc++;
-			myself.test();
-        }
+        } 
         myself.dispose();
     }
 }

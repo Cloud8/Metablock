@@ -9,13 +9,11 @@ import java.util.logging.Logger;
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A Command Line Interface for the Shanghai Bibliograpic Record Manager 
+   @title A Command Line Interface for the Shanghai RDF Indexer
    @date 2013-01-17
 */
-public class Main {
 
-    private static final Logger logger =
-                         Logger.getLogger(Main.class.getName());
+public class Main {
 
     RDFCrawl rdfCrawl = null;
     RDFTransporter rdfTransporter = null;
@@ -23,13 +21,16 @@ public class Main {
     String suffix;
     int depth;
 
+    private static final Logger logger =
+                         Logger.getLogger(Main.class.getName());
+
     public Main(Properties prop) {
         this.prop = prop;
     }
 
     static void log(String msg) {
-        // logger.info(msg);
-        System.out.println(msg);
+        logger.info(msg);
+        //System.out.println("Main: " + msg);
     }
 
     static void log(Exception e) {
@@ -68,19 +69,22 @@ public class Main {
         log("RDFTransporter test:");
         rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();    
-        int size = rdfTransporter.probe();
-        log("store size: " + size);
-        if (size==0)
-            return;
-        rdfTransporter.test();
+        rdfTransporter.probe();
+        rdfTransporter.dispose();    
     }
 
     private void probe(String what) {
-        probe();
         int x = Integer.parseInt(what);
+        rdfTransporter = new RDFTransporter(prop);
+        rdfTransporter.create();    
+        int size = rdfTransporter.size();
+        log("store size: " + size);
+        if (size==0)
+            return;
         for(String id: rdfTransporter.getIdentifiers(0,x)) {
             log(id);
         }
+        rdfTransporter.dispose();    
     }
 
     private void post(String what) {
@@ -126,6 +130,20 @@ public class Main {
                        + ((end - start)/1000) + " sec");
     }
 
+    private void index(String offset, String limit) {
+        int off = Integer.parseInt(offset);
+        int max = Integer.parseInt(limit);
+        log("index offset " + off + " limit " + max);
+        rdfCrawl = new RDFCrawl(prop);
+        rdfCrawl.create();
+        boolean b = rdfCrawl.index(off, max);
+        rdfCrawl.dispose();
+    }
+
+    private void index(String offset) {
+        index(offset, "42");
+    }
+
     private void index() {
         long start = System.currentTimeMillis();
         rdfCrawl = new RDFCrawl(prop);
@@ -137,6 +155,7 @@ public class Main {
                        + ((end - start)/1000) + " sec");
     }
 
+    /** update triple store with description found in the file */
     private void update(String filename) {
         rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();    
@@ -144,6 +163,8 @@ public class Main {
         rdfTransporter.dispose();    
     }
 
+    /** write everything known about the resource identified 
+        by uri to the file given in the properties */
     private void getDescription(String uri) {
         rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();    
@@ -158,10 +179,11 @@ public class Main {
         String rdfDoc = rdfTransporter.getDescription(uri); 
         rdfTransporter.dispose();    
         try {
-            Util.writeFile(filename, rdfDoc);
+            FileUtil.writeFile(filename, rdfDoc);
         } catch(IOException e) { log(e); }
     }
 
+    /** delete everything where uri is a subject */
     private void delete(String uri) {
         rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();    
@@ -177,21 +199,16 @@ public class Main {
         solrPost.dispose();
     }
 
-    /** unused: clean the store, not the index */
+    @Deprecated
     private void cleanStorage() {
-        //long start = System.currentTimeMillis();
         rdfCrawl = new RDFCrawl(prop);
         rdfCrawl.create();
         rdfCrawl.solrPost.clean();
         rdfCrawl.dispose();
-        //rdfCrawl.clean();
-        //long end = System.currentTimeMillis();
-        //log("cleaned " + rdfCrawl.count + " records in " 
-        //               + ((end - start)/1000) + " sec");
     }
 
     private void talk() {
-       log("usage: to do");
+        log("usage: to do");
     }
 
     public static void main(String[] args) {
@@ -230,6 +247,12 @@ public class Main {
             myself.probe();
         } else if (args.length>argc && args[argc].endsWith("-crawl")) {
             myself.crawl(args);
+        } else if (args.length-2>argc && args[argc].endsWith("-index")) {
+		    argc++;
+            myself.index(args[argc++], args[argc]);
+        } else if (args.length-1>argc && args[argc].endsWith("-index")) {
+		    argc++;
+            myself.index(args[argc]);
         } else if (args.length>argc && args[argc].endsWith("-index")) {
             myself.index();
         } else if (args.length>argc && args[argc].endsWith("-upd")) {

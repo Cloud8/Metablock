@@ -24,9 +24,10 @@ import java.io.StringWriter;
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A Jena RDF Transporter 
+   @title A RDF Transporter with CRUD functionality
    @date 2013-01-17
 */
+
 public class RDFTransporter {
 
     private static final Logger logger =
@@ -57,13 +58,14 @@ public class RDFTransporter {
 
     public void create() {
         try {
-            probeQuery = Util.readFile(prop.getProperty("probe.sparql"));
-            indexQuery = Util.readFile(prop.getProperty("index.sparql"));
-            descrQuery = Util.readFile(prop.getProperty("about.sparql"));
+            probeQuery = FileUtil.readFile(prop.getProperty("probe.sparql"));
+            indexQuery = FileUtil.readFile(prop.getProperty("index.sparql"));
+            descrQuery = FileUtil.readFile(prop.getProperty("about.sparql"));
             tdbReader = new TDBReader(prop.getProperty("jena.tdb"), 
                                       prop.getProperty("jena.graph"));
 		    tdbReader.create();
         } catch(IOException e) { log(e); }
+        size=0;
     }
 
     public void dispose() {
@@ -94,8 +96,10 @@ public class RDFTransporter {
         return tdbReader.delete(bid);
     }
 
-    /** intended to deliver the number of triples in the store */
-    public int probe() {
+    /** should deliver the number of triples in the store */
+    public int size() {
+        if (size>0)
+            return size;
         String result = tdbReader.query(probeQuery);
         try { 
           size = Integer.parseInt(result);
@@ -104,30 +108,28 @@ public class RDFTransporter {
               log("result: [" + result + "]");
           }
         } catch (NumberFormatException e) { log(e); }
-        //log("size: " + size);
         return size;
     }
 
     private boolean loadDescription(File file) {
         boolean b = false;
         try {
-            String description = Util.readFile(file);
+            String description = FileUtil.readFile(file);
             InputStream in = 
                      new ByteArrayInputStream(description.getBytes("UTF-8"));
             b = tdbReader.update(in);
             if (in!=null) in.close();
-            // log("loadDescription " + file.getName() + " " + b);
         } catch(IOException e) { log(e); }
         finally { return b; }
     }
 
-    public void talk(String probe) {
-        String rdf = tdbReader.getDescription(descrQuery, probe);
+    public void talk(String what) {
+        String rdf = tdbReader.getDescription(descrQuery, what);
         String testRdf = prop.getProperty("test.rdf");
         if (testRdf==null)
             testRdf = "test-rdf.xml"; 
         try {
-            Util.writeFile(testRdf, rdf);
+            FileUtil.writeFile(testRdf, rdf);
         } catch(IOException e) { log(e); }
         log("wrote " + testRdf);
     }
@@ -135,81 +137,27 @@ public class RDFTransporter {
     private void write(String outfile) {
         String talk = getRecord();
         try {
-            Util.writeFile(outfile, talk);
+            FileUtil.writeFile(outfile, talk);
         } catch(IOException e) { log(e); }
-    }
-
-    private void talk() {
-        String talk = getRecord();
-        System.out.println(talk);
     }
 
     public String getRecord() {
         String[] ids = tdbReader.getSubjects(indexQuery, 0, 1);
         String rdf = tdbReader.getDescription(descrQuery, ids[0]);
-        //String solr = transformer.transform(rdf);
-        //return solr;
         return rdf;
     }
 
-    /** test */
-    void test() {
-        int max = probe();
+    /** test a random record */
+    public void probe() {
+        int max = size();
         if (max==0) {
-            log("No triples in the store. Check probe.");
+            log("No triples in the store. Check size.");
             return;
         }
-        int off = Math.min(22, max-1);
-        int limit = Math.min(42, max);
-        //int random = (int) (Math.random() * (high - low) + low)
-        int random = (int) (Math.random() * (limit-1));
-
-        //log("offset " + off + " limit " + limit);
-        String[] identifiers = tdbReader.getSubjects(indexQuery, off, limit);
-        //for (String identifier: identifiers) {
-        //     System.out.println(identifier);
-        //}
-        // tdbReader.test();
-        String probe = identifiers[random];
-        log( "resource: " + probe );
-        talk(probe);
-    }
-
-    public static void main(String[] args) {
-	    int argc=0;
-        Properties prop = new Properties();
-        String properties = "shanghai.properties";
-        if (args.length>argc && args[argc].endsWith("-prop")) {
-            argc++;
-            properties = args[argc];
-            argc++;
-        }
-        try {
-            prop.load(Main.class.getResourceAsStream("/" + properties));
-        } catch(IOException e) { e.printStackTrace(); }
-	    RDFTransporter myself = new RDFTransporter(prop);
-        myself.create();
-		if (args.length>argc && args[argc].endsWith("-test")) {
-		    myself.test();
-		} else if (args.length>argc && args[argc].endsWith("-talk")) {
-		    myself.talk();
-		} else if (args.length>argc && args[argc].endsWith("-probe")) {
-		    myself.probe();
-        } else if (args.length>argc && args[argc].endsWith("-get")) {
-            argc++;
-            if (args.length>argc)
-                myself.talk(args[argc]);
-        } else if (args.length>argc && args[argc].endsWith("-put")) {
-            argc++;
-            if (args.length>argc) {
-                myself.update(args[argc]);
-            }
-        } else if (args.length>argc && args[argc].endsWith("-del")) {
-            argc++;
-            if (args.length>argc) {
-                myself.delete(args[argc]);
-            }
-        } 
-        myself.dispose();
+        int off = (int)(Math.random() * max);
+        String[] identifiers = tdbReader.getSubjects(indexQuery, off, 1);
+        String what = identifiers[0];
+        log( "resource " + off + ": " + what );
+        talk(what);
     }
 }
