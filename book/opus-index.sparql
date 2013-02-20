@@ -1,17 +1,10 @@
 
 PREFIX  dcterms: <http://purl.org/dc/terms/>
 PREFIX  dc: <http://purl.org/dc/elements/1.1/>
-PREFIX  dini: <http://www.d-nb.de/standards/xmetadissplus/type/>
 
 select ?subject ?identifier  where 
 {
    ?subject  dc:identifier ?identifier .
-   # ?subject  dini:PublType "doctoralThesis" 
-   # ?subject  dini:PublType "book" 
-   # ?subject  dini:PublType "Periodical" 
-   # ?subject  dini:PublType "bookPart" 
-   # ?subject  dini:PublType "MusicalNotation" 
-   # ?subject  dini:PublType "Image" 
 }
    ORDER BY DESC(?subject)
 

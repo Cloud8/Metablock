@@ -1,9 +1,6 @@
 package org.shanghai.jena;
 
-import java.util.Iterator;
 import java.util.logging.Logger;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
 
 import java.io.StringWriter;
@@ -95,10 +92,9 @@ public class TDBReader {
         log("closed " + tdbData);
     }
 
-    public String[] getSubjects(String q, int offset, int limit) {
+    public String[] getSubjects(String q, int limit) {
         String[] result = new String[limit];
-        String lquery = q + " offset " + offset + " limit " + limit;
-        Query query = QueryFactory.create(lquery);
+        Query query = QueryFactory.create(q);
         QueryExecution qexec = QueryExecutionFactory.create(query, model);
         try {
             ResultSet results = qexec.execSelect();
@@ -114,12 +110,6 @@ public class TDBReader {
            qexec.close();
            return result;
          }
-    }
-
-    /** return a hopefully concise bounded description for the subject */
-    public String getDescription(String query, String subject) {
-         String desc = query.replace("%param%", "<" + subject + ">");
-         return getData(desc);
     }
 
     /** execute an update query */
@@ -138,7 +128,7 @@ public class TDBReader {
     }
 
     /** return sparql query result as xml */
-    public String getData(String q) {
+    public String getDescription(String q) {
         String result = null;
         Query query = QueryFactory.create(q);
         QueryExecution qexec = QueryExecutionFactory.create(query, model);
@@ -319,7 +309,7 @@ public class TDBReader {
 
     /** test support */
     public static void main(String[] args) {
-	    TDBReader myself = new TDBReader(TDBReader.tdbData);
+	    TDBReader myself = new TDBReader("/vol/vol01/data/jena.tdb");
         int argc=0;
         myself.create();
         if (args.length>argc && args[argc].endsWith("-dump")) {

@@ -4,5 +4,4 @@ PREFIX  dini: <http://www.d-nb.de/standards/xmetadissplus/type/>
 SELECT (COUNT(*) AS ?subject) 
   { 
       ?s dc:identifier ?o .
-      # ?s dini:PublType "doctoralThesis" 
   }
