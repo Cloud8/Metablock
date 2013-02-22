@@ -21,8 +21,8 @@ PACKT := shanghai
 
 # run
 DIRS := /srv/archiv/diss/2013 /srv/archiv/eb/2013 /srv/archiv/es/2013
-MAIN := org.shanghai.jena.Main -prop book/gnd.properties
-MAIN := org.shanghai.jena.Main -prop book/opus.properties
+MAIN := org.shanghai.rdf.Main -prop book/gnd.properties
+MAIN := org.shanghai.rdf.Main -prop book/opus.properties
 
 .PHONY: deploy 
 
@@ -40,14 +40,11 @@ zero: # solr clean up : throws away the index
 crawl: # crawl file system and update jena store with rdf files
 	@java -cp $(CPATH) $(MAIN) -crawl $(DIRS)
 
-index: # jena store index
-	@java -cp $(CPATH) $(MAIN) -index
+test: # fetch some record URIs from triple store
+	@java -cp $(CPATH) $(MAIN) -probe 22
 
 probe: # fetch a random record from triple store
 	@java -cp $(CPATH) $(MAIN) -probe
-
-fetch: # fetch some record URIs from triple store
-	@java -cp $(CPATH) $(MAIN) -probe 22
 
 get: # retrieve description about uri 1=$1 from store to file 2=$2
 	@java -cp $(CPATH) $(MAIN) -get $1 $2
@@ -61,8 +58,8 @@ del: # remove description about uri 1=$1 from store
 post: # post description about uri 1=$1 to solr
 	@java -cp $(CPATH) $(MAIN) -post $1
 
-test: # perform some functionality checks
-	@java -cp $(CPATH) $(MAIN) -test
+index: # jena store index
+	@java -cp $(CPATH) $(MAIN) -index
 
 # copy like mad
 copy: 
