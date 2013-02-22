@@ -1,0 +1,17 @@
+#
+# DNB data 2013-02
+#
+
+PREFIX  dcterms: <http://purl.org/dc/terms/>
+PREFIX  dc: <http://purl.org/dc/elements/1.1/>
+PREFIX  gnd: <http://d-nb.info/standards/elementset/gnd#>
+PREFIX  bibo: <http://purl.org/ontology/bibo/>
+PREFIX  rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX  ifla: <http://iflastandards.info/ns/isbd/elements/>
+
+SELECT (COUNT(*) AS ?subject) 
+where
+  { 
+    ?s dcterms:identifier ?o
+  }
+
