@@ -1,4 +1,4 @@
-package org.shanghai.rdf;
+package org.shanghai.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,18 +18,11 @@ import java.util.logging.Logger;
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title Utility Class to wrap Filesystem access
-   @date 2013-02-18
+   @title Simple Utility Class to wrap Filesystem access
+   @date 2013-01-18
 */
 
 public class FileUtil {
-
-    private static final Logger logger =
-                         Logger.getLogger(FileUtil.class.getName());
-
-    private void log(String msg) {
-        logger.info(msg);    
-    }
 
     public static String readFile(File f) throws IOException {
         FileInputStream stream = new FileInputStream(f);

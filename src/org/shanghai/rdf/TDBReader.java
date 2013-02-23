@@ -1,10 +1,8 @@
-package org.shanghai.jena;
+package org.shanghai.rdf;
 
 import java.util.logging.Logger;
 
 import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.tdb.TDBFactory;
@@ -19,7 +17,7 @@ import com.hp.hpl.jena.query.QueryFactory;
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A Jena TDB Reader 
+   @title Old Jena TDB Reader. Better use sparql service.
    @date 2013-01-16
 */
 public class TDBReader {
@@ -28,7 +26,7 @@ public class TDBReader {
     private static final Logger logger =
                          Logger.getLogger(TDBReader.class.getName());
 
-    Model model;
+    private Model model;
     private Dataset dataset;
     private int count = 0;
 
@@ -49,33 +47,34 @@ public class TDBReader {
         logger.info(msg);    
     }
 
-    /** shit happens */
     private void log(Exception e) {
         log(e.toString());
         e.printStackTrace(System.out);
     }
 
     public void create() {
-      if (tdbData==null) 
-          log("something is terribly wrong: no valid rdf service point.");
-      if (model==null) {
-        location = new Location (tdbData);
-        dataset = TDBFactory.createDataset(location) ;
-        if (uri==null) {
-            log("init " + tdbData);
-		    model = dataset.getDefaultModel();
-        } else {
-            log("init " + tdbData + " graph " + uri);
-		    model = dataset.getNamedModel(uri);
+        if (tdbData==null) 
+            log("something is terribly wrong: no valid tdb source.");
+        if (model==null) {
+            location = new Location (tdbData);
+            dataset = TDBFactory.createDataset(location) ;
+            if (uri==null) {
+                log("init " + tdbData);
+		        model = dataset.getDefaultModel();
+            } else {
+                log("init " + tdbData + " graph " + uri);
+		        model = dataset.getNamedModel(uri);
+            }
         }
-      }
     }
 
     public void dispose() {
-        model.close();
+        if (model!=null) 
+            model.close();
         if (dataset!=null) 
             dataset.close();
         model=null;
+        dataset=null;
         log("closed " + tdbData);
     }
 
@@ -84,7 +83,6 @@ public class TDBReader {
         return QueryExecutionFactory.create(query, model);
     }
 
-    /** execute an update query */
     private boolean execute(String action) {
         UpdateAction.parseExecute(action, model);
         return true;
@@ -95,12 +93,12 @@ public class TDBReader {
         boolean b = execute("DELETE WHERE { <" + about + "> ?p ?o. }");
         model.commit();
         return b;
-    } 
+    }
 
     public boolean add(Model m) {
         model.begin();
         model.add(m);
-        model.commit(); 
+        model.commit();
         return true;
     }
 }

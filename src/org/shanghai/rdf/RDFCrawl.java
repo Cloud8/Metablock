@@ -1,5 +1,7 @@
 package org.shanghai.rdf;
 
+import org.shanghai.util.FileUtil;
+
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -113,6 +115,7 @@ public class RDFCrawl {
         } catch(IOException e) { log(e); }
     }
 
+    /***
     private void talk() {
         long start = System.currentTimeMillis();
         index();
@@ -120,5 +123,6 @@ public class RDFCrawl {
         log("indexed " + count + " records in " 
                        + ((end - start)/1000) + " sec");
     }
+    ***/
 
 }

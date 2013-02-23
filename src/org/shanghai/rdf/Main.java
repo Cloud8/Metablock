@@ -1,5 +1,7 @@
 package org.shanghai.rdf;
 
+import org.shanghai.util.FileUtil;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -39,30 +41,9 @@ public class Main {
     }
 
     public void create() {
-        suffix = prop.getProperty("crawl.suffix");
-        String s = prop.getProperty("crawl.depth");
-        if (s!=null) depth = Integer.parseInt(s);
     }
 
     public void dispose() {
-    }
-
-    private void crawl(String[] dirs) {
-        long start = System.currentTimeMillis();
-        FileCrawl crawler = new FileCrawl(prop);
-        crawler.create();
-        for (String dir: dirs) {
-            File f = new File(dir);
-            if (f.isDirectory()) {
-                log("crawling " + dir + " with suffix " + suffix 
-                    + " and depth " + depth + ".");
-                crawler.crawl(dir, "", suffix, depth);
-            }
-        }
-        crawler.dispose();
-        long end = System.currentTimeMillis();
-        log("crawled " + crawler.count + " records in "
-                       + ((end - start)/1000) + " sec");
     }
 
     private void probe() {
@@ -73,26 +54,28 @@ public class Main {
         rdfTransporter.dispose();    
     }
 
-    private void probe(String what) {
-        int x = Integer.parseInt(what);
+    private void test(String offset) {
+        int off = Integer.parseInt(offset);
+        test(off);
+    }
+
+    private void test() {
+        test(0);
+    }
+
+    private void test(int off) {
+        // int x = Integer.parseInt(what);
+        int x = 22;
         rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();    
         int size = rdfTransporter.size();
         log("store size: " + size);
         if (size==0)
             return;
-        for(String id: rdfTransporter.getIdentifiers(0,x-1)) {
+        for(String id: rdfTransporter.getIdentifiers(off,x-1)) {
             log( "[" + id + "]");
         }
         rdfTransporter.dispose();    
-    }
-
-    private void post(String what) {
-        log("post: " + what);
-        rdfCrawl = new RDFCrawl(prop);
-        rdfCrawl.create();
-        rdfCrawl.post(what);
-        rdfCrawl.dispose();
     }
 
     private void testCrawl() {
@@ -103,30 +86,12 @@ public class Main {
         rdfCrawl.dispose();
     }
 
-    @Deprecated
-    private void crawl(String dir, String prae, String suf, String lev) {
-        int level = Integer.parseInt(lev);
-        long start = System.currentTimeMillis();
-        FileCrawl crawler = new FileCrawl(prop);
-        log(dir + " " + prae + " " + suf + " " + level);
-        crawler.crawl(dir, prae, suf, level);
-        //crawler.dispose();
-        long end = System.currentTimeMillis();
-        log("crawled " + crawler.count + " records from " + dir + " in "
-                       + ((end - start)/1000) + " sec");
-    }
-
-    @Deprecated
-    private void crawl(String dir) {
-        long start = System.currentTimeMillis();
-        FileCrawl crawler = new FileCrawl(prop);
-        log(dir);
-        // all files ending with rdf, recurse 3 levels into directories
-        crawler.crawl(dir, "", ".rdf", 3);
-        //crawler.dispose();
-        long end = System.currentTimeMillis();
-        log("crawled " + crawler.count + " records from " + dir + " in "
-                       + ((end - start)/1000) + " sec");
+    private void post(String what) {
+        log("post: " + what);
+        rdfCrawl = new RDFCrawl(prop);
+        rdfCrawl.create();
+        rdfCrawl.post(what);
+        rdfCrawl.dispose();
     }
 
     private void index(String offset, String limit) {
@@ -140,7 +105,10 @@ public class Main {
     }
 
     private void index(String offset) {
-        index(offset, "42");
+        if (offset.equals("test"))
+            testCrawl();
+        else
+            index(offset, "42");
     }
 
     private void index() {
@@ -152,14 +120,6 @@ public class Main {
         long end = System.currentTimeMillis();
         log("indexed " + rdfCrawl.count + " records in " 
                        + ((end - start)/1000) + " sec");
-    }
-
-    /** update triple store with description found in the file */
-    private void update(String filename) {
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        rdfTransporter.update(filename);
-        rdfTransporter.dispose();    
     }
 
     /** write everything known about the resource identified 
@@ -180,14 +140,6 @@ public class Main {
         try {
             FileUtil.writeFile(filename, rdfDoc);
         } catch(IOException e) { log(e); }
-    }
-
-    /** delete everything where uri is a subject */
-    private void delete(String uri) {
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        rdfTransporter.delete(uri);
-        rdfTransporter.dispose();    
     }
 
     /** clean the solr index, not the triple store data */
@@ -237,15 +189,13 @@ public class Main {
 
         myself.create();
 
-        if (args.length>argc && args[argc].endsWith("-test")) {
-			myself.testCrawl();
-        } else if (args.length-1>argc && args[argc].endsWith("-probe")) {
+        if (args.length-1>argc && args[argc].endsWith("-test")) {
 		    argc++;
-            myself.probe(args[argc]);
+			myself.test(args[argc]);
+        } else if (args.length>argc && args[argc].endsWith("-test")) {
+			myself.test();
         } else if (args.length>argc && args[argc].endsWith("-probe")) {
             myself.probe();
-        } else if (args.length>argc && args[argc].endsWith("-crawl")) {
-            myself.crawl(args);
         } else if (args.length-2>argc && args[argc].endsWith("-index")) {
 		    argc++;
             myself.index(args[argc++], args[argc]);
@@ -254,17 +204,11 @@ public class Main {
             myself.index(args[argc]);
         } else if (args.length>argc && args[argc].endsWith("-index")) {
             myself.index();
-        } else if (args.length>argc && args[argc].endsWith("-upd")) {
-		    argc++;
-            myself.update(args[argc]);
-        } else if (args.length>argc && args[argc].endsWith("-get")) {
+        } else if (args.length>argc && args[argc].endsWith("-dump")) {
 		    argc++;
             if (args.length-1>argc)
                 myself.getDescription(args[argc], args[argc+1]);
             else myself.getDescription(args[argc]);
-        } else if (args.length>argc && args[argc].endsWith("-del")) {
-		    argc++;
-            myself.delete(args[argc]);
         } else if (args.length-1>argc && args[argc].endsWith("-post")) {
 		    argc++;
             myself.post(args[argc]);

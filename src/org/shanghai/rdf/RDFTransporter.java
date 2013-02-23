@@ -1,5 +1,7 @@
 package org.shanghai.rdf;
 
+import org.shanghai.util.FileUtil;
+
 import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.HashMap;
@@ -61,7 +63,7 @@ public class RDFTransporter {
             probeQuery = FileUtil.readFile(prop.getProperty("probe.sparql"));
             indexQuery = FileUtil.readFile(prop.getProperty("index.sparql"));
             descrQuery = FileUtil.readFile(prop.getProperty("about.sparql"));
-            rdfReader = new RDFReader(prop.getProperty("data.rdf"), 
+            rdfReader = new RDFReader(prop.getProperty("service.sparql"), 
                                       prop.getProperty("data.graph"));
 		    rdfReader.create();
         } catch(IOException e) { log(e); }
@@ -78,31 +80,14 @@ public class RDFTransporter {
         return rdfReader.getSubjects(indexQuery, offset, limit);
     }
 
-    /** update description with content from file */
-    public boolean update(File file) {
-        boolean b = false;
-        try {
-            String description = FileUtil.readFile(file);
-            InputStream in = 
-                     new ByteArrayInputStream(description.getBytes("UTF-8"));
-            b = rdfReader.update(in);
-            if (in!=null) in.close();
-        } catch(IOException e) { log(e); }
-        finally { return b; }
-    }
-
-    public boolean update(String filename) {
-        return update(new File(filename));
-    }
-
     /** return a transformed record as xml String */
     public String getDescription(String bid) {
         return rdfReader.getDescription(descrQuery, bid);
     }
 
-    public boolean delete(String bid) {
-        return rdfReader.delete(bid);
-    }
+    // public boolean delete(String bid) {
+    //     return rdfReader.delete(bid);
+    // }
 
     /** should deliver the number of triples in the store */
     public int size() {
