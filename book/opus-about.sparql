@@ -25,16 +25,18 @@ construct
 } 
 # from ...
 where {
-  {
-     %param% ?p1 ?o1 .
-     optional {
-       ?o1 ?x ?y 
-       FILTER (isBlank(?o1) && !isBlank(?y))
-     }
-  } 
-  optional {
-    %param% dcterms:isPartOf ?journal .
-    ?journal ?p2 ?o2
+  GRAPH <http://archiv.ub.uni-marburg.de> {
+    {
+       %param% ?p1 ?o1 .
+       optional {
+         ?o1 ?x ?y 
+         FILTER (isBlank(?o1) && !isBlank(?y))
+       }
+    } 
+    optional {
+      %param% dcterms:isPartOf ?journal .
+      ?journal ?p2 ?o2
+    }
   }
 } 
 

@@ -1,4 +1,4 @@
-package org.shanghai.util;
+package org.shanghai.crawl;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,13 +7,18 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
+import java.io.BufferedOutputStream;
 
 import java.nio.channels.FileChannel;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
 
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0

@@ -29,10 +29,28 @@
 
 <xsl:template match="rdf:RDF">
   <!-- rdf:Description fabio:DoctoralThesis -->
-  <xsl:apply-templates select="fabio:*|rdf:Description" />
+  <xsl:apply-templates select="fabio:*" />
+  <xsl:apply-templates select="dcmitype:Image" />
+  <xsl:apply-templates select="dcmitype:Collection" />
 </xsl:template>
 
-<xsl:template match="rdf:Description|fabio:*">
+<xsl:template match="dcmitype:Collection">
+ <add>
+  <doc>
+      <field name="recordtype">opus</field>
+      <field name="id"><xsl:value-of select="dc:identifier" /></field>
+      <field name="url"><xsl:value-of select="@rdf:about" /></field>
+      <field name="title"><xsl:value-of select="dc:title[@xml:lang='de']"/>
+      </field>
+      <field name="author"><xsl:value-of select="dc:creator//foaf:name"/>
+      </field>
+      <field name="publisher"><xsl:value-of select="dc:publisher//foaf:name"/>
+      </field>
+  </doc>
+ </add>
+</xsl:template>
+
+<xsl:template match="fabio:*|dcmitype:Image">
  <add>
   <xsl:comment> RDF Transformer UB Marburg 2013 </xsl:comment>
    <doc>
@@ -40,9 +58,7 @@
       <field name="recordtype">opus</field>
 
       <!-- IDENTIFIER -->
-      <field name="id">
-        <xsl:value-of select="dc:identifier" />
-      </field>
+      <field name="id"><xsl:value-of select="dc:identifier" /></field>
 
       <!-- TITLE -->
       <xsl:apply-templates select="dc:title" />
@@ -114,7 +130,7 @@
 </xsl:template>
 
 <!-- AUTHOR -->
-<xsl:template match="dc:creator">
+<xsl:template match="dc:creator[position()=1]">
    <field name="author">
      <xsl:if test="normalize-space(.)=''">Unbekannt</xsl:if>
      <xsl:value-of select="foaf:Person/foaf:name"/>
@@ -129,11 +145,15 @@
    </field>
 </xsl:template>
 
+<xsl:template match="dc:creator[position()!=1]">
+   <field name="author_additional">
+     <xsl:value-of select="foaf:Person/foaf:name"/>
+   </field>
+</xsl:template>
+
 <!-- CONTRIBUTOR -->
 <xsl:template match="dc:contributor">
-  <field name="author_additional">
-   <xsl:value-of select="." />
-  </field>
+  <field name="author_additional"><xsl:value-of select="." /></field>
 </xsl:template>
 
 <!-- PUBLISHER -->
@@ -172,7 +192,7 @@
   <xsl:when test=".='book'">
      <field name="format">eBook</field>
   </xsl:when>
-  <!-- series like Professionalisierung und Diagnosekompetenz etc. -->
+  <!-- series -->
   <xsl:when test=".='bookPart'">
      <field name="format">Article</field>
   </xsl:when>
@@ -214,6 +234,10 @@
 
 <!-- DATE -->
 <xsl:template match="dcterms:dateAccepted">
+</xsl:template>
+
+<!-- DATE -->
+<xsl:template match="dcterms:modified">
 </xsl:template>
 
 <xsl:template match="dcterms:issued">
@@ -299,31 +323,31 @@
   <field name="contents"><xsl:value-of select="." /></field>
 </xsl:template>
 
-<!-- CONTAINER -->
+<!-- CONTAINER : Collection identifier = "Top" -->
 <xsl:template match="dcterms:isPartOf">
   <!-- blank causes VuFind to default to the driver 
        specified in the [Hierarchy] section of config.ini -->
   <field name="hierarchytype"></field>
 
   <field name="hierarchy_top_id">
-     <xsl:value-of select="rdf:Description/dc:identifier" />
+     <xsl:value-of select="dcmitype:Collection/dc:identifier" />
   </field>
   <field name="hierarchy_top_title">
-     <xsl:value-of select="rdf:Description/dc:title" />
+     <xsl:value-of select="dcmitype:Collection/dc:title" />
   </field>
   <field name="hierarchy_parent_id">
-     <xsl:value-of select="rdf:Description/dc:identifier" />
+     <xsl:value-of select="dcmitype:Collection/dc:identifier" />
   </field>
   <field name="hierarchy_parent_title">
-     <xsl:value-of select="rdf:Description/dc:title" />
+     <xsl:value-of select="dcmitype:Collection/dc:title" />
   </field>
 
   <field name="container_title">
-     <xsl:value-of select="rdf:Description/dc:title" />
+     <xsl:value-of select="dcmitype:Collection/dc:title" />
   </field>
 </xsl:template>
 
-<!-- this record has a part : is_hierarchy_id can only be poulated once -->
+<!-- this record has a part : is_hierarchy_id can only be populated once -->
 <xsl:template match="dcterms:hasPart[position()=1]">
   <field name="is_hierarchy_id">
      <xsl:value-of select="../dc:identifier" />

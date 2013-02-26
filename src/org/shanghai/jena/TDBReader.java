@@ -1,4 +1,4 @@
-package org.shanghai.rdf;
+package org.shanghai.jena;
 
 import java.util.logging.Logger;
 
@@ -31,7 +31,7 @@ public class TDBReader {
     private int count = 0;
 
     private Location location;
-    private String uri = null;
+    private String graph;
 
     public TDBReader(String tdbData) {
         this.tdbData = tdbData;
@@ -40,7 +40,7 @@ public class TDBReader {
     /** just to be prepared to graphs */
     public TDBReader(String tdbData, String uri) {
         this.tdbData = tdbData;
-        this.uri = uri;
+        this.graph = uri;
     }
 
     private void log(String msg) {
@@ -58,12 +58,12 @@ public class TDBReader {
         if (model==null) {
             location = new Location (tdbData);
             dataset = TDBFactory.createDataset(location) ;
-            if (uri==null) {
+            if (graph==null) {
                 log("init " + tdbData);
 		        model = dataset.getDefaultModel();
             } else {
-                log("init " + tdbData + " graph " + uri);
-		        model = dataset.getNamedModel(uri);
+                log("init " + tdbData + " graph " + graph);
+		        model = dataset.getNamedModel(graph);
             }
         }
     }
@@ -76,6 +76,13 @@ public class TDBReader {
         model=null;
         dataset=null;
         log("closed " + tdbData);
+    }
+
+    public void clean() {
+        model.begin();
+        String action = "DELETE WHERE { ?s ?p ?o . }";
+        UpdateAction.parseExecute(action, model);
+        model.commit();
     }
 
     public QueryExecution getExecutor(String q) {

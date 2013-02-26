@@ -1,6 +1,6 @@
 package org.shanghai.rdf;
 
-import org.shanghai.util.FileUtil;
+import org.shanghai.crawl.FileUtil;
 
 import java.util.Iterator;
 import java.util.logging.Logger;

@@ -1,6 +1,6 @@
 package org.shanghai.rdf;
 
-import org.shanghai.util.FileUtil;
+import org.shanghai.crawl.FileUtil;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -87,8 +87,8 @@ public class RDFCrawl {
                  rdfTransporter.talk(bid);
              }
              count++;
-             if (count%limit==0)
-                 log(bid + " index " + count);
+             //if (count%limit==0)
+             //    log(bid + " index " + count);
         }
         return result;
     }

@@ -1,5 +1,7 @@
 package org.shanghai.rdf;
 
+import org.shanghai.jena.TDBReader;
+
 import java.util.logging.Logger;
 import java.io.StringWriter;
 
