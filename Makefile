@@ -1,53 +1,37 @@
 #
-# Make Intelligence
+# Makefile Forever Agency
 #
 
 JDIRS := $(shell find src -type d)
 FILES := $(foreach d,$(JDIRS),$(wildcard $(d)/*.java))
 CLASS := $(patsubst src/%.java,lib/%.class,$(FILES))
-
-# compile
 CPATH := lib:$(subst $() $(),:,$(wildcard lib/*.jar))
-JOPTS := -Xlint:deprecation -Xlint:unchecked -Xmaxerrs 9 -encoding UTF8
-
-# run
-DIRS := /srv/archiv/diss/2013 /srv/archiv/eb/2013 /srv/archiv/es/2013
-MAIN := org.shanghai.rdf.Main -prop book/gnd.properties
-MAIN := org.shanghai.rdf.Main -prop book/opus.properties
+JOPTS := -encoding UTF8
 
 .PHONY: deploy 
 
 lib/%.class: src/%.java
-	javac $(JOPTS) -cp src:$(CPATH) -d lib $<
+	@echo $<
+	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
-def: compile 
+default: deploy 
 	@echo "All compiled now, I believe."
-	@echo "make zero : delete solr index"
-	@echo "make index : build solr index"
 
-zero: # solr clean up : throws away the index
-	@java -cp $(CPATH) $(MAIN) -clean
+deploy: lib/shanghai.jar
 
-test: # fetch some resource URIs 
-	@java -cp $(CPATH) $(MAIN) -test
-
-probe: # fetch a random record 
-	@java -cp $(CPATH) $(MAIN) -probe
-
-get: # retrieve description about uri 1=$1 
-	@java -cp $(CPATH) $(MAIN) -get $1 $2
-
-post: # post description about uri 1=$1 to solr
-	@java -cp $(CPATH) $(MAIN) -post $1
-
-index: # jena store index
-	@java -cp $(CPATH) $(MAIN) -index
+lib/shanghai.jar: $(CLASS) lib/shanghai.properties
+	jar cf $@ -C lib org -C lib shanghai.properties -C lib log4j.properties
 
 compile: $(CLASS)
 
 check:
-	@#echo CPATH: $(CPATH)
+	@echo CPATH: $(CPATH)
+	@echo FILES: $(FILES)
 
 clean:
 	@rm -f $(CLASS)
+	@rm -rf lib/org
+
+cleaner:
+	@rm -f lib/shanghai.jar
 

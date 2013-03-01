@@ -5,8 +5,8 @@ Shanghai
 
   Shanghai can build a solr index out of RDF data sources. <br/>
 
-  The RDF data are queried from a remote sparql service endpoint
-  or can reside in a local Jena TDB triple store. 
+  The RDF data can be queried from a remote sparql service endpoint
+  or reside in a local Jena TDB triple store. 
 
   To perform the indexing, three steps are required:
 

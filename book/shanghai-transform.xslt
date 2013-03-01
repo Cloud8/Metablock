@@ -42,8 +42,10 @@
       <field name="url"><xsl:value-of select="@rdf:about" /></field>
       <field name="title"><xsl:value-of select="dc:title[@xml:lang='de']"/>
       </field>
+      <xsl:if test="normalize-space(dc:creator//foaf:name)!=''">
       <field name="author"><xsl:value-of select="dc:creator//foaf:name"/>
       </field>
+      </xsl:if>
       <field name="publisher"><xsl:value-of select="dc:publisher//foaf:name"/>
       </field>
   </doc>
@@ -115,18 +117,21 @@
  </add>
 </xsl:template>
 
-<!-- TITLE @lang : no multilanguage support for now -->
-<xsl:template match="dc:title[position()=1]">
+<!-- TITLE @lang : no multilanguage support for now position()=1 -->
+<xsl:template match="dc:title[@xml:lang=../dc:language]">
   <field name="title"><xsl:value-of select="." /></field>
   <field name="title_short"><xsl:value-of select="." />
   </field>
   <field name="title_full"><xsl:value-of select="." /></field>
   <field name="title_sort"><xsl:value-of select="." /></field>
+  <field name="title_fullStr"><xsl:value-of select="." /></field>
+  <field name="allfields"><xsl:value-of select="." /></field>
+  <field name="allfields_unstemmed"><xsl:value-of select="." /></field>
 </xsl:template>
 
 <!-- TITLE @lang : no multilanguage support for now -->
-<xsl:template match="dc:title[position()=2]">
-   <field name="title_fullStr"><xsl:value-of select="." /></field>
+<xsl:template match="dc:title">
+  <field name="allfields"><xsl:value-of select="." /></field>
 </xsl:template>
 
 <!-- AUTHOR -->
@@ -134,26 +139,22 @@
    <field name="author">
      <xsl:if test="normalize-space(.)=''">Unbekannt</xsl:if>
      <xsl:value-of select="foaf:Person/foaf:name"/>
-     <!--
-     <xsl:value-of select="*/pc:foreName" />
-     <xsl:if test="*/pc:surName">
-       <xsl:text> </xsl:text>
-       <xsl:value-of select="*/pc:surName" />
-     </xsl:if>
-     <xsl:value-of select="normalize-space(*/pc:personEnteredUnderGivenName)"/>
-     -->
    </field>
 </xsl:template>
 
 <xsl:template match="dc:creator[position()!=1]">
-   <field name="author_additional">
-     <xsl:value-of select="foaf:Person/foaf:name"/>
-   </field>
+ <xsl:if test="normalize-space(.)!=''">
+  <field name="author_additional">
+   <xsl:value-of select="foaf:Person/foaf:name"/>
+  </field>
+ </xsl:if>
 </xsl:template>
 
 <!-- CONTRIBUTOR -->
 <xsl:template match="dc:contributor">
+ <xsl:if test="normalize-space(.)!=''">
   <field name="author_additional"><xsl:value-of select="." /></field>
+ </xsl:if>
 </xsl:template>
 
 <!-- PUBLISHER -->
@@ -363,6 +364,9 @@
 <!-- suppress al other positions -->
 <xsl:template match="dcterms:hasPart">
 </xsl:template>
+
+<!-- suppress emptyness -->
+<xsl:template match="text()"/>
 
 <!--
 <xsl:template match="@*|text()">

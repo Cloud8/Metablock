@@ -101,18 +101,19 @@ public class RDFTransporter {
               log("result: [" + result + "]");
           }
         } catch (NumberFormatException e) { log(e); }
+        // log("size " + size);
         return size;
     }
 
     public void talk(String what) {
         String rdf = rdfReader.getDescription(descrQuery, what);
         String testRdf = prop.getProperty("test.rdf");
-        if (testRdf==null)
-            testRdf = "test-rdf.xml"; 
-        try {
+        if (testRdf==null) {
+            System.out.println(rdf);
+        } else try {
             FileUtil.writeFile(testRdf, rdf);
+            log("wrote " + testRdf);
         } catch(IOException e) { log(e); }
-        log("wrote " + testRdf);
     }
 
     private void write(String outfile) {

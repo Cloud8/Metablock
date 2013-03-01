@@ -19,23 +19,22 @@ PREFIX  dcq: <http://purl.org/dc/qualifier/1.0/>
 
 construct 
 {
-    %param% ?p1 ?o1 .
-    ?o1 ?x ?y . 
-    ?journal ?p2 ?o2
+    <subject> ?p ?o .
+    ?o ?x ?y . 
+    ?journal ?jp ?jo
 } 
-# from ...
 where {
   GRAPH <http://archiv.ub.uni-marburg.de> {
     {
-       %param% ?p1 ?o1 .
+       <subject> ?p ?o .
        optional {
-         ?o1 ?x ?y 
-         FILTER (isBlank(?o1) && !isBlank(?y))
+         ?o ?x ?y 
+         FILTER (isBlank(?o) && !isBlank(?y))
        }
     } 
     optional {
-      %param% dcterms:isPartOf ?journal .
-      ?journal ?p2 ?o2
+       <subject> dcterms:isPartOf ?journal .
+       ?journal ?jp ?jo
     }
   }
 } 

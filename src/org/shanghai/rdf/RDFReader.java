@@ -2,6 +2,7 @@ package org.shanghai.rdf;
 
 import java.util.logging.Logger;
 import java.io.InputStream;
+import java.net.URL;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -57,8 +58,12 @@ public class RDFReader {
 
     /** return a concise bounded description for the subject */
     public String getDescription(String query, String subject) {
-        String desc = query.replace("%param%", "<" + subject + ">");
-        return reader.getDescription(desc);
+        // String desc = query.replace("%param%", "<" + subject + ">");
+        if ( isValidURI(subject) ) {
+            String desc = query.replace("<subject>", "<" + subject + ">");
+            return reader.getDescription(desc);
+        } 
+        return null;
     }
 
     /** execute query and return result */
@@ -66,12 +71,13 @@ public class RDFReader {
         return reader.query(query);
     }
 
-    // public boolean delete(String about) {
-    //     return reader.delete(about);
-    // } 
-
-    //public boolean update(InputStream in) {
-    //    return reader.update(in);
-    //}
-
+    private boolean isValidURI(String uri) {
+        final URL url;
+    try {
+        url = new URL(uri);
+    } catch (Exception e1) {
+        return false;
+    }
+    return "http".equals(url.getProtocol());
+    }
 }

@@ -60,7 +60,7 @@ public class ModelTalk implements Interface {
     }
 
     private void log(Exception e) {
-        log("/* shit happens */" + e.toString());
+        log("/* shit happens */ " + e.toString());
         e.printStackTrace(System.out);
     }
 
@@ -77,10 +77,16 @@ public class ModelTalk implements Interface {
     private QueryExecution getExecutor(String sparql) {
         if (tdb)
             return tdbReader.getExecutor(sparql);
-        Query query = QueryFactory.create(sparql);
-        QueryExecution qexec = 
+        try {
+          Query query = QueryFactory.create(sparql);
+          QueryExecution qexec = 
                        QueryExecutionFactory.sparqlService(servicePoint, query);
-        return qexec;
+          return qexec;
+        } catch(com.hp.hpl.jena.query.QueryParseException e) {
+          log(sparql);
+          log(e);
+        }
+        return null;
     }
 
     public String[] getSubjects(String query, int limit) {
@@ -99,6 +105,15 @@ public class ModelTalk implements Interface {
          } catch(Exception e) { log(query + " [" + limit + "]"); log(e); }
            finally {
            qexec.close();
+           //log("subjects: " + k + " limit " + limit);
+           if (k<limit) {
+               log("subject array crunch " + k + " " + limit);
+               String resultCopy[] = new String[k];
+               for (int i=0; i<k; i++)
+                    resultCopy[i] = result[i];
+               result = null;
+               return resultCopy;
+           }
            return result;
          }
     }
@@ -116,6 +131,8 @@ public class ModelTalk implements Interface {
     public String getDescription(String query) {
         String result = null;
         QueryExecution qexec = getExecutor(query);
+        if (qexec==null)
+            return ""; // try to continue
         try {
             Model model;
             model = qexec.execConstruct();

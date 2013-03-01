@@ -9,10 +9,9 @@ import java.util.logging.Logger;
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A Jena RDF Triple Crawler
+   @title A RDF Crawler for the purpose of Solr indexing
    @date 2013-01-31
 */
-
 public class RDFCrawl {
 
     private static final Logger logger =
@@ -25,9 +24,13 @@ public class RDFCrawl {
     private Properties prop;
     int count;
     int chunkSize;
+    int logC = 0;
 
     public RDFCrawl(Properties prop) {
         this.prop = prop;
+        if (prop.getProperty("count.log")!=null) {
+            this.logC = Integer.parseInt(prop.getProperty("count.log"));
+        }
     }
 
     private void log(String msg) {
@@ -74,11 +77,15 @@ public class RDFCrawl {
              if (bid==null) {
                  return false;
              }
-             String rdfDoc = rdfTransporter.getDescription(bid);
-             String solrDoc = xmlTransformer.transform(rdfDoc);
+             String rdf = rdfTransporter.getDescription(bid);
+             if (rdf==null) {
+                 //if server sends garbage, we dont care.
+                 continue;
+             }
+             String solrDoc = xmlTransformer.transform(rdf);
              if (solrDoc.length() <42) {
-                 log("problem: " + bid + " no index!"); 
-                 rdfTransporter.talk(bid);
+                 // log("problem: " + bid + " no index!"); 
+                 // rdfTransporter.talk(bid);
                  continue;
              }
              result = solrPost.post(solrDoc);
@@ -87,8 +94,8 @@ public class RDFCrawl {
                  rdfTransporter.talk(bid);
              }
              count++;
-             //if (count%limit==0)
-             //    log(bid + " index " + count);
+             if (logC!=0 && count%logC==0)
+                 log(bid + " index " + count);
         }
         return result;
     }
