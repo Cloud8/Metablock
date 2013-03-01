@@ -22,8 +22,6 @@ Shanghai
 
   The Shanghai program is written in Java and controled by a property 
   file and some command line flags.
-  See Makefile for reference, for now. May be later, I can script 
-  things up.
 
   *This is the first initial realease and considered test code.*
 
