@@ -17,18 +17,20 @@ import java.util.Date;
   @title A Bibliographic Record
   @date 2012-10-22
 */
-@Namespace("http://purl.org/dc/terms/")
-@RdfType("BibliographicResource")
+// @Namespace("http://purl.org/dc/terms/")
+// @RdfType("BibliographicResource")
 public class BiblioRecord {
 
     public static final String DCT = "http://purl.org/dc/terms/";
     public static final String DC  = "http://purl.org/dc/elements/1.1/";
+    public static final String SHI = "http://shanghai.org/";
 
     @Id public String id;
     public String getId() {
         return id;
     }
 
+    @RdfProperty(SHI + "recordtype")
     public String recordtype;
 
     @RdfProperty(DCT + "coverage")

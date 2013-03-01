@@ -31,12 +31,15 @@ public class FileCrawl {
     }
 
 	public int count = 0;
-	public int logC = 0;
-    public boolean create; 
+
+	int logC = 0;
+    boolean create; 
+    String suffix;
 
     private Transporter transporter;
 	private int depth = 0;
 	private int level = 0;
+    private String[] suffixes;
 
     private static final Logger logger =
                          Logger.getLogger(FileCrawl.class.getName());
@@ -61,6 +64,12 @@ public class FileCrawl {
 
     public void create() {
         transporter.create();
+        if (suffix!=null) {
+            suffixes = suffix.split(" ");
+        }
+        //for (int i=0; i<suffixes.length; i++) {
+        //    log(suffixes[i]);
+        //}
     }
 
     public void dispose() {
@@ -99,6 +108,8 @@ public class FileCrawl {
                 level--;
             }
         } else {
+            checkFile(f, create);
+            /**
             boolean b;
             if (create)
                 b = transporter.create(f);
@@ -109,7 +120,35 @@ public class FileCrawl {
                 if (logC!=0 && count%logC==1)
                 log("" + count + ": " + f.getAbsolutePath() +" ["+ level +"]");
             }
+            **/
         }
+    }
+
+    private void checkFile(File f, boolean create) {
+        boolean b = true;
+        if (suffix!=null) {
+            b = false;
+            for (int i=0; i<suffixes.length; i++) {
+                 if (f.getName().endsWith(suffixes[i])) 
+                     b=true;
+            }
+        }
+        if (!b)
+            return;
+
+        if (create)
+            b = transporter.create(f);
+        else
+            b = transporter.update(f);
+		if (b) {
+            count++;
+            if (logC!=0 && count%logC==1)
+            log("" + count + ": " + f.getAbsolutePath() +" ["+ level +"]");
+        }
+    }
+
+    public void add(File file) {
+		transporter.create(file);
     }
 
     public void delete(String resource) {

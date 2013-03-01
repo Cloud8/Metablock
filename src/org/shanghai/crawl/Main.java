@@ -53,6 +53,7 @@ public class Main {
             if (args.length==argc) 
                 talkMore();
             else {
+                silence();
                 crawl = new Crawl(prop).create();
                 crawl.crawl(args);
             }
@@ -61,9 +62,13 @@ public class Main {
             argc++;
             crawl.delete(args[argc]);
         } else if (args.length>argc && args[argc].endsWith("-upd")) {
-            crawl = new Crawl(prop).create();
             argc++;
+            crawl = new Crawl(prop).create();
             crawl.update(args[argc]);
+        } else if (args.length>argc && args[argc].endsWith("-put")) {
+            argc++;
+            crawl = new Crawl(prop).create();
+            crawl.add(args[argc]);
         } else if (args.length>argc && args[argc].endsWith("-get")) {
             crawl = new Crawl(prop).create();
             argc++;
@@ -107,6 +112,7 @@ public class Main {
             indexer = new Indexer(prop).create();
             indexer.index(args[argc]);
         } else if (args.length>argc && args[argc].endsWith("-index")) {
+            silence();
             indexer = new Indexer(prop).create();
             indexer.index();
         } else {
@@ -119,10 +125,8 @@ public class Main {
     }
 
     private static void silence() {
-        Logger.getLogger("org.shanghai.rdf.ModelTalk")
-              .setLevel(Level.OFF);
-        Logger.getLogger("org.shanghai.jena.TDBReader")
-              .setLevel(Level.OFF);
+        Logger.getLogger("org.shanghai.rdf.ModelTalk").setLevel(Level.OFF);
+        Logger.getLogger("org.shanghai.jena.TDBReader").setLevel(Level.OFF);
     }
 
     private static void talk() {

@@ -1,11 +1,9 @@
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX  dc: <http://purl.org/dc/elements/1.1/>
-PREFIX  dini: <http://www.d-nb.de/standards/xmetadissplus/type/>
 
+# check size of store
 SELECT (COUNT(distinct(?s)) AS ?subject) 
-## SELECT (COUNT(*) AS ?subject) 
 WHERE { 
      ?s ?p ?o .
      FILTER (!isBlank(?s))
-##   ?s rdf:type ?type
 }

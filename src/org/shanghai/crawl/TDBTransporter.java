@@ -141,7 +141,6 @@ public class TDBTransporter implements FileCrawl.Transporter {
         return update(file, false);
     }
 
-    /** GH201302 : TODO */
     private boolean update(File file, boolean create) {
         if (file.getName().endsWith(".rdf")) {
             boolean b = update(readFile(file), create);
@@ -156,8 +155,8 @@ public class TDBTransporter implements FileCrawl.Transporter {
             return b;
         } else if (file.getName().endsWith(".java")) {
             BiblioRecord bib = fileScanner.getRecord(file);
-            boolean b = update(bib, create);
-            if (!b) log("update failed for " + file.getAbsolutePath());
+            boolean b = addBean(bib, create);
+            if (!b) log("addBean failed for " + file.getAbsolutePath());
             return b;
         }
         return false;
@@ -170,7 +169,8 @@ public class TDBTransporter implements FileCrawl.Transporter {
         return null;
     }
 
-    private boolean update(BiblioRecord bib, boolean create) {
+    /* GH2013-03-01 TODO */
+    private boolean addBean(BiblioRecord bib, boolean create) {
         Model m = ModelFactory.createDefaultModel();
         m.setNsPrefix("dct", "http://purl.org/dc/terms/");
         m.setNsPrefix("sem", "http://thewebsemantic.com/");
@@ -179,17 +179,19 @@ public class TDBTransporter implements FileCrawl.Transporter {
         Bean2RDF writer = new Bean2RDF(m);
         log("about " + bib.getId());
         writer.save(bib);
-        // m.write(System.out, "RDF/XML-ABBREV");
+        m.write(System.out, "RDF/XML-ABBREV");
         String about = getSubject(m);
         if (about==null) {
             log("about zero");
             return false;
         } else {
-            log("about " + about);
+            log("add bib " + about);
+            /***
             if (!create) {
                 tdbReader.delete(about);
             }
             tdbReader.add(m);
+            ***/
         } 
         return true;
     }
@@ -224,7 +226,6 @@ public class TDBTransporter implements FileCrawl.Transporter {
             if (!create) {
                 tdbReader.delete(about);
             } else {
-                log("add " + about);
                 tdbReader.add(m);
             }
         }

@@ -35,6 +35,9 @@ public class Crawl {
         if (prop.getProperty("crawl.count")!=null) {
             crawler.logC = Integer.parseInt(prop.getProperty("crawl.count"));
         }
+        if (prop.getProperty("crawl.suffix")!=null) {
+            crawler.suffix = prop.getProperty("crawl.suffix");
+        }
     }
 
     static void log(String msg) {
@@ -79,6 +82,10 @@ public class Crawl {
 
     public void delete(String uri) {
         crawler.delete(uri);
+    }
+
+    public void add(String file) {
+        crawler.add(new File(file));
     }
 
     /** update from a single file */
