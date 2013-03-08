@@ -1,13 +1,14 @@
 package org.shanghai.crawl;
 
 import org.shanghai.bones.BiblioRecord;
+import org.shanghai.jena.Bean2RDF;
 import org.shanghai.jena.TDBReader;
-
-import thewebsemantic.Bean2RDF;
-import thewebsemantic.binding.Jenabean;
+import org.shanghai.util.FileUtil;
 
 import java.util.logging.Logger;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.io.StringWriter;
 import java.io.InputStream;
@@ -15,12 +16,14 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 
+import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.DC;
+
 import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.tdb.base.file.Location;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.RDFReader;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
@@ -44,15 +47,15 @@ import com.hp.hpl.jena.rdf.arp.JenaReader;
    @title Transporter for RDF data
    @date 2013-02-21
 */
-
 public class TDBTransporter implements FileCrawl.Transporter {
 
     public interface Scanner {
-        public void create();
+        public Scanner create();
         public void dispose();
         public BiblioRecord getRecord(File file);
         public String getDescription(File file);
         public void setStartDirectory(String dir);
+        public boolean canTalk(File file);
     }
 
     public TDBTransporter(String storage) {
@@ -62,12 +65,15 @@ public class TDBTransporter implements FileCrawl.Transporter {
     /** Be prepared to graphs */
     public TDBTransporter(String storage, String uri) {
         this.tdbReader = new TDBReader(storage, uri);
+        //this.graph = uri;
     }
 
     private TDBReader tdbReader;
-    private Scanner fileScanner;
+    private Bean2RDF writer;
+    private List<Scanner> fileScanner;
     private static final Logger logger =
                          Logger.getLogger(TDBTransporter.class.getName());
+    //private String graph;
 
     private void log(String msg) {
         logger.info(msg);    
@@ -78,17 +84,30 @@ public class TDBTransporter implements FileCrawl.Transporter {
         e.printStackTrace(System.out);
     }
 
+    private void createWriter() {
+        writer = new Bean2RDF(tdbReader);
+        writer.create();
+    }
+
     @Override
     public void create() {
         tdbReader.create();
-        fileScanner = new FileScanner();
-        fileScanner.create();
+        fileScanner = new ArrayList<Scanner>();
+        addScanner(new FileScanner().create());
     }
 
     @Override
     public void dispose() {
         tdbReader.dispose();
-        fileScanner.dispose();
+        if (writer!=null)
+            writer.dispose();
+        for(Scanner s: fileScanner)
+            s.dispose();
+    }
+
+    @Override 
+    public void addScanner(Scanner scanner) {
+         fileScanner.add(scanner); 
     }
 
     @Override
@@ -98,15 +117,25 @@ public class TDBTransporter implements FileCrawl.Transporter {
 
     @Override
     public void setStartDirectory(String dir) {
-        fileScanner.setStartDirectory(dir);
+        for(Scanner s: fileScanner)
+            s.setStartDirectory(dir);
     }
 
     //private QueryExecution getExecutor(String q) {
     //    return tdbReader.getExecutor(q);
     //}
 
+    //public String read(String resource) {
+    //    BiblioRecord b = writer.read(resource); //bad logic
+    //    return b.toString();
+    //}
+    public BiblioRecord read(String resource) {
+        return writer.read(resource);
+    }
+
     @Override
-    public String read(String resource) {
+    /** simple default resource reader */
+    public String readAsString(String resource) {
         String query = "CONSTRUCT { "
                      + "<" + resource + ">" + " ?p ?o }"
                      + " where { "
@@ -116,6 +145,7 @@ public class TDBTransporter implements FileCrawl.Transporter {
         try {
             Model model;
             model = qexec.execConstruct();
+            model.setNsPrefix("dct", DCTerms.NS);
             StringWriter out = new StringWriter();
             model.write(out, "RDF/XML-ABBREV");
             result = out.toString();
@@ -146,19 +176,17 @@ public class TDBTransporter implements FileCrawl.Transporter {
             boolean b = update(readFile(file), create);
             if (!b) log("update failed for " + file.getAbsolutePath());
             return b;
-        } else if (file.getName().endsWith(".php")) {
-            String rdf = fileScanner.getDescription(file);
-            //boolean b = update(rdf, create);
-            //if (!b) log("update failed for " + file.getAbsolutePath());
-            boolean b = true;
-            //System.out.println(rdf);
-            return b;
-        } else if (file.getName().endsWith(".java")) {
-            BiblioRecord bib = fileScanner.getRecord(file);
-            boolean b = addBean(bib, create);
-            if (!b) log("addBean failed for " + file.getAbsolutePath());
-            return b;
-        }
+        } else {
+            for (Scanner s : fileScanner) {
+		        if (s.canTalk(file)) {
+                    BiblioRecord bib = s.getRecord(file);
+                    boolean b = save(bib);
+                    if (!b) 
+					    log("addBean failed for " + file.getAbsolutePath());
+                    return b;
+			    }
+            }
+		}
         return false;
     }
 
@@ -169,31 +197,18 @@ public class TDBTransporter implements FileCrawl.Transporter {
         return null;
     }
 
-    /* GH2013-03-01 TODO */
-    private boolean addBean(BiblioRecord bib, boolean create) {
-        Model m = ModelFactory.createDefaultModel();
-        m.setNsPrefix("dct", "http://purl.org/dc/terms/");
-        m.setNsPrefix("sem", "http://thewebsemantic.com/");
-        m.setNsPrefix("shi", "http://shanghai.org/");
-        Jenabean.instance().bind(m);
-        Bean2RDF writer = new Bean2RDF(m);
-        log("about " + bib.getId());
-        writer.save(bib);
-        m.write(System.out, "RDF/XML-ABBREV");
-        String about = getSubject(m);
-        if (about==null) {
-            log("about zero");
-            return false;
-        } else {
-            log("add bib " + about);
-            /***
-            if (!create) {
-                tdbReader.delete(about);
-            }
-            tdbReader.add(m);
-            ***/
-        } 
-        return true;
+    /* GH2013-03-01 TODO: create or not */
+    public boolean save(BiblioRecord bib) {
+        if (writer==null)
+            createWriter();
+        //log("about " + bib.id);
+        //if (!create) {
+        //    tdbReader.delete(about);
+        //} 
+        //writer.save(bib);
+        //Model m = writer.getModel(bib);
+        //tdbReader.add(m);
+        return writer.save(bib);
     }
 
     /** create or update an entity */
@@ -211,11 +226,7 @@ public class TDBTransporter implements FileCrawl.Transporter {
     }
 
     private boolean update(InputStream in, boolean create) {
-        Model m;
-        // if (graph==null)
-            m = ModelFactory.createDefaultModel();
-        // else
-        //     m = ModelFactory.createModelForGraph(model.getGraph());
+        Model m = tdbReader.newModel();
         RDFReader reader = new JenaReader(); 
         reader.read(m, in, null);
         String about = getSubject(m);

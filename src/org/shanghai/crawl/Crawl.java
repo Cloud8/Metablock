@@ -1,5 +1,7 @@
 package org.shanghai.crawl;
 
+import org.shanghai.util.FileUtil;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -17,28 +19,21 @@ import java.util.logging.Logger;
 */
 public class Crawl {
 
-    Properties prop;
-    FileCrawl crawler;
-    FileCrawl.Transporter transporter;
+    protected Properties prop;
+    protected FileCrawl crawler;
 
-    private static final Logger logger =
-                         Logger.getLogger(Crawl.class.getName());
+    public Crawl() {
+    }
 
     public Crawl(Properties prop) {
         this.prop = prop;
-        transporter = new TDBTransporter(prop.getProperty("jena.tdb"),
-                                         prop.getProperty("jena.graph"));
-        crawler = new FileCrawl(transporter, prop.getProperty("crawl.depth"));
-        if (prop.getProperty("crawl.create")!=null
-            && prop.getProperty("crawl.create").equals("true"))
-        crawler.create=true;
-        if (prop.getProperty("crawl.count")!=null) {
-            crawler.logC = Integer.parseInt(prop.getProperty("crawl.count"));
-        }
-        if (prop.getProperty("crawl.suffix")!=null) {
-            crawler.suffix = prop.getProperty("crawl.suffix");
-        }
+        FileCrawl.Transporter transporter = new TDBTransporter(
+                  prop.getProperty("jena.tdb"), prop.getProperty("jena.graph"));
+        crawler = new FileCrawl(transporter, prop);
     }
+
+    private static final Logger logger =
+                         Logger.getLogger(Crawl.class.getName());
 
     static void log(String msg) {
         //logger.info(msg);
@@ -70,9 +65,16 @@ public class Crawl {
     public void crawl(String[] dirs) {
         long start = System.currentTimeMillis();
         for (String dir: dirs) {
+            if (dir.equals("-crawl"))
+                continue;
             File f = new File(dir);
             if (f.isDirectory()) {
                 crawler.crawl(dir);
+            } else {
+                String check = System.getProperty("user.home") + "/" + dir;
+                if ( new File(check).isDirectory()) {
+                    crawler.crawl(check);
+                }
             }
         }
         long end = System.currentTimeMillis();

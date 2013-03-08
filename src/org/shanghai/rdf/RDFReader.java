@@ -1,5 +1,7 @@
 package org.shanghai.rdf;
 
+import org.shanghai.rdf.RDFTransporter;
+
 import java.util.logging.Logger;
 import java.io.InputStream;
 import java.net.URL;
@@ -10,10 +12,10 @@ import java.net.URL;
    @title A RDF Reader as abstraction layer to some sparql service
    @date 2013-01-16
 */
-public class RDFReader {
+public class RDFReader implements RDFTransporter.Reader {
 
     public interface Interface {
-        public void create();
+        public Interface create();
         public void dispose();
         public String[] getSubjects(String query, int limit);
         public String getDescription(String query);
@@ -25,14 +27,17 @@ public class RDFReader {
 
     private Interface reader;
 
-    public RDFReader(String service) {
-        this.reader = new ModelTalk(service);
+    public RDFReader(Interface reader) {
+        this.reader = reader;
     }
 
-    /** Be prepared for graphs */
-    public RDFReader(String service, String graph) {
-        this.reader = new ModelTalk(service, graph);
-    }
+    //public RDFReader(String service) {
+    //    this.reader = new ModelTalk(service);
+    //}
+
+    //public RDFReader(String service, String graph) {
+    //    this.reader = new ModelTalk(service, graph);
+    //}
 
     private void log(String msg) {
         logger.info(msg);    
@@ -43,20 +48,25 @@ public class RDFReader {
         e.printStackTrace(System.out);
     }
 
-    public void create() {
+    @Override
+    public RDFTransporter.Reader create() {
         reader.create();
+        return this;
     }
 
+    @Override
     public void dispose() {
         reader.dispose();
     }
 
+    @Override
     public String[] getSubjects(String q, int offset, int limit) {
         String query = q + " offset " + offset + " limit " + limit;
         return reader.getSubjects(query, limit);
     }
 
     /** return a concise bounded description for the subject */
+    @Override
     public String getDescription(String query, String subject) {
         // String desc = query.replace("%param%", "<" + subject + ">");
         if ( isValidURI(subject) ) {
@@ -66,18 +76,20 @@ public class RDFReader {
         return null;
     }
 
-    /** execute query and return result */
+    /** execute query and return result. 
+        Used for probe query, may be deprecated sometimes. */
+    @Override
     public String query(String query) {
         return reader.query(query);
     }
 
     private boolean isValidURI(String uri) {
         final URL url;
-    try {
-        url = new URL(uri);
-    } catch (Exception e1) {
-        return false;
-    }
-    return "http".equals(url.getProtocol());
+        try {
+            url = new URL(uri);
+        } catch (Exception e1) {
+            return false;
+        }
+        return "http".equals(url.getProtocol());
     }
 }

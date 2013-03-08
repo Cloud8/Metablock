@@ -16,7 +16,8 @@ Shanghai
 
   3. Resource Tranformation: Transform RDF/XML to solr index format.
 
-  Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
+
+Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   There are some examples in the book folder to help with the steps,
   but the solution is to break the RDF index problem into this parts.
 

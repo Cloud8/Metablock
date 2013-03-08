@@ -1,6 +1,6 @@
 package org.shanghai.rdf;
 
-import org.shanghai.crawl.FileUtil;
+import org.shanghai.util.FileUtil;
 
 import java.io.File;
 import java.io.FileReader;
@@ -16,7 +16,6 @@ import java.util.logging.Logger;
    @abstract Indexer : RDFCrawl : RDFTransporter : RDFReader : ModelTalk
                     RDFCrawl : XMLTransformer, SolrPost 
 */
-
 public class Indexer {
 
     RDFCrawl rdfCrawl = null;
@@ -127,17 +126,6 @@ public class Indexer {
                        + ((end - start)/1000) + " sec");
     }
 
-    /** write everything known about the resource identified 
-        by uri to the file given in the properties */
-    /**
-    public void getDescription(String uri) {
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        rdfTransporter.talk(uri);    
-        rdfTransporter.dispose();    
-    }
-    **/
-
     public void dump(String uri) {
         String rdf = getDescription(uri);
         System.out.println(rdf);
@@ -164,14 +152,6 @@ public class Indexer {
         solrPost.create();
         solrPost.clean();
         solrPost.dispose();
-    }
-
-    @Deprecated
-    private void cleanStorage() {
-        rdfCrawl = new RDFCrawl(prop);
-        rdfCrawl.create();
-        rdfCrawl.solrPost.clean();
-        rdfCrawl.dispose();
     }
 
     public void talk() {

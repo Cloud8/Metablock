@@ -1,10 +1,9 @@
 #!/bin/sh
 
-SHANGHAI="$HOME/src/git/Shanghai"
-
-for l in $SHANGHAI/lib/*.jar; do
+CP=lib; for l in lib/*.jar; do
   CP=$CP:$l
 done
 
 java -cp $CP org.shanghai.crawl.Main $*
+## java -cp $CP org.shanghai.rdf.Main $*
 

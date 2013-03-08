@@ -18,139 +18,85 @@ import java.util.logging.Level;
              and starts it according to the command line settings.
              FileCrawl : FileTransporter : TDBTransporter : TDBReader
 */
-public class Main {
+public class Main extends org.shanghai.rdf.Main {
 
-    public static void main(String[] args) {
-        int argc=0;
+    protected Crawl crawl;
+    protected Indexer indexer;
 
-        Crawl crawl = null; // perform as crawler
-        Indexer indexer = null; // be an indexer
+    public Crawl getCrawl(Properties prop) {
+        if (crawl==null)
+            crawl = new Crawl(prop).create();
+        return crawl;
+    }
 
-        Properties prop = new Properties();
-        boolean b = false;
-        if (args.length>argc && args[argc].endsWith("-prop")) {
-		    argc++;
-            try {
-              System.out.println("loading " + args[argc]);
-              prop.load(new FileReader(args[argc]));
-              b=true;
-            } catch(IOException e) { e.printStackTrace(); }
-		    argc++;
-        }
-        if (!b) try {
-            prop.load(Main.class.getResourceAsStream("/shanghai.properties"));
-        } catch(IOException e) { e.printStackTrace(); }
+    public Indexer getIndexer(Properties prop) {
+        if (indexer==null)
+            indexer = new Indexer(prop).create();
+        return indexer;
+    }
+   
+    public void dispose() {
+	    if (crawl!=null)
+		    crawl.dispose();
+	    if (indexer!=null)
+		    indexer.dispose();
+    }
 
-        if (args.length>argc && args[argc].endsWith("-clean")) {
-            //indexer.cleanSolr();
-            new Indexer(prop).cleanSolr();
-            return;
-        }
+    public int make(String[] args) {
+        int argc = super.make(args);
+        if (args.length==0)
+            talk();
+        if (argc==args.length)
+            return argc;
 
-        /** crawl commands */
         if (args.length>argc && args[argc].endsWith("-crawl")) {
             argc++;
             if (args.length==argc) 
-                talkMore();
+                talk2();
             else {
-                silence();
-                crawl = new Crawl(prop).create();
-                crawl.crawl(args);
+                getCrawl(prop).crawl(args);
             }
         } else if (args.length>argc && args[argc].endsWith("-del")) {
-            crawl = new Crawl(prop).create();
             argc++;
-            crawl.delete(args[argc]);
+            getCrawl(prop).delete(args[argc++]);
         } else if (args.length>argc && args[argc].endsWith("-upd")) {
             argc++;
-            crawl = new Crawl(prop).create();
-            crawl.update(args[argc]);
+            getCrawl(prop).update(args[argc++]);
         } else if (args.length>argc && args[argc].endsWith("-put")) {
             argc++;
-            crawl = new Crawl(prop).create();
-            crawl.add(args[argc]);
+            getCrawl(prop).add(args[argc++]);
         } else if (args.length>argc && args[argc].endsWith("-get")) {
-            crawl = new Crawl(prop).create();
             argc++;
-            crawl.read(args[argc]);
-        } else if (args.length>argc && args[argc].endsWith("-remove")) {
-            crawl = new Crawl(prop).create();
-            crawl.clean();
-        } else
-
-        /** index commands */
-        if (args.length-1>argc && args[argc].endsWith("-test")) {
-		    argc++;
-            indexer = new Indexer(prop).create();
-			indexer.test(args[argc]);
-        } else if (args.length>argc && args[argc].endsWith("-test")) {
-            silence();
-            indexer = new Indexer(prop).create();
-			indexer.test();
-        } else if (args.length>argc && args[argc].endsWith("-dump")) {
-            indexer = new Indexer(prop).create();
-            if (args.length-2>argc) {
-		        argc++;
-                indexer.dump(args[argc], args[argc+1]);
-            } else if (args.length-1>argc) {
-		        argc++;
-                silence();
-                indexer.dump(args[argc]);
-            } else {
-                indexer.dump();
-            }
-        } else if (args.length-1>argc && args[argc].endsWith("-post")) {
-		    argc++;
-            indexer = new Indexer(prop).create();
-            indexer.post(args[argc]);
-        } else if (args.length-2>argc && args[argc].endsWith("-index")) {
-		    argc++;
-            indexer = new Indexer(prop).create();
-            indexer.index(args[argc++], args[argc]);
-        } else if (args.length-1>argc && args[argc].endsWith("-index")) {
-		    argc++;
-            indexer = new Indexer(prop).create();
-            indexer.index(args[argc]);
-        } else if (args.length>argc && args[argc].endsWith("-index")) {
-            silence();
-            indexer = new Indexer(prop).create();
-            indexer.index();
+            getCrawl(prop).read(args[argc++]);
+        } else if (args.length>argc && args[argc].endsWith("-destroy")) {
+            argc++;
+            getCrawl(prop).clean();
+        } else if (args.length>argc && args[argc].endsWith("-help")) {
+            talk2();
         } else {
             talk();
         }
-        if (crawl!=null)
-            crawl.dispose();
-        if (indexer!=null)
-            indexer.dispose();
+
+        return argc;
     }
 
-    private static void silence() {
-        Logger.getLogger("org.shanghai.rdf.ModelTalk").setLevel(Level.OFF);
-        Logger.getLogger("org.shanghai.jena.TDBReader").setLevel(Level.OFF);
-    }
-
-    private static void talk() {
-        String usage = "java org.shanghai.rdf.Main"
-                     + " -prop [file.properties] \n"
-                     + "   -test [offset]\n"
-                     + "   -dump [resource] [file]: resource dump\n"
-                     + "   -post [resource] : post a resource to solr\n"
-                     + "   -index [offset] [limit] : build index.\n"
-                     + "   -clean : destroy index.\n"
-                     + "options with brackets area optional.\n";
-        System.out.print(usage);
-    }
-
-    private static void talkMore() {
-        String usage = "java org.shanghai.rdf.Main"
+    protected void talk2() {
+        String usage = "java org.shanghai.crawl.Main"
                      + " -prop [file.properties] \n"
                      + "   -crawl [directories]\n"
                      + "   -put [resource] : put a rdf file to store\n"
                      + "   -get [resource] [file]: get a resource from store\n"
                      + "   -upd [resource] : update a rdf file into the store\n"
                      + "   -del [resource] : delete resource from store.\n"
-                     + "   -remove : destroy store.\n"
-                     + "options with brackets area sometimes optional.\n";
+                     + "   -destroy : destroy store.\n"
+                     + "options with brackets are sometimes optional.\n";
         System.out.print(usage);
     }
+
+    public static void main(String[] args) {
+	    Main main = new Main();
+		main.make(args);
+		main.dispose();
+    }
+
 }

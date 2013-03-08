@@ -22,11 +22,6 @@ public class SolrPost {
     private static final Logger logger =
                          Logger.getLogger(SolrPost.class.getName());
 
-    /** Only for dev. In reality, solrServer is required */
-    private SolrPost() {
-       this.solrServer = "http://localhost:8080/solr/code/update";
-    }
-
     public SolrPost(String solrServer) {
        this.solrServer = solrServer;
     }

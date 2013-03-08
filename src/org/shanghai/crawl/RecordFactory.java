@@ -36,10 +36,12 @@ public class RecordFactory {
 	    String id = file.getPath();
         b.setUrl(id);
 	    id = directory==null ? 
-	    id:id.substring(id.lastIndexOf(directory)+directory.length()+1);
+	    id:id.substring(id.lastIndexOf(directory)+directory.length());
 	    b.id = id.replace("/",":"); 
+        if (b.id.startsWith(":"))
+            b.id = b.id.substring(1);
 	    Date date = new Date(file.lastModified());
-	    b.setPublishDate(new SimpleDateFormat("yyyy-MM-dd").format(date));
+	    b.modified = new SimpleDateFormat("yyyy-MM-dd").format(date);
 		return b;
 	}
 

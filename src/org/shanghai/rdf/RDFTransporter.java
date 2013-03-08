@@ -1,6 +1,6 @@
 package org.shanghai.rdf;
 
-import org.shanghai.crawl.FileUtil;
+import org.shanghai.util.FileUtil;
 
 import java.util.Iterator;
 import java.util.logging.Logger;
@@ -29,24 +29,42 @@ import java.io.StringWriter;
    @title A RDF Transporter with CRUD functionality
    @date 2013-01-17
 */
-
 public class RDFTransporter {
+
+    public interface Reader {
+        public Reader create();
+        public void dispose();
+        public String[] getSubjects(String q, int offset, int limit);
+        public String getDescription(String query, String subject);
+        public String query(String query);
+    }
+
+    public Properties prop;
 
     private static final Logger logger =
                          Logger.getLogger(RDFTransporter.class.getName());
 
-    RDFReader rdfReader;
-    XMLTransformer transformer;
+    private Reader rdfReader;
 
-    String probeQuery;
-    String indexQuery;
-    String descrQuery;
+    private String probeQuery;
+    private String indexQuery;
+    private String descrQuery;
 
-    Properties prop;
-    int size;
+    private int size;
+
+    public RDFTransporter(RDFReader.Interface modelTalk) {
+        this.rdfReader = new RDFReader(modelTalk);
+    }
 
     public RDFTransporter(Properties prop) {
         this.prop = prop;
+        String s = prop.getProperty("service.sparql");
+        s=s==null?s=prop.getProperty("jena.tdb"):s;
+        log("init: " + s);
+        RDFReader.Interface modelTalk = new ModelTalk(
+                  prop.getProperty("service.sparql"), 
+                  prop.getProperty("data.graph")); 
+        this.rdfReader = new RDFReader(modelTalk);
     }
 
     private void log(String msg) {
@@ -63,10 +81,8 @@ public class RDFTransporter {
             probeQuery = FileUtil.readFile(prop.getProperty("probe.sparql"));
             indexQuery = FileUtil.readFile(prop.getProperty("index.sparql"));
             descrQuery = FileUtil.readFile(prop.getProperty("about.sparql"));
-            rdfReader = new RDFReader(prop.getProperty("service.sparql"), 
-                                      prop.getProperty("data.graph"));
-		    rdfReader.create();
         } catch(IOException e) { log(e); }
+        rdfReader.create();
         size=0;
     }
 
@@ -81,8 +97,8 @@ public class RDFTransporter {
     }
 
     /** return a transformed record as xml String */
-    public String getDescription(String bid) {
-        return rdfReader.getDescription(descrQuery, bid);
+    public String getDescription(String subject) {
+        return rdfReader.getDescription(descrQuery, subject);
     }
 
     // public boolean delete(String bid) {

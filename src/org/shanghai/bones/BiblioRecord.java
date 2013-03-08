@@ -1,11 +1,6 @@
 package org.shanghai.bones;
 
-import thewebsemantic.Namespace;
-import thewebsemantic.RdfProperty;
-import thewebsemantic.RdfType;
-
-//import thewebsemantic.Uri;
-import thewebsemantic.Id;
+import org.apache.solr.client.solrj.beans.Field;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -17,54 +12,39 @@ import java.util.Date;
   @title A Bibliographic Record
   @date 2012-10-22
 */
-// @Namespace("http://purl.org/dc/terms/")
-// @RdfType("BibliographicResource")
 public class BiblioRecord {
 
-    public static final String DCT = "http://purl.org/dc/terms/";
-    public static final String DC  = "http://purl.org/dc/elements/1.1/";
-    public static final String SHI = "http://shanghai.org/";
+    @Field
+    public String id;
 
-    @Id public String id;
-    public String getId() {
-        return id;
-    }
-
-    @RdfProperty(SHI + "recordtype")
+    @Field
     public String recordtype;
 
-    @RdfProperty(DCT + "coverage")
-    public String getRecordtype() {
-        return recordtype;
-    }
-
-    @RdfProperty(DC + "creator") 
+    @Field
     public String author;
     public void setAuthor(String a) {
 	    author = a;
     }
-    public String getAuthor() {
-        return author;
-    }
 
-    public String title;
-    public void setTitle(String t) {
-        title = t;
-    }
-    @RdfProperty(DC + "title")
-    public String getTitle() {
-        return title;
-    }
-
+    @Field
     public List<String> author_additional = new ArrayList<String>();
     public void setAuthor_additional(String a) {
         author_additional = getList(author_additional, a);
     }
 
+    @Field
+    public String title;
+    public void setTitle(String t) {
+        title = t;
+    }
+
+    @Field
     public String title_short;
 
+    @Field
     public String title_full;
 
+    @Field
     private List<String> isbn = new ArrayList<String>();
     public void setIsbn(String i) {
         isbn.clear();
@@ -75,6 +55,7 @@ public class BiblioRecord {
         return isbn;
     }
 
+    @Field
     private List<String> oclc_num = new ArrayList<String>();
     public void setOclc_num(String i) {
         oclc_num.clear();
@@ -85,77 +66,69 @@ public class BiblioRecord {
         return oclc_num;
     }
 
-    public List<String> format = new ArrayList<String>();
+    @Field
+    public List<String> format;
     public void setFormat(String f) {
         if (f==null) return;
+        if (format==null)
+            format = new ArrayList<String>();
         format.add(f);
     }
-
-    @RdfProperty
     public String getFormat() {
+        if (format==null)
+            return null;
         return format.get(0);
     }
 
+    @Field
     public List<String> url = new ArrayList<String>();
     public void setUrl(String u) {
         url.add(u);
     }
-
     public String getUrl() {
         return url.get(0);
     }
 
-    //@Uri
-    //public String getUri() {
-    //    return url.get(0);
-    //}
-
-    public List<String> publishDate = new ArrayList<String>();
-    public void setPublishDate(String p) {
-        publishDate.add(p);
-    }
-    @RdfProperty(DCT + "publishdate") 
-    public String getPublishDate() {
-        if (publishDate.size()==0)
-            return "";
-        return publishDate.get(0);
-    }
-
-    public List<String> language = new ArrayList<String>();
-    public void setLanguage(String l) {
-        language.add(l);
-    }
-
-    @RdfProperty(DCT + "language")
-    public String getLanguage() {
-        return language.get(0);
-    }
-
-    public String publisher;
-
-    public String fulltext;
-
+    @Field
     public List<String> institution = new ArrayList<String>();
     public void setInstitution(String i) {
         institution.add(i);
     }
 
-    private List<String> topic = new ArrayList<String>();
+    @Field
+    public List<String> language;
+    public void setLanguage(String l) {
+        if (language==null) 
+            language = new ArrayList<String>();
+        language.add(l);
+    }
+    public String getLanguage() {
+        if (language==null) 
+            return null;
+        return language.get(0);
+    }
+
+    @Field
+    private List<String> topic;
     public void setTopic(List<String> t) {
         topic = t;
     }
-    
     public void delTopic() {
         topic = new ArrayList<String>();
     }
 
+    @Field
     private List<String> topic_facet = new ArrayList<String>();
     public void setTopic_facet(List<String> t) {
         topic_facet = t;
     }
 
+    /** einzelne topics werden hinzugefuegt,
+        listen vom topics setzen die topics dieses beans neu. */
     public void setTopic(String t) {
         if (t==null || t.trim().length()==0) return;
+        if (topic==null) 
+            topic = new ArrayList<String>();
         if (t.indexOf(",")>0) {
             topic = getList(topic, t);
             topic_facet = getList(topic_facet, t);
@@ -165,11 +138,11 @@ public class BiblioRecord {
         }
     }
 
-    @RdfProperty("subject")
     public String getTopic() {
         return getListAsString(topic);
     }
 
+    @Field
     public List<String> genre = new ArrayList<String>();
 
     public void setGenre(List<String> g) {
@@ -184,13 +157,44 @@ public class BiblioRecord {
         return getListAsString(genre);
     }
 
-    String Abstract;
+    @Field
+    public String fulltext;
 
-    Date date;
+    //@Field
+    //String Abstract;
 
-    public String publishDateSort;
+    @Field
+    public String publisher;
 
-    public String description = "";
+    @Field
+    public List<String> publishDate;
+    public void setPublishDate(String p) {
+        if (publishDate==null)
+            publishDate = new ArrayList<String>();
+        publishDate.add(p);
+    }
+    public String getPublishDate() {
+        if (publishDate==null)
+            return null;
+        if (publishDate.size()==0)
+            return "";
+        return publishDate.get(0);
+    }
+
+    @Field /** Date of formal issuance (e.g., publication) of the resource. */
+    public String issued;
+    public String getIssued() {
+        return issued;
+    }
+
+    //@Field
+    public String modified;
+
+    //@Field
+    //public String publishDateSort;
+
+    @Field
+    public String description;
     public String getDescription() {
         return description;
     }
@@ -199,13 +203,18 @@ public class BiblioRecord {
     //    description = d;
     //}
 
+    @Field
     public String contents;
 
+    @Field /** thumbnail image url */
     public String thumbnail;
 
+    @Field
     public Date upd_date;
 
     private String getListAsString(List<String> list) {
+        if (list==null)
+            return null;
         String s = new String("");
         for (int i=0; i<list.size(); i++) {
             s+=list.get(i);
@@ -229,7 +238,7 @@ public class BiblioRecord {
     public String toString() {
         return "[" 
                + "id: " + id + "\n"
-               + "Url: " + url + "\n"
+               + "Url: " + url.toString() + "\n"
                + "Titel: " + title + "\n" 
                + "Autor: " + author
                + "]";

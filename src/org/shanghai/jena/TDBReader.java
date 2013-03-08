@@ -1,8 +1,10 @@
 package org.shanghai.jena;
 
 import java.util.logging.Logger;
+import java.io.InputStream;
 
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.tdb.TDBFactory;
@@ -71,9 +73,9 @@ public class TDBReader {
     public void dispose() {
         if (model!=null) 
             model.close();
+        model=null;
         if (dataset!=null) 
             dataset.close();
-        model=null;
         dataset=null;
         log("closed " + tdbData);
     }
@@ -108,4 +110,32 @@ public class TDBReader {
         model.commit();
         return true;
     }
+
+    public Model newModel() {
+        Model m;
+        if (graph==null)
+            m = ModelFactory.createDefaultModel();
+        else
+            m = ModelFactory.createModelForGraph(model.getGraph());
+        return m;
+    }
+ 
+    /**
+    public boolean update(InputStream in, boolean create) {
+        RDFReader reader = new JenaReader(); 
+        reader.read(m, in, null);
+        String about = getSubject(m);
+        if (about==null) {
+            return false;
+        } else {
+            if (!create) {
+                this.delete(about);
+            } else {
+                this.add(m);
+            }
+        }
+        return true;
+    }
+    **/
+
 }

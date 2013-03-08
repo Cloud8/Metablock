@@ -1,6 +1,6 @@
 package org.shanghai.rdf;
 
-import org.shanghai.crawl.FileUtil;
+import org.shanghai.util.FileUtil;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -43,7 +43,7 @@ public class RDFCrawl {
     }
 
     public void create() {
-        chunkSize = 800;
+        chunkSize = 200;
         count = 0;
         try {
             String xslt = FileUtil.readFile(prop.getProperty("transform.xslt"));
@@ -121,15 +121,5 @@ public class RDFCrawl {
             FileUtil.writeFile(testfile, solrDoc);
         } catch(IOException e) { log(e); }
     }
-
-    /***
-    private void talk() {
-        long start = System.currentTimeMillis();
-        index();
-        long end = System.currentTimeMillis();
-        log("indexed " + count + " records in " 
-                       + ((end - start)/1000) + " sec");
-    }
-    ***/
 
 }

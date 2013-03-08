@@ -1,6 +1,6 @@
 package org.shanghai.crawl;
 
-import org.shanghai.crawl.FileUtil;
+import org.shanghai.util.FileUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,17 +25,30 @@ public class FileCrawl {
         public void clean(); 
         public boolean create(File file); 
         public boolean update(File file); 
-        public String read(String what); 
+        public String readAsString(String what); 
         public void delete(String what); 
         public void setStartDirectory(String dir); 
+        public void addScanner(TDBTransporter.Scanner scanner);
+    }
+
+    public FileCrawl(Transporter transporter, Properties prop) {
+        this.transporter = transporter;
+        if (prop.getProperty("crawl.create")!=null
+            && prop.getProperty("crawl.create").equals("true"))
+            create=true;
+        if (prop.getProperty("crawl.count")!=null) {
+            logC = Integer.parseInt(prop.getProperty("crawl.count"));
+        }
+        if (prop.getProperty("crawl.suffix")!=null) {
+            suffix = prop.getProperty("crawl.suffix");
+        }
     }
 
 	public int count = 0;
 
-	int logC = 0;
-    boolean create; 
-    String suffix;
-
+	private int logC = 0;
+    private boolean create; 
+    private String suffix;
     private Transporter transporter;
 	private int depth = 0;
 	private int level = 0;
@@ -67,6 +80,7 @@ public class FileCrawl {
         if (suffix!=null) {
             suffixes = suffix.split(" ");
         }
+        //log(suffix);
         //for (int i=0; i<suffixes.length; i++) {
         //    log(suffixes[i]);
         //}
@@ -109,18 +123,6 @@ public class FileCrawl {
             }
         } else {
             checkFile(f, create);
-            /**
-            boolean b;
-            if (create)
-                b = transporter.create(f);
-            else
-                b = transporter.update(f);
-			if (b) {
-                count++;
-                if (logC!=0 && count%logC==1)
-                log("" + count + ": " + f.getAbsolutePath() +" ["+ level +"]");
-            }
-            **/
         }
     }
 
@@ -160,8 +162,7 @@ public class FileCrawl {
     }
 
     public String read(String resource) {
-        String about = transporter.read(resource);
-        return about;
+        return transporter.readAsString(resource);
     }
 
 }

@@ -1,6 +1,7 @@
 package org.shanghai.rdf;
 
 import org.shanghai.jena.TDBReader;
+import org.shanghai.rdf.RDFReader;
 
 import java.util.logging.Logger;
 import java.io.StringWriter;
@@ -14,8 +15,7 @@ import com.hp.hpl.jena.query.QueryExecutionFactory;
 import com.hp.hpl.jena.query.QueryFactory;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
-
-import org.shanghai.rdf.RDFReader.Interface;
+import com.hp.hpl.jena.query.QueryParseException;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -24,14 +24,14 @@ import org.shanghai.rdf.RDFReader.Interface;
    @date 2013-02-25
 */
 /** @abstract Reads RDF data from a sparql service endpoint.
-    This class can also read from a jena TDB store. */
-public class ModelTalk implements Interface {
+              This class can also read from a jena TDB store. */
+public class ModelTalk implements RDFReader.Interface {
 
     private static final Logger logger =
                          Logger.getLogger(ModelTalk.class.getName());
 
     private String servicePoint;
-    private TDBReader tdbReader;
+    protected TDBReader tdbReader;
     private int count;
     private boolean tdb;
 
@@ -64,11 +64,14 @@ public class ModelTalk implements Interface {
         e.printStackTrace(System.out);
     }
 
-    public void create() {
+    @Override
+    public RDFReader.Interface create() {
         if (tdb)
             tdbReader.create();
+        return this;
     }
 
+    @Override
     public void dispose() {
         if (tdb)
             tdbReader.dispose();
@@ -82,13 +85,14 @@ public class ModelTalk implements Interface {
           QueryExecution qexec = 
                        QueryExecutionFactory.sparqlService(servicePoint, query);
           return qexec;
-        } catch(com.hp.hpl.jena.query.QueryParseException e) {
+        } catch(QueryParseException e) {
           log(sparql);
           log(e);
         }
         return null;
     }
 
+    @Override
     public String[] getSubjects(String query, int limit) {
         int k=0;
         String[] result = new String[limit];
@@ -119,6 +123,7 @@ public class ModelTalk implements Interface {
     }
 
     /** execute query and return first row first subject */
+    @Override
     public String query(String query) {
         QueryExecution qe = getExecutor(query);
         ResultSet results=qe.execSelect();
@@ -128,14 +133,14 @@ public class ModelTalk implements Interface {
     }
 
     /** return sparql query result as xml */
+    @Override
     public String getDescription(String query) {
         String result = null;
         QueryExecution qexec = getExecutor(query);
         if (qexec==null)
             return ""; // try to continue
         try {
-            Model model;
-            model = qexec.execConstruct();
+            Model model = qexec.execConstruct();
             StringWriter out = new StringWriter();
             model.write(out, "RDF/XML-ABBREV");
             result = out.toString();
