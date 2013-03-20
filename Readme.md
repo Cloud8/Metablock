@@ -24,7 +24,7 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   Although the sparql queries and xslt transformations 
   delivered together with shanghai are rathetr general, 
   the concrete modelling of the bibliographic resources may vary
-  and requiere modifications.
+  and require modifications.
 
 ##### RDF crawling
 
@@ -56,11 +56,9 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
 
 ###TODO
 
-  - check if SERVICE keyword works as expected to query distributed sources
-  - most bibliographic data source have authority and title data
-    separated. It may be possible to index RDF data to separate solr cores
-    but it is unclear wether VuFind can work with linked data this way. 
-  - more performance analysis
+  - Check if SERVICE keyword works as expected to query distributed sources
+  - Most bibliographic data source have authority and title data
+    separated. It may make sence to index RDF data to separate solr cores.
 
 ###May be later
 
