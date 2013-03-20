@@ -79,6 +79,11 @@ public class XMLTransformer {
         }
     }
 
+    /** Add a parameter for the transformation */
+    public void setParameter(String name, String value) {
+        transformer.setParameter(name, value);
+    }
+
     private void createTransformer(String text) {
         try {
             TransformerFactory factory = TransformerFactory.newInstance();

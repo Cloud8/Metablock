@@ -28,7 +28,7 @@ public class Crawl {
     public Crawl(Properties prop) {
         this.prop = prop;
         FileCrawl.Transporter transporter = new TDBTransporter(
-                  prop.getProperty("jena.tdb"), prop.getProperty("jena.graph"));
+               prop.getProperty("store.tdb"), prop.getProperty("store.graph"));
         crawler = new FileCrawl(transporter, prop);
     }
 
@@ -74,12 +74,14 @@ public class Crawl {
                 String check = System.getProperty("user.home") + "/" + dir;
                 if ( new File(check).isDirectory()) {
                     crawler.crawl(check);
+                } else {
+                    crawler.add(f);
                 }
             }
         }
         long end = System.currentTimeMillis();
         log("crawled " + crawler.count + " records in "
-                       + ((end - start)/1000) + " sec");
+                       + ((double)Math.round(end - start)/1000) + " sec");
     }
 
     public void delete(String uri) {
@@ -99,9 +101,7 @@ public class Crawl {
         String about = crawler.read(resource);
         String testFile = prop.getProperty("test.file");
         if (testFile!=null) {
-            try {
-                FileUtil.writeFile(testFile, about);
-            } catch(IOException e) { log(e); }
+            FileUtil.write(testFile, about);
         } else {
             System.out.println(about);
         }

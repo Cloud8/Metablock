@@ -14,15 +14,16 @@ lib/%.class: src/%.java
 	@echo $<
 	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
-default: deploy 
+default: compile
 	@echo "All compiled now, I believe."
 
-deploy: lib/shanghai.jar
+deploy: 
+	rsync -av --delete --exclude .git ./ archiv@archiv:/usr/local/opus/Shanghai
 
-lib/shanghai.jar: $(CLASS) lib/shanghai.properties
-	jar cf $@ -C lib org -C lib shanghai.properties -C lib log4j.properties
+lib/shanghai.jar: $(CLASS) 
+	jar cf $@ -C lib org -C lib log4j.properties
 
-compile: $(CLASS)
+compile: lib/shanghai.jar
 
 check:
 	@echo CPATH: $(CPATH)

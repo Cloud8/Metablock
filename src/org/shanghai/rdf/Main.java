@@ -19,10 +19,23 @@ public class Main {
  
     protected Properties prop;
     protected Indexer indexer;
+    protected Config config;
+
+    protected Indexer getIndexer() {
+        if (config==null)
+            return getIndexer(prop);
+        return getIndexer(config);
+    }
 
     protected Indexer getIndexer(Properties prop) {
         if (indexer==null)
             indexer = new Indexer(prop).create();
+		return indexer;
+    }
+
+    protected Indexer getIndexer(Config config) {
+        if (indexer==null)
+            indexer = new Indexer(config).create();
 		return indexer;
     }
 
@@ -32,62 +45,71 @@ public class Main {
         main.dispose();
     }
 
+    private void create() {
+    }
+
     protected int make(String[] args) {
         int argc=0;
 
-        prop = new Properties();
-        boolean b = false;
         if (args.length>argc && args[argc].endsWith("-prop")) {
 		    argc++;
             try {
-              System.out.println("loading " + args[argc]);
-              prop.load(new FileReader(args[argc++]));
-              b=true;
+                System.out.println("loading " + args[argc]);
+                prop = new Properties();
+                prop.load(new FileReader(args[argc++]));
             } catch(IOException e) { e.printStackTrace(); }
+        } else {
+             config = new Config("/shanghai.ttl").create();
+             if (config==null) { //old school
+                 if (prop==null) try {
+                     prop = new Properties();
+                     prop.load(
+                     Main.class.getResourceAsStream("/shanghai.properties"));
+                 } catch(IOException e) { e.printStackTrace(); }
+             } else {
+                 prop = config.getSimpleProperties();
+             }
         }
-        if (!b) try {
-            prop.load(Main.class.getResourceAsStream("/shanghai.properties"));
-        } catch(IOException e) { e.printStackTrace(); }
 
         if (args.length>argc && args[argc].endsWith("-clean")) {
             argc++;
-            new Indexer(prop).cleanSolr();
+            getIndexer().cleanSolr();
             return args.length;
         }
 
         if (args.length-1>argc && args[argc].endsWith("-test")) {
 		    argc++;
-			getIndexer(prop).test(args[argc]);
+			getIndexer().test(args[argc++]);
         } else if (args.length>argc && args[argc].endsWith("-test")) {
 		    argc++;
-            silence();
-			getIndexer(prop).test();
+            // silence();
+			getIndexer().test();
         } else if (args.length>argc && args[argc].endsWith("-dump")) {
 		    argc++;
             if (args.length-1>argc) {
                 silence();
-                getIndexer(prop).dump(args[argc++], args[argc++]);
+                getIndexer().dump(args[argc++], args[argc++]);
             } else if (args.length>argc) {
                 silence();
-                getIndexer(prop).dump(args[argc++]);
+                getIndexer().dump(args[argc++]);
             } else {
-                getIndexer(prop).dump();
+                getIndexer().dump();
             }
         } else if (args.length-1>argc && args[argc].endsWith("-post")) {
 		    argc++;
-            getIndexer(prop).post(args[argc++]);
+            getIndexer().post(args[argc++]);
         } else if (args.length-2>argc && args[argc].endsWith("-index")) {
 		    argc++;
-            getIndexer(prop).index(args[argc++], args[argc++]);
+            getIndexer().index(args[argc++], args[argc++]);
         } else if (args.length-1>argc && args[argc].endsWith("-index")) {
 		    argc++;
-            getIndexer(prop).index(args[argc++]);
+            getIndexer().index(args[argc++]);
         } else if (args.length>argc && args[argc].endsWith("-index")) {
 		    argc++;
-            getIndexer(prop).index();
+            getIndexer().index();
         } else if (args.length>argc && args[argc].startsWith("-h")) {
-            talk();
-        } //else if (args.length==0) talk();
+            help();
+        } 
         return argc;
     }
 
@@ -101,15 +123,16 @@ public class Main {
         Logger.getLogger("org.shanghai.jena.TDBReader").setLevel(Level.OFF);
     }
 
-    protected void talk() {
+    protected void help() {
         String usage = "java org.shanghai.rdf.Main"
                      + " -prop [file.properties] \n"
-                     + "   -test [offset]\n"
-                     + "   -dump [resource] [file]: resource dump\n"
-                     + "   -post [resource] : post a resource to solr\n"
+                     + "   -test  [offset]\n"
+                     + "   -dump  [resource] [file]: resource dump\n"
+                 //  + "   -post  [resource] : post a resource to solr\n"
                      + "   -index [offset] [limit] : build index.\n"
                      + "   -clean : destroy index.\n"
-                     + "options with brackets area optional.\n";
+                     //+ "options with brackets are optional.\n"
+                     + "";
         System.out.print(usage);
     }
 }

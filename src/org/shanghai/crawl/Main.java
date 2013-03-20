@@ -44,16 +44,14 @@ public class Main extends org.shanghai.rdf.Main {
 
     public int make(String[] args) {
         int argc = super.make(args);
-        if (args.length==0)
-            talk();
         if (argc==args.length)
             return argc;
 
         if (args.length>argc && args[argc].endsWith("-crawl")) {
             argc++;
-            if (args.length==argc) 
-                talk2();
-            else {
+            if (args.length==argc) {
+                help();
+            } else {
                 getCrawl(prop).crawl(args);
             }
         } else if (args.length>argc && args[argc].endsWith("-del")) {
@@ -71,25 +69,32 @@ public class Main extends org.shanghai.rdf.Main {
         } else if (args.length>argc && args[argc].endsWith("-destroy")) {
             argc++;
             getCrawl(prop).clean();
-        } else if (args.length>argc && args[argc].endsWith("-help")) {
-            talk2();
+        } else if (args.length>argc && args[argc].endsWith("-list")) {
+            list();
         } else {
-            talk();
+        //    help();
         }
 
         return argc;
     }
 
-    protected void talk2() {
-        String usage = "java org.shanghai.crawl.Main"
-                     + " -prop [file.properties] \n"
+    protected void list() {
+        prop.list(System.out);
+    }
+
+    protected void help() {
+        super.help();
+        String usage = "\n" // "java org.shanghai.crawl.Main"
+                            // + " -prop [file.properties] \n"
                      + "   -crawl [directories]\n"
-                     + "   -put [resource] : put a rdf file to store\n"
-                     + "   -get [resource] [file]: get a resource from store\n"
-                     + "   -upd [resource] : update a rdf file into the store\n"
-                     + "   -del [resource] : delete resource from store.\n"
+                 //  + "   -put   [resource] : put a rdf file to store\n"
+                 //  + "   -get   [resource] [file]: get resource from store\n"
+                 //  + "   -upd   [resource] : update rdf file to the store\n"
+                     + "   -del   [resource] : delete resource from store.\n"
+                     + "   -list : list properies.\n"
                      + "   -destroy : destroy store.\n"
-                     + "options with brackets are sometimes optional.\n";
+                 //  + "options with brackets are sometimes optional.\n"
+					 + "";
         System.out.print(usage);
     }
 

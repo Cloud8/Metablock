@@ -3,6 +3,7 @@ package org.shanghai.crawl;
 import org.shanghai.bones.BiblioRecord;
 import org.shanghai.jena.Bean2RDF;
 import org.shanghai.jena.TDBReader;
+import org.shanghai.jena.TDBWriter;
 import org.shanghai.util.FileUtil;
 
 import java.util.logging.Logger;
@@ -65,15 +66,14 @@ public class TDBTransporter implements FileCrawl.Transporter {
     /** Be prepared to graphs */
     public TDBTransporter(String storage, String uri) {
         this.tdbReader = new TDBReader(storage, uri);
-        //this.graph = uri;
     }
 
     private TDBReader tdbReader;
+    private TDBWriter tdbWriter;
     private Bean2RDF writer;
     private List<Scanner> fileScanner;
     private static final Logger logger =
                          Logger.getLogger(TDBTransporter.class.getName());
-    //private String graph;
 
     private void log(String msg) {
         logger.info(msg);    
@@ -84,9 +84,14 @@ public class TDBTransporter implements FileCrawl.Transporter {
         e.printStackTrace(System.out);
     }
 
-    private void createWriter() {
+    private void createBeanWriter() {
         writer = new Bean2RDF(tdbReader);
         writer.create();
+    }
+
+    private void createRDFWriter() {
+        tdbWriter = new TDBWriter(tdbReader);
+        tdbWriter.create();
     }
 
     @Override
@@ -101,6 +106,8 @@ public class TDBTransporter implements FileCrawl.Transporter {
         tdbReader.dispose();
         if (writer!=null)
             writer.dispose();
+        if (tdbWriter!=null)
+            tdbWriter.dispose();
         for(Scanner s: fileScanner)
             s.dispose();
     }
@@ -121,14 +128,6 @@ public class TDBTransporter implements FileCrawl.Transporter {
             s.setStartDirectory(dir);
     }
 
-    //private QueryExecution getExecutor(String q) {
-    //    return tdbReader.getExecutor(q);
-    //}
-
-    //public String read(String resource) {
-    //    BiblioRecord b = writer.read(resource); //bad logic
-    //    return b.toString();
-    //}
     public BiblioRecord read(String resource) {
         return writer.read(resource);
     }
@@ -191,75 +190,24 @@ public class TDBTransporter implements FileCrawl.Transporter {
     }
 
     private String readFile(File f) {
-        try {
-            return FileUtil.readFile(f);
-        } catch(IOException e) { log(e); }
-        return null;
+        return FileUtil.read(f);
     }
 
     /* GH2013-03-01 TODO: create or not */
     public boolean save(BiblioRecord bib) {
         if (writer==null)
-            createWriter();
-        //log("about " + bib.id);
-        //if (!create) {
-        //    tdbReader.delete(about);
-        //} 
-        //writer.save(bib);
-        //Model m = writer.getModel(bib);
-        //tdbReader.add(m);
+            createBeanWriter();
         return writer.save(bib);
     }
 
     /** create or update an entity */
     private boolean update(String what, boolean create) {
-        if (what==null)
-            return false;
-        boolean b = false;
-        try {
-            InputStream in = new ByteArrayInputStream(what.getBytes("UTF-8"));
-            b = this.update(in, create);
-            if (in!=null) in.close();
-            //if (!b) log("failed " + what);
-        } catch(IOException e) { log(e); }
-        finally { return b; }
-    }
-
-    private boolean update(InputStream in, boolean create) {
-        Model m = tdbReader.newModel();
-        RDFReader reader = new JenaReader(); 
-        reader.read(m, in, null);
-        String about = getSubject(m);
-        if (about==null) {
-            //log("about zero");
-            return false;
-        } else {
-            if (!create) {
-                tdbReader.delete(about);
-            } else {
-                tdbReader.add(m);
-            }
-        }
-        return true;
-    }
-
-    private String getSubject(Model m) {
-        String result = null;
-        ResIterator iter = m.listSubjects();
-        try {
-            while ( iter.hasNext() && result==null) {
-                Resource s = iter.nextResource();
-                if ( s.isURIResource() ) {
-                    result = s.getURI();
-                    // System.out.print("URI " + s.getURI());
-                } else if ( s.isAnon() ) {
-                    // System.out.print("blank");
-                }
-            }
-        } finally {
-            if ( iter != null ) iter.close();
-            return result;
-        }
+        if (tdbWriter==null)
+            createRDFWriter();
+        if (create)
+            return tdbWriter.update(what);
+        else
+            return tdbWriter.add(what);
     }
 
 }

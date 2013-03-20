@@ -150,7 +150,9 @@ public class FileCrawl {
     }
 
     public void add(File file) {
-		transporter.create(file);
+		boolean b = transporter.create(file);
+		if (b) count++;
+        //else log("" + count + " failed: " + file.getAbsolutePath());
     }
 
     public void delete(String resource) {

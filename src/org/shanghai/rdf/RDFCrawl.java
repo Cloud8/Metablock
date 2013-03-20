@@ -28,8 +28,8 @@ public class RDFCrawl {
 
     public RDFCrawl(Properties prop) {
         this.prop = prop;
-        if (prop.getProperty("count.log")!=null) {
-            this.logC = Integer.parseInt(prop.getProperty("count.log"));
+        if (prop.getProperty("index.count")!=null) {
+            this.logC = Integer.parseInt(prop.getProperty("index.count"));
         }
     }
 
@@ -45,10 +45,10 @@ public class RDFCrawl {
     public void create() {
         chunkSize = 200;
         count = 0;
-        try {
-            String xslt = FileUtil.readFile(prop.getProperty("transform.xslt"));
-            xmlTransformer = new XMLTransformer(xslt);
-        } catch(IOException e) { log(e); }
+        String xslt = FileUtil.read(prop.getProperty("index.transformer"));
+        if (xslt==null)
+            log(prop.getProperty("index.transformer") + " not found!");
+        xmlTransformer = new XMLTransformer(xslt);
 	    rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();
         solrPost = new SolrPost(prop.getProperty("index.solr"));
@@ -117,9 +117,7 @@ public class RDFCrawl {
         String solrDoc = xmlTransformer.transform(rdfDoc);
         solrPost.post(solrDoc);
         String testfile = prop.getProperty("test.solr");
-        try {
-            FileUtil.writeFile(testfile, solrDoc);
-        } catch(IOException e) { log(e); }
+        FileUtil.write(testfile, solrDoc);
     }
 
 }

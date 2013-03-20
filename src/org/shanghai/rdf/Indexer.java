@@ -21,9 +21,14 @@ public class Indexer {
     RDFCrawl rdfCrawl = null;
     RDFTransporter rdfTransporter = null;
     Properties prop;
+    Config config;
 
     private static final Logger logger =
                          Logger.getLogger(Indexer.class.getName());
+
+    public Indexer(Config c) {
+        this.config = c;
+    }
 
     public Indexer(Properties prop) {
         this.prop = prop;
@@ -40,6 +45,8 @@ public class Indexer {
     }
 
     public Indexer create() {
+        if (prop==null)
+            prop = config.getIndexList().get(0).getProperties();
         return this;
     }
 
@@ -79,6 +86,10 @@ public class Indexer {
             log( "[" + id + "]");
         }
         rdfTransporter.dispose();    
+
+        rdfCrawl = new RDFCrawl(prop);
+        rdfCrawl.create();
+        rdfCrawl.dispose();
     }
 
     private void testCrawl() {
@@ -117,10 +128,21 @@ public class Indexer {
     public void index() {
         log("index routine starts.");
         long start = System.currentTimeMillis();
-        rdfCrawl = new RDFCrawl(prop);
-        rdfCrawl.create();
-        rdfCrawl.index();
-        rdfCrawl.dispose();
+        if (config!=null)
+        for (Config.Index idx : config.getIndexList()) {
+            Properties prop = idx.getProperties();
+            log("indexing " + prop.getProperty("index.sparql"));
+            rdfCrawl = new RDFCrawl(prop);
+            rdfCrawl.create();
+            rdfCrawl.index();
+            rdfCrawl.dispose();
+        } else {
+            log("indexing " + prop.getProperty("index.sparql"));
+            rdfCrawl = new RDFCrawl(prop);
+            rdfCrawl.create();
+            rdfCrawl.index();
+            rdfCrawl.dispose();
+        }
         long end = System.currentTimeMillis();
         log("indexed " + rdfCrawl.count + " records in " 
                        + ((end - start)/1000) + " sec");
@@ -141,9 +163,7 @@ public class Indexer {
     }
 
     public void dump(String uri, String filename) {
-        try {
-            FileUtil.writeFile(filename, getDescription(uri));
-        } catch(IOException e) { log(e); }
+        FileUtil.write(filename, getDescription(uri));
     }
 
     /** clean the solr index, not the triple store data */

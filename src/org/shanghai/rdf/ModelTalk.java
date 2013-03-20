@@ -61,7 +61,7 @@ public class ModelTalk implements RDFReader.Interface {
 
     private void log(Exception e) {
         log("/* shit happens */ " + e.toString());
-        e.printStackTrace(System.out);
+        // e.printStackTrace(System.out);
     }
 
     @Override
@@ -110,7 +110,7 @@ public class ModelTalk implements RDFReader.Interface {
            finally {
            qexec.close();
            //log("subjects: " + k + " limit " + limit);
-           if (k<limit) {
+           if (0<k && k<limit) {
                log("subject array crunch " + k + " " + limit);
                String resultCopy[] = new String[k];
                for (int i=0; i<k; i++)
@@ -125,10 +125,16 @@ public class ModelTalk implements RDFReader.Interface {
     /** execute query and return first row first subject */
     @Override
     public String query(String query) {
+        String result = null;
         QueryExecution qe = getExecutor(query);
-        ResultSet results=qe.execSelect();
-        QuerySolution soln = results.next();
-        String result = soln.getLiteral("subject").getString();
+        try {
+            ResultSet results=qe.execSelect();
+            QuerySolution soln = results.next();
+            result = soln.getLiteral("subject").getString();
+        } catch( Exception e ) {
+          log(query);
+          log(e);
+        }
         return result;
     }
 

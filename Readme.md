@@ -3,10 +3,13 @@
 Shanghai
 ========
 
-  Shanghai can build a solr index out of RDF data sources. <br/>
+##### Indexing
+
+  Shanghai can build a solr index for the VuFind discovery system
+  out of RDF data sources. <br/>
 
   The RDF data can be queried from a remote sparql service endpoint
-  or reside in a local Jena TDB triple store. 
+  or from a local Jena TDB triple store. 
 
   To perform the indexing, three steps are required:
 
@@ -18,24 +21,54 @@ Shanghai
 
 
 Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
-  There are some examples in the book folder to help with the steps,
-  but the solution is to break the RDF index problem into this parts.
+  Although the sparql queries and xslt transformations 
+  delivered together with shanghai are rathetr general, 
+  the concrete modelling of the bibliographic resources may vary
+  and requiere modifications.
 
-  The Shanghai program is written in Java and controled by a property 
-  file and some command line flags.
+##### RDF crawling
 
-  *This is the first initial realease and considered test code.*
+  Shanghai can be used as a filesystem crawler to collect rdf 
+  resource description files and store them into a triple store.
 
-##TODO
+##### OAI harvesting
+
+  Shanghai use the xoai library for harvesting of bibliographic
+  records into a local Jena triple store. 
+  The storage of XML based records into a RDF storage engine
+  requires a XSLT transformation.
+  Together with shanghai there a currently two transformations
+  defined, from XMetaDissPlus to RDF and from OJS/NLM to RDF.
+
+  The RDF modeling of the records relies on the SPAR Ontologies
+  and the Dublin Core Terms vocabulary.
+
+##### About
+
+  The Shanghai program is written in Java and controled by a 
+  knowledge base written down in a turtle file together with
+  some command line flags.
+
+  The goal is to have a cronnable tool to drive a Jena/RDF based 
+  bibliographic metadata hub with a VuFind discovery frontend.
+
+  Shanghai is under development and not feature complete.
+
+###TODO
+
   - check if SERVICE keyword works as expected to query distributed sources
-  - some performance analysis, may be there are too much model.commits()
+  - most bibliographic data source have authority and title data
+    separated. It may be possible to index RDF data to separate solr cores
+    but it is unclear wether VuFind can work with linked data this way. 
+  - more performance analysis
 
-##May be later
+###May be later
+
   - add a knowledge base for indexing well known rdf data sources
-  - add an OAI client with XSLT transformer to harvest metadata and
-    collect them as rdf data in a local triple store
+  - add an OAI server with XSLT transformer to expose metadata from
+    the local store as xml again.
 
-##Collaboration
+###Collaboration
   We're *open to pull requests*! If you'd like to collaborate, 
   offer feedback, now better english or best of all - better code, 
   feel free to do so. 

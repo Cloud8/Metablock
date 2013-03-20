@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
 import java.io.InputStream;
 import java.io.FileInputStream;
@@ -22,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.StringReader;
 import java.io.StringWriter;
+
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -58,12 +61,12 @@ public class RDFTransporter {
 
     public RDFTransporter(Properties prop) {
         this.prop = prop;
-        String s = prop.getProperty("service.sparql");
-        s=s==null?s=prop.getProperty("jena.tdb"):s;
-        log("init: " + s);
-        RDFReader.Interface modelTalk = new ModelTalk(
-                  prop.getProperty("service.sparql"), 
-                  prop.getProperty("data.graph")); 
+        String s = prop.getProperty("index.sparql");
+        s=s==null?s=prop.getProperty("store.tdb"):s;
+        if (s.equals("http://localhost/shanghai/store"))
+            s=prop.getProperty("store.tdb");
+        RDFReader.Interface modelTalk = 
+                         new ModelTalk( s, prop.getProperty("store.graph")); 
         this.rdfReader = new RDFReader(modelTalk);
     }
 
@@ -76,12 +79,25 @@ public class RDFTransporter {
         e.printStackTrace(System.out);
     }
 
+    /** create queries, resolve <date> */
     public void create() {
-        try {
-            probeQuery = FileUtil.readFile(prop.getProperty("probe.sparql"));
-            indexQuery = FileUtil.readFile(prop.getProperty("index.sparql"));
-            descrQuery = FileUtil.readFile(prop.getProperty("about.sparql"));
-        } catch(IOException e) { log(e); }
+        String date = prop.getProperty("index.days");
+        probeQuery = FileUtil.read(prop.getProperty("index.probe"));
+        indexQuery = FileUtil.read(prop.getProperty("index.enum"));
+        if (probeQuery==null || probeQuery.trim().length()==0) 
+            log("missing " + prop.getProperty("index.probe"));
+        else if (indexQuery==null) 
+            log("missing " + prop.getProperty("index.enum"));
+        else if (date!=null) {
+            probeQuery = probeQuery.replace("<date>", date);
+            indexQuery = indexQuery.replace("<date>", date);
+        } else {
+            probeQuery = probeQuery.replace("<date>", "1970-01-01");
+            indexQuery = indexQuery.replace("<date>", "1970-01-01");
+        }
+        descrQuery = FileUtil.read(prop.getProperty("index.dump"));
+        if (descrQuery==null)
+            log("missing " + prop.getProperty("index.dump"));
         rdfReader.create();
         size=0;
     }
@@ -111,6 +127,11 @@ public class RDFTransporter {
             return size;
         String result = rdfReader.query(probeQuery);
         try { 
+          if (result==null) {
+              log("problem with probeQuery [" + probeQuery + "]");
+              prop.list(System.out);
+              return 0;
+          }
           size = Integer.parseInt(result);
           if (size==0) {
               log("query: " + probeQuery);
@@ -123,20 +144,18 @@ public class RDFTransporter {
 
     public void talk(String what) {
         String rdf = rdfReader.getDescription(descrQuery, what);
-        String testRdf = prop.getProperty("test.rdf");
+        String testRdf = prop.getProperty("index.test");
         if (testRdf==null) {
             System.out.println(rdf);
-        } else try {
-            FileUtil.writeFile(testRdf, rdf);
+        } else {
+            FileUtil.write(testRdf, rdf);
             log("wrote " + testRdf);
-        } catch(IOException e) { log(e); }
+        } 
     }
 
     private void write(String outfile) {
         String talk = getRecord();
-        try {
-            FileUtil.writeFile(outfile, talk);
-        } catch(IOException e) { log(e); }
+        FileUtil.write(outfile, talk);
     }
 
     public String getRecord() {
