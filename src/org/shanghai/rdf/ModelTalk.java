@@ -49,17 +49,17 @@ public class ModelTalk implements RDFReader.Interface {
         if (storage.startsWith("http://")) {
             servicePoint = storage;
         } else {
-            log(storage);
+            //log(storage);
             this.tdbReader = new TDBReader(storage, uri);
             tdb = true;
         }
     }
 
-    private void log(String msg) {
+    protected void log(String msg) {
         logger.info(msg);    
     }
 
-    private void log(Exception e) {
+    protected void log(Exception e) {
         log("/* shit happens */ " + e.toString());
         // e.printStackTrace(System.out);
     }

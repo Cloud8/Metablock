@@ -10,6 +10,7 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.RDFReader;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 
 import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.tdb.TDBFactory;
@@ -26,7 +27,7 @@ import com.hp.hpl.jena.rdf.arp.JenaReader;
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title Old Jena TDB Reader. Better use sparql service.
+   @title A Jena TDB Reader
    @date 2013-01-16
 */
 public class TDBReader {
@@ -46,7 +47,6 @@ public class TDBReader {
         this.tdbData = tdbData;
     }
 
-    /** just to be prepared to graphs */
     public TDBReader(String tdbData, String uri) {
         this.tdbData = tdbData;
         this.graph = uri;
@@ -58,7 +58,6 @@ public class TDBReader {
 
     private void log(Exception e) {
         log(e.toString());
-        //e.printStackTrace(System.out);
     }
 
     public void create() {
@@ -126,6 +125,36 @@ public class TDBReader {
         return true;
     }
 
+    /** expensive */
+    public String getSubject(Model m) {
+        int count = 0;
+        Resource subject = null;
+        ResIterator iter = m.listSubjects();
+        try {
+            while (iter.hasNext()) {
+                Resource s = iter.nextResource();
+                if ( s.isAnon() )
+                     continue;
+                if ( subject==null ) {
+                    subject = s;
+                } else if (s.equals(subject)) {
+                    count++;
+                } else if (!s.equals(subject)) {
+                    count--;
+                    if (count<0) {
+                        count=0;
+                        subject=s;
+                    }
+                }
+            }
+        } finally {
+            if ( iter != null ) iter.close();
+            if (subject==null)
+                return null;
+            return subject.toString();
+        }
+    }
+
     Model newModel() {
         Model m;
         if (graph==null)
@@ -135,64 +164,4 @@ public class TDBReader {
         return m;
     }
  
-    /** delete knowledge about resource before adding new statements */
-    /***
-    public boolean update(String about) {
-        return update(about, false);
-    }
-
-    public boolean add(String about) {
-        return update(about, true);
-    }
-
-    private boolean update(String what, boolean create) {
-        if (what==null)
-            return false;
-        boolean b = false;
-        try {
-            InputStream in = new ByteArrayInputStream(what.getBytes("UTF-8"));
-            b = this.update(in, create);
-            if (in!=null) in.close();
-            //if (!b) log("failed " + what);
-        } catch(IOException e) { log(e); }
-        finally { return b; }
-    }
-
-    private boolean update(InputStream in, boolean create) {
-        Model m = newModel();
-        RDFReader reader = new JenaReader(); 
-        reader.read(m, in, null);
-        String about = getSubject(m);
-        if (about==null) {
-            return false;
-        } else {
-            if (!create) {
-                this.delete(about);
-            } else {
-                this.add(m);
-            }
-        }
-        return true;
-    }
-
-    private String getSubject(Model m) {
-        String result = null;
-        ResIterator iter = m.listSubjects();
-        try {
-            while ( iter.hasNext() && result==null) {
-                Resource s = iter.nextResource();
-                if ( s.isURIResource() ) {
-                    result = s.getURI();
-                    // System.out.print("URI " + s.getURI());
-                } else if ( s.isAnon() ) {
-                    // System.out.print("blank");
-                }
-            }
-        } finally {
-            if ( iter != null ) iter.close();
-            return result;
-        }
-    }
-    ***/
-
 }

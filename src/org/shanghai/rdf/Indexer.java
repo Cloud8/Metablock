@@ -62,7 +62,10 @@ public class Indexer {
 
     public void test(String offset) {
         int off = Integer.parseInt(offset);
+        rdfTransporter = new RDFTransporter(prop);
+        rdfTransporter.create();    
         test(off);
+        rdfTransporter.dispose();    
     }
 
     public void test() {
@@ -75,21 +78,18 @@ public class Indexer {
         int rand = (int)(Math.random()*size);
         test(rand);
         rdfTransporter.dispose();    
+
+        //rdfCrawl = new RDFCrawl(prop);
+        //rdfCrawl.create();
+        //rdfCrawl.dispose();
     }
 
     private void test(int off) {
         // int x = Integer.parseInt(what);
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
         int x = 22;
         for(String id: rdfTransporter.getIdentifiers(off,x-1)) {
             log( "[" + id + "]");
         }
-        rdfTransporter.dispose();    
-
-        rdfCrawl = new RDFCrawl(prop);
-        rdfCrawl.create();
-        rdfCrawl.dispose();
     }
 
     private void testCrawl() {

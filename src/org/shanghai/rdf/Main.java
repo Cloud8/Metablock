@@ -108,6 +108,7 @@ public class Main {
 		    argc++;
             getIndexer().index();
         } else if (args.length>argc && args[argc].startsWith("-h")) {
+		    argc++;
             help();
         } 
         return argc;

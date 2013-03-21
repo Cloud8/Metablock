@@ -69,8 +69,8 @@ public class Main extends org.shanghai.rdf.Main {
         } else if (args.length>argc && args[argc].endsWith("-destroy")) {
             argc++;
             getCrawl(prop).clean();
-        } else if (args.length>argc && args[argc].endsWith("-list")) {
-            list();
+        } else if (args.length>argc && args[argc].endsWith("-show")) {
+            show();
         } else {
         //    help();
         }
@@ -78,20 +78,22 @@ public class Main extends org.shanghai.rdf.Main {
         return argc;
     }
 
-    protected void list() {
-        prop.list(System.out);
+    protected void show() {
+        if (config!=null)
+            config.test();
+        else prop.list(System.out);
     }
 
     protected void help() {
         super.help();
         String usage = "\n" // "java org.shanghai.crawl.Main"
                             // + " -prop [file.properties] \n"
+                     + "   -show : show configuration.\n"
                      + "   -crawl [directories]\n"
                  //  + "   -put   [resource] : put a rdf file to store\n"
                  //  + "   -get   [resource] [file]: get resource from store\n"
                  //  + "   -upd   [resource] : update rdf file to the store\n"
                      + "   -del   [resource] : delete resource from store.\n"
-                     + "   -list : list properies.\n"
                      + "   -destroy : destroy store.\n"
                  //  + "options with brackets are sometimes optional.\n"
 					 + "";

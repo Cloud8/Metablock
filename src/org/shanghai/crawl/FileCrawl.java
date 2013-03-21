@@ -80,10 +80,6 @@ public class FileCrawl {
         if (suffix!=null) {
             suffixes = suffix.split(" ");
         }
-        //log(suffix);
-        //for (int i=0; i<suffixes.length; i++) {
-        //    log(suffixes[i]);
-        //}
     }
 
     public void dispose() {

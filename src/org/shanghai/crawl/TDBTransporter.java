@@ -1,7 +1,5 @@
 package org.shanghai.crawl;
 
-import org.shanghai.bones.BiblioRecord;
-import org.shanghai.jena.Bean2RDF;
 import org.shanghai.jena.TDBReader;
 import org.shanghai.jena.TDBWriter;
 import org.shanghai.util.FileUtil;
@@ -15,7 +13,9 @@ import java.io.StringWriter;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.FileNotFoundException;
 
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.DC;
@@ -53,10 +53,9 @@ public class TDBTransporter implements FileCrawl.Transporter {
     public interface Scanner {
         public Scanner create();
         public void dispose();
-        public BiblioRecord getRecord(File file);
-        public String getDescription(File file);
         public void setStartDirectory(String dir);
         public boolean canTalk(File file);
+        public Model getModel(File file);
     }
 
     public TDBTransporter(String storage) {
@@ -70,8 +69,7 @@ public class TDBTransporter implements FileCrawl.Transporter {
 
     private TDBReader tdbReader;
     private TDBWriter tdbWriter;
-    private Bean2RDF writer;
-    private List<Scanner> fileScanner;
+    private List<Scanner> scanner;
     private static final Logger logger =
                          Logger.getLogger(TDBTransporter.class.getName());
 
@@ -81,40 +79,29 @@ public class TDBTransporter implements FileCrawl.Transporter {
 
     private void log(Exception e) {
         log(e.toString());
-        e.printStackTrace(System.out);
-    }
-
-    private void createBeanWriter() {
-        writer = new Bean2RDF(tdbReader);
-        writer.create();
-    }
-
-    private void createRDFWriter() {
-        tdbWriter = new TDBWriter(tdbReader);
-        tdbWriter.create();
+        //e.printStackTrace(System.out);
     }
 
     @Override
     public void create() {
         tdbReader.create();
-        fileScanner = new ArrayList<Scanner>();
-        addScanner(new FileScanner().create());
+        tdbWriter = new TDBWriter(tdbReader);
+        tdbWriter.create();
+        scanner = new ArrayList<Scanner>();
+        addScanner(new TrivialScanner().create());
     }
 
     @Override
     public void dispose() {
         tdbReader.dispose();
-        if (writer!=null)
-            writer.dispose();
-        if (tdbWriter!=null)
-            tdbWriter.dispose();
-        for(Scanner s: fileScanner)
+        tdbWriter.dispose();
+        for(Scanner s: scanner)
             s.dispose();
     }
 
     @Override 
-    public void addScanner(Scanner scanner) {
-         fileScanner.add(scanner); 
+    public void addScanner(Scanner s) {
+         scanner.add(s); 
     }
 
     @Override
@@ -124,16 +111,12 @@ public class TDBTransporter implements FileCrawl.Transporter {
 
     @Override
     public void setStartDirectory(String dir) {
-        for(Scanner s: fileScanner)
+        for(Scanner s: scanner)
             s.setStartDirectory(dir);
     }
 
-    public BiblioRecord read(String resource) {
-        return writer.read(resource);
-    }
-
     @Override
-    /** simple default resource reader */
+    /** very simple default resource reader */
     public String readAsString(String resource) {
         String query = "CONSTRUCT { "
                      + "<" + resource + ">" + " ?p ?o }"
@@ -171,43 +154,38 @@ public class TDBTransporter implements FileCrawl.Transporter {
     }
 
     private boolean update(File file, boolean create) {
-        if (file.getName().endsWith(".rdf")) {
-            boolean b = update(readFile(file), create);
-            if (!b) log("update failed for " + file.getAbsolutePath());
-            return b;
-        } else {
-            for (Scanner s : fileScanner) {
-		        if (s.canTalk(file)) {
-                    BiblioRecord bib = s.getRecord(file);
-                    boolean b = save(bib);
-                    if (!b) 
-					    log("addBean failed for " + file.getAbsolutePath());
-                    return b;
-			    }
-            }
-		}
+        for (Scanner s : scanner) {
+		     if (s.canTalk(file)) {
+		         Model m = s.getModel(file);
+                 tdbReader.add(m);
+                 log(tdbReader.getSubject(m));
+                 return true;
+             }
+        }
         return false;
     }
 
-    private String readFile(File f) {
-        return FileUtil.read(f);
-    }
-
-    /* GH2013-03-01 TODO: create or not */
-    public boolean save(BiblioRecord bib) {
-        if (writer==null)
-            createBeanWriter();
-        return writer.save(bib);
-    }
-
-    /** create or update an entity */
-    private boolean update(String what, boolean create) {
-        if (tdbWriter==null)
-            createRDFWriter();
-        if (create)
-            return tdbWriter.update(what);
-        else
-            return tdbWriter.add(what);
+    private class TrivialScanner implements Scanner {
+        public Scanner create() {
+            return this;
+        }
+        public void dispose() {}
+        public void setStartDirectory(String dir) {}
+        public boolean canTalk(File file) {
+            if (file.getName().endsWith(".rdf")) 
+                return true;
+            return false;
+        }
+        public Model getModel(File file) {
+            try {
+                InputStream in = new FileInputStream(file);
+                Model m = tdbWriter.getModel(in);
+                in.close();
+                return m;
+            } catch(FileNotFoundException e) { log(e); }
+              catch(IOException e) { log(e); }
+            return null;
+        }
     }
 
 }
