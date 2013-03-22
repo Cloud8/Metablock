@@ -31,7 +31,8 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   Shanghai can be used as a filesystem crawler to collect rdf 
   resource description files and store them into a triple store.
 
-  Source code files can be crawled and indexed too.
+  Source code files can be crawled and indexed too. For a simple
+  view the servlet code contained in the sources can be used.
 
 ##### OAI harvesting
 
