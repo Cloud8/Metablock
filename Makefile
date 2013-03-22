@@ -3,6 +3,7 @@
 #
 
 JDIRS := $(shell find src -type d)
+JDIRS := $(filter-out src/%/bones,$(JDIRS))
 FILES := $(foreach d,$(JDIRS),$(wildcard $(d)/*.java))
 CLASS := $(patsubst src/%.java,lib/%.class,$(FILES))
 CPATH := lib:$(subst $() $(),:,$(wildcard lib/*.jar))

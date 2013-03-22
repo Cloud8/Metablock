@@ -46,7 +46,7 @@ public class Indexer {
 
     public Indexer create() {
         if (prop==null)
-            prop = config.getIndexList().get(0).getProperties();
+            prop = config.getProperties();
         return this;
     }
 

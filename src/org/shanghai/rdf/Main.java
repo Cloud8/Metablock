@@ -67,7 +67,7 @@ public class Main {
                      Main.class.getResourceAsStream("/shanghai.properties"));
                  } catch(IOException e) { e.printStackTrace(); }
              } else {
-                 prop = config.getSimpleProperties();
+                 prop = config.getProperties();
              }
         }
 

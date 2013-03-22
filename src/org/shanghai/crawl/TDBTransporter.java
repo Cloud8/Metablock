@@ -3,6 +3,7 @@ package org.shanghai.crawl;
 import org.shanghai.jena.TDBReader;
 import org.shanghai.jena.TDBWriter;
 import org.shanghai.util.FileUtil;
+import org.shanghai.bones.FileScanner;
 
 import java.util.logging.Logger;
 import java.util.Iterator;
@@ -89,6 +90,7 @@ public class TDBTransporter implements FileCrawl.Transporter {
         tdbWriter.create();
         scanner = new ArrayList<Scanner>();
         addScanner(new TrivialScanner().create());
+        addScanner(new FileScanner().create());
     }
 
     @Override
@@ -157,8 +159,10 @@ public class TDBTransporter implements FileCrawl.Transporter {
         for (Scanner s : scanner) {
 		     if (s.canTalk(file)) {
 		         Model m = s.getModel(file);
+                 if (m==null)
+                     continue;
                  tdbReader.add(m);
-                 log(tdbReader.getSubject(m));
+                 //log(tdbReader.getSubject(m));
                  return true;
              }
         }
