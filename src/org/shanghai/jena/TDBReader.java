@@ -118,6 +118,16 @@ public class TDBReader {
         return b;
     }
 
+    /** relplace model with a new one */
+    public boolean save(Model m) {
+        String about = m.listSubjects().nextResource().toString();
+        model.begin();
+        boolean b = execute("DELETE WHERE { <" + about + "> ?p ?o. }");
+        model.add(m);
+        model.commit();
+        return true;
+    }
+
     public boolean add(Model m) {
         model.begin();
         model.add(m);

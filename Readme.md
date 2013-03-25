@@ -8,9 +8,6 @@ Shanghai
   Shanghai can build a solr index for the VuFind discovery system
   out of RDF data sources. <br/>
 
-  The RDF data can be queried from a remote sparql service endpoint
-  or from a local Jena TDB triple store. 
-
   To perform the indexing, three steps are required:
 
   1. Resource Enumeration: List all resources that should be indexed,
@@ -24,7 +21,10 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   Although the sparql queries and xslt transformations 
   delivered together with shanghai are rather general, 
   the concrete modelling of bibliographic resources may vary
-  and require modifications.
+  and require modifications.  
+  RDF data can be queried from a remote sparql service endpoint
+  or from a local Jena TDB triple store. 
+
 
 ##### RDF crawling
 
