@@ -4,6 +4,7 @@ import java.util.logging.Logger;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
+import java.io.StringWriter;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -107,7 +108,12 @@ public class TDBReader {
     }
 
     private boolean execute(String action) {
-        UpdateAction.parseExecute(action, model);
+        try {
+            UpdateAction.parseExecute(action, model);
+        } catch(QueryParseException e) {
+            log("execute " + action);
+            throw e;
+        }
         return true;
     }
 
@@ -120,9 +126,20 @@ public class TDBReader {
 
     /** relplace model with a new one */
     public boolean save(Model m) {
-        String about = m.listSubjects().nextResource().toString();
+        ResIterator ri = m.listSubjects();
+        if (!ri.hasNext()) {
+            StringWriter out = new StringWriter();
+            m.write(out, "TURTLE");
+            log("ERROR: " + out.toString());
+            return false;
+        }
+        Resource r = ri.nextResource();
+        while (ri.hasNext() && r.isAnon()) {
+            r = ri.nextResource();
+        }
         model.begin();
-        boolean b = execute("DELETE WHERE { <" + about + "> ?p ?o. }");
+        if (!r.isAnon()) 
+            execute("DELETE WHERE { <" + r.toString() + "> ?p ?o. }");
         model.add(m);
         model.commit();
         return true;

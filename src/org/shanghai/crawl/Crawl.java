@@ -1,6 +1,7 @@
 package org.shanghai.crawl;
 
 import org.shanghai.util.FileUtil;
+import org.shanghai.bones.FileScanner;
 
 import java.io.File;
 import java.io.FileReader;
@@ -21,15 +22,18 @@ public class Crawl {
 
     protected Properties prop;
     protected FileCrawl crawler;
+    private String base;
+    private FileCrawl.Transporter transporter;
 
     public Crawl() {
     }
 
     public Crawl(Properties prop) {
         this.prop = prop;
-        FileCrawl.Transporter transporter = new TDBTransporter(
+        transporter = new TDBTransporter(
                prop.getProperty("store.tdb"), prop.getProperty("store.graph"));
         crawler = new FileCrawl(transporter, prop);
+        base = prop.getProperty("crawl.base");
     }
 
     private static final Logger logger =
@@ -46,6 +50,8 @@ public class Crawl {
     }
 
     public Crawl create() {
+        transporter.create();
+        transporter.addScanner(new FileScanner(base).create());
         crawler.create();
         return this;
     }

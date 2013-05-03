@@ -1,6 +1,8 @@
 #!/bin/sh
 
-CP=lib; for l in lib/*.jar; do
+dir=`dirname $0`
+
+CP=$dir/lib; for l in $dir/lib/*.jar; do
   CP=$CP:$l
 done
 

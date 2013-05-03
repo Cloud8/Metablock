@@ -44,7 +44,7 @@ public class ModelTalk implements RDFReader.Interface {
         }
     }
 
-    /** Be prepared to graphs */
+    /** prepare to graphs */
     public ModelTalk(String storage, String uri) {
         if (storage.startsWith("http://")) {
             servicePoint = storage;
@@ -138,22 +138,25 @@ public class ModelTalk implements RDFReader.Interface {
         return result;
     }
 
-    /** return sparql query result as xml */
+    /** return sparql query result as xml string */
     @Override
     public String getDescription(String query) {
         String result = null;
+        Model model = getModel(query);
+        StringWriter out = new StringWriter();
+        model.write(out, "RDF/XML-ABBREV");
+        return out.toString();
+    }
+
+    public Model getModel(String query) {
         QueryExecution qexec = getExecutor(query);
-        if (qexec==null)
-            return ""; // try to continue
+        Model model = null;
         try {
-            Model model = qexec.execConstruct();
-            StringWriter out = new StringWriter();
-            model.write(out, "RDF/XML-ABBREV");
-            result = out.toString();
+           model = qexec.execConstruct();
          } catch(Exception e) { log(query); log(e); }
            finally {
            qexec.close();
-           return result;
+           return model;
          }
     }
 

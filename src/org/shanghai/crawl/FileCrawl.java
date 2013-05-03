@@ -76,7 +76,6 @@ public class FileCrawl {
     }
 
     public void create() {
-        transporter.create();
         if (suffix!=null) {
             suffixes = suffix.split(" ");
         }

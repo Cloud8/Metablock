@@ -90,7 +90,7 @@ public class TDBTransporter implements FileCrawl.Transporter {
         tdbWriter.create();
         scanner = new ArrayList<Scanner>();
         addScanner(new TrivialScanner().create());
-        addScanner(new FileScanner().create());
+        // addScanner(new FileScanner(base).create());
     }
 
     @Override
@@ -161,7 +161,9 @@ public class TDBTransporter implements FileCrawl.Transporter {
 		         Model m = s.getModel(file);
                  if (m==null)
                      continue;
-                 tdbReader.add(m);
+                 //tdbReader.add(m);
+                 if (tdbReader.save(m)) ;
+                 else log("FAILED " + file.getAbsolutePath());
                  //log(tdbReader.getSubject(m));
                  return true;
              }

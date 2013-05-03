@@ -36,9 +36,9 @@ public class SolrPost {
 
     public void create() {
         try {
-          server = new CommonsHttpSolrServer(solrServer);
+            server = new CommonsHttpSolrServer(solrServer);
         } catch (MalformedURLException e) {
-          log("System Property 'url' is not a valid URL: " + solrServer);
+            log("System Property 'url' is not a valid URL: " + solrServer);
       }
     }
 

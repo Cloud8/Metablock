@@ -22,6 +22,7 @@ public class RDFCrawl {
 
     SolrPost solrPost;
     private Properties prop;
+    private boolean local;
     int count;
     int chunkSize;
     int logC = 0;
@@ -51,8 +52,13 @@ public class RDFCrawl {
         xmlTransformer = new XMLTransformer(xslt);
 	    rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();
-        solrPost = new SolrPost(prop.getProperty("index.solr"));
-        solrPost.create();
+        if (prop.getProperty("index.solr").startsWith("http://")) {
+            solrPost = new SolrPost(prop.getProperty("index.solr"));
+            solrPost.create();
+            local = false;
+        } else {
+            local = true;
+        }
     }
 
     public void dispose() {
@@ -67,7 +73,8 @@ public class RDFCrawl {
         for (boolean b=true; b; b=index((i-1)*chunkSize, chunkSize)) {
              i++;
         }
-	    solrPost.commit();
+        if (!local)
+	        solrPost.commit();
     }
 
     public boolean index(int offset, int limit) {
@@ -88,8 +95,14 @@ public class RDFCrawl {
                  // rdfTransporter.talk(bid);
                  continue;
              }
-             result = solrPost.post(solrDoc);
-             if(!result) {
+             if (local) {
+                 String path = prop.getProperty("index.solr") 
+                        + bid.substring(bid.lastIndexOf("/")+1) + ".xml";
+                 FileUtil.write( path, solrDoc);
+             } else {
+                 result = solrPost.post(solrDoc);
+             }
+             if(!result && !local) {
                  log("problem: " + bid + " solr doc length " +solrDoc.length());
                  rdfTransporter.talk(bid);
              }

@@ -5,6 +5,7 @@ import org.shanghai.rdf.RDFTransporter;
 import java.util.logging.Logger;
 import java.io.InputStream;
 import java.net.URL;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -20,6 +21,7 @@ public class RDFReader implements RDFTransporter.Reader {
         public String[] getSubjects(String query, int limit);
         public String getDescription(String query);
         public String query(String what);
+        public Model getModel(String desc);
     }
 
     private static final Logger logger =
@@ -35,9 +37,9 @@ public class RDFReader implements RDFTransporter.Reader {
     //    this.reader = new ModelTalk(service);
     //}
 
-    //public RDFReader(String service, String graph) {
-    //    this.reader = new ModelTalk(service, graph);
-    //}
+    public RDFReader(String service, String graph) {
+        this.reader = new ModelTalk(service, graph);
+    }
 
     private void log(String msg) {
         logger.info(msg);    
@@ -68,12 +70,24 @@ public class RDFReader implements RDFTransporter.Reader {
     /** return a concise bounded description for the subject */
     @Override
     public String getDescription(String query, String subject) {
-        // String desc = query.replace("%param%", "<" + subject + ">");
         if ( isValidURI(subject) ) {
-            String desc = query.replace("<subject>", "<" + subject + ">");
+            String desc;
+            if (query==null)
+                 desc = defaultQuery(subject);
+            else desc = query.replace("<subject>", "<" + subject + ">");
             return reader.getDescription(desc);
         } 
+        log("zero: " + subject);
         return null;
+    }
+
+    public Model getModel(String subject) {
+        return reader.getModel( defaultQuery(subject) );
+    }
+
+    public Model getModel(String query, String subject) {
+        String desc = query.replace("<subject>", "<" + subject + ">");
+        return reader.getModel(desc);
     }
 
     /** execute query and return result. 
@@ -91,5 +105,19 @@ public class RDFReader implements RDFTransporter.Reader {
             return false;
         }
         return "http".equals(url.getProtocol());
+    }
+
+    private String defaultQuery(String resource) {
+        String query = "CONSTRUCT { "
+                     + "<" + resource + ">" + " ?p ?o "
+                     + " ?o ?x ?y . "
+                     + "} where { "
+                     + "<" + resource + ">" + " ?p ?o "
+					 + "optional { "
+					 + "  ?o ?x ?y "
+					 + "  FILTER (isBlank(?o) && !isBlank(?y)) "
+					 + "}\n"
+					 + "}";
+        return query;
     }
 }

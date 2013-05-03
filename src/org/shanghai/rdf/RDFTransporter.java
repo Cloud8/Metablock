@@ -63,10 +63,10 @@ public class RDFTransporter {
         this.prop = prop;
         String s = prop.getProperty("index.sparql");
         s=s==null?s=prop.getProperty("store.tdb"):s;
-        if (s.equals("http://localhost/shanghai/store"))
+        if (s.equals("http://localhost/terms/store"))
             s=prop.getProperty("store.tdb");
-        RDFReader.Interface modelTalk = 
-                         new ModelTalk( s, prop.getProperty("store.graph")); 
+        RDFReader.Interface modelTalk =
+                         new ModelTalk( s, prop.getProperty("store.graph"));
         this.rdfReader = new RDFReader(modelTalk);
     }
 
@@ -81,7 +81,7 @@ public class RDFTransporter {
 
     /** create queries, resolve <date> */
     public void create() {
-        String date = prop.getProperty("index.days");
+        String date = prop.getProperty("index.date");
         probeQuery = FileUtil.read(prop.getProperty("index.probe"));
         indexQuery = FileUtil.read(prop.getProperty("index.enum"));
         if (probeQuery==null || probeQuery.trim().length()==0) 
@@ -91,7 +91,9 @@ public class RDFTransporter {
         else if (date!=null) {
             probeQuery = probeQuery.replace("<date>", date);
             indexQuery = indexQuery.replace("<date>", date);
+            // log(indexQuery);
         } else {
+            // log("zero date ?");
             probeQuery = probeQuery.replace("<date>", "1970-01-01");
             indexQuery = indexQuery.replace("<date>", "1970-01-01");
         }
