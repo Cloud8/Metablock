@@ -16,7 +16,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 public class RDFReader implements RDFTransporter.Reader {
 
     public interface Interface {
-        public Interface create();
+        public void create();
         public void dispose();
         public String[] getSubjects(String query, int limit);
         public String getDescription(String query);
@@ -33,9 +33,9 @@ public class RDFReader implements RDFTransporter.Reader {
         this.reader = reader;
     }
 
-    //public RDFReader(String service) {
-    //    this.reader = new ModelTalk(service);
-    //}
+    public RDFReader(String service) {
+        this.reader = new ModelTalk(service);
+    }
 
     public RDFReader(String service, String graph) {
         this.reader = new ModelTalk(service, graph);
@@ -51,9 +51,8 @@ public class RDFReader implements RDFTransporter.Reader {
     }
 
     @Override
-    public RDFTransporter.Reader create() {
+    public void create() {
         reader.create();
-        return this;
     }
 
     @Override

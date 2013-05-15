@@ -57,18 +57,13 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
 
   Shanghai is under development and not feature complete.
 
-###TODO
-
-  - Check if SERVICE keyword works as expected to query distributed 
-    sparql sources
-  - Most bibliographic data source have authority and title data
-    separated.   
-    It may make sence to index RDF data to separate solr cores.
+### Compile
+  
+  Only Java 7 and upwards...
 
 ###May be later
 
-  - add a knowledge base for indexing well known external sparql services.
-  - add an OAI server to expose metadata from the local store as xml again.
+  - add an OAI server to expose metadata from the local store as RDF/XML
 
 ###Collaboration
   We're *open to pull requests*! If you'd like to collaborate, 

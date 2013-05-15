@@ -35,7 +35,7 @@ import java.io.StringWriter;
 public class RDFTransporter {
 
     public interface Reader {
-        public Reader create();
+        public void create();
         public void dispose();
         public String[] getSubjects(String q, int offset, int limit);
         public String getDescription(String query, String subject);

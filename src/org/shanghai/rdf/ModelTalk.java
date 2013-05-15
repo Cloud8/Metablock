@@ -65,10 +65,9 @@ public class ModelTalk implements RDFReader.Interface {
     }
 
     @Override
-    public RDFReader.Interface create() {
+    public void create() {
         if (tdb)
             tdbReader.create();
-        return this;
     }
 
     @Override

@@ -105,7 +105,7 @@ public class FileCrawl {
         if (mDepth!=0 && level>mDepth)
             return;
     	if (f.isDirectory()) {
-            //log("crawling " + f.getName() + " level " + level); 
+            // log("crawling " + f.getName() + " level " + level); 
         	File[] subFiles = f.listFiles();
 			if (subFiles==null) {
     	        log(" problem: " + f.getName() + " [" + count + "]");

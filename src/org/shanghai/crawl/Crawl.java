@@ -25,7 +25,11 @@ public class Crawl {
     private String base;
     private FileCrawl.Transporter transporter;
 
-    public Crawl() {
+    public Crawl(FileCrawl.Transporter transporter, Properties prop) {
+        this.prop = prop;
+        this.transporter = transporter;
+        crawler = new FileCrawl(transporter, prop);
+        base = prop.getProperty("crawl.base");
     }
 
     public Crawl(Properties prop) {
