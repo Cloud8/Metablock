@@ -3,29 +3,43 @@
 #
 
 JDIRS := $(shell find src -type d)
-JDIRS := $(filter-out src/%/view,$(JDIRS))
 FILES := $(foreach d,$(JDIRS),$(wildcard $(d)/*.java))
-CLASS := $(patsubst src/%.java,lib/%.class,$(FILES))
-CPATH := lib:$(subst $() $(),:,$(wildcard lib/*.jar))
+CLASS := $(patsubst src/%.java,dlib/%.class,$(FILES))
+CPATH := dlib:$(subst $() $(),:,$(wildcard lib/*.jar))
 JOPTS := -encoding UTF8
 
-.PHONY: deploy 
+.PHONY: deploy fat
 
-lib/%.class: src/%.java
+dlib/%.class: src/%.java
 	@echo $<
-	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
+	@javac $(JOPTS) -cp src:$(CPATH) -d dlib $<
 
 default: compile
 	@echo "All compiled now, I believe."
 
+dlib:
+	mkdir -p dlib
+
 deploy: 
-	rsync -av --delete --exclude .git ./ archiv@archiv:/usr/local/opus/Shanghai
+	@#rsync -av shanghai.jar archiv@archiv:/usr/local/opus/Shanghai
+	rsync -av --delete lib dlib shanghai archiv@archiv:/usr/local/opus/Shanghai/
 
-lib/shanghai.jar: $(CLASS) 
-	jar cf $@ -C lib org -C lib log4j.properties
+compile: $(CLASS)
 
-compile: lib/shanghai.jar
+shanghai.jar: dlib/manifest $(CLASS)
+	jar cfm $@ dlib/manifest
+	@#rm -rf dlib/META-INF dlib/manifest
+	jar uf $@ -C dlib org
+	jar uf $@ lib
 
+dlib/manifest: Makefile
+	@echo "Created-By: Nirvana Coorporation" >$@
+	@#echo "Class-Path: . lib $(wildcard lib/*)" >>$@
+	@echo "Class-Path: . lib " >>$@
+	@echo "Main-Class: org.shanghai.main.Main" >>$@
+
+fat: shanghai.jar
+	
 check:
 	@echo CPATH: $(CPATH)
 	@echo FILES: $(FILES)

@@ -161,7 +161,8 @@ public class TDBTransporter implements FileCrawl.Transporter {
 		         Model m = s.getModel(file);
                  if (m==null)
                      continue;
-                 //tdbReader.add(m);
+                 if (create)
+                     tdbReader.remove(m);
                  if (tdbReader.save(m)) ;
                  else log("FAILED " + file.getAbsolutePath());
                  //log(tdbReader.getSubject(m));

@@ -22,6 +22,7 @@ public class RDFReader implements RDFTransporter.Reader {
         public String getDescription(String query);
         public String query(String what);
         public Model getModel(String desc);
+        public void save(Model model);
     }
 
     private static final Logger logger =
@@ -71,20 +72,18 @@ public class RDFReader implements RDFTransporter.Reader {
     public String getDescription(String query, String subject) {
         if ( isValidURI(subject) ) {
             String desc;
-            if (query==null)
-                 desc = defaultQuery(subject);
-            else desc = query.replace("<subject>", "<" + subject + ">");
+            // if (query==null)
+            //      desc = defaultQuery(subject);
+            // else 
+            desc = query.replace("<subject>", "<" + subject + ">");
             return reader.getDescription(desc);
         } 
         log("zero: " + subject);
         return null;
     }
 
-    public Model getModel(String subject) {
-        return reader.getModel( defaultQuery(subject) );
-    }
-
     public Model getModel(String query, String subject) {
+        log("getModel " + subject);
         String desc = query.replace("<subject>", "<" + subject + ">");
         return reader.getModel(desc);
     }
@@ -106,16 +105,33 @@ public class RDFReader implements RDFTransporter.Reader {
         return "http".equals(url.getProtocol());
     }
 
+    public void save(Model model) {
+        reader.save(model);
+    }
+
+    //only a simple rather flat model
+    public Model getModel(String subject) {
+        return reader.getModel( defaultQuery(subject) );
+    }
+
     private String defaultQuery(String resource) {
-        String query = "CONSTRUCT { "
-                     + "<" + resource + ">" + " ?p ?o "
-                     + " ?o ?x ?y . "
-                     + "} where { "
-                     + "<" + resource + ">" + " ?p ?o "
-					 + "optional { "
-					 + "  ?o ?x ?y "
-					 + "  FILTER (isBlank(?o) && !isBlank(?y)) "
-					 + "}\n"
+        String query = "PREFIX  dct: <http://purl.org/dc/terms/>\n" 
+                     + "PREFIX  dcq: <http://purl.org/dc/qualifier/1.0/>\n" 
+                     + "PREFIX  dcam: <http://purl.org/dc/dcam/>\n" 
+                     + "PREFIX  dcmitype: <http://purl.org/dc/dcmitype/>\n" 
+                     + "PREFIX  cito:    <http://purl.org/spar/cito/>\n"
+                     + "PREFIX  gnd: <http://d-nb.info/gnd/>\n" 
+                     + "PREFIX  foaf: <http://xmlns.com/foaf/0.1/>\n" 
+                     + "PREFIX  fabio: <http://purl.org/spar/fabio/>\n" 
+                     + "PREFIX  aiiso: <http://purl.org/vocab/aiiso/schema#>\n" 
+                     + "PREFIX  urn: <http://www.d-nb.de/standards/urn/>\n" 
+                     + "PREFIX  shg: <http://localhost/view/>\n" 
+                     + "CONSTRUCT { " + "<" + resource + ">" + " ?p ?o }\n"
+                     + " where { " + "<" + resource + ">" + " ?p ?o "
+					 // + "optional { "
+					 // + "  ?o ?x ?y "
+					 // + "  FILTER (isBlank(?o) && !isBlank(?y)) "
+					 // + "}\n"
 					 + "}";
         return query;
     }

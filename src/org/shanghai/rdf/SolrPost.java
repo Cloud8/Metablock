@@ -1,7 +1,7 @@
 package org.shanghai.rdf;
 
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.request.DirectXmlRequest;
 import org.apache.solr.common.SolrInputDocument;
 
@@ -17,7 +17,7 @@ import java.util.logging.Logger;
 */
 public class SolrPost {
 
-    private CommonsHttpSolrServer server;
+    private HttpSolrServer server;
     private String solrServer;
     private static final Logger logger =
                          Logger.getLogger(SolrPost.class.getName());
@@ -35,11 +35,11 @@ public class SolrPost {
     }
 
     public void create() {
-        try {
-            server = new CommonsHttpSolrServer(solrServer);
-        } catch (MalformedURLException e) {
-            log("System Property 'url' is not a valid URL: " + solrServer);
-      }
+        //try {
+            server = new HttpSolrServer(solrServer);
+        //} catch (MalformedURLException e) {
+        //    log("System Property 'url' is not a valid URL: " + solrServer);
+        //}
     }
 
     public void dispose() {

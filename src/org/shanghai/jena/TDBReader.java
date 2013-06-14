@@ -124,7 +124,38 @@ public class TDBReader {
         return b;
     }
 
-    /** relplace model with a new one */
+    /** try to delete all statements 
+    private boolean XXdelete(Model m) {
+        ResIterator ri = m.listSubjects();
+        while (ri.hasNext()) {
+            Resource r = ri.nextResource();
+            if(r.isAnon())
+               continue;
+            //delete(r);
+            execute("DELETE WHERE { <" + r.toString() + "> ?p ?o. }");
+            //log("del: " + r.toString());
+        }
+        return true;
+    }
+    */
+
+    public void remove(Model m) {
+        model.begin();
+        model.remove(m);
+        model.commit();
+    }
+
+    /** replace model with a new one : does not work ? */
+    public boolean save(Model m) {
+        //delete(m);
+        model.begin();
+        // model.remove(m);
+        model.add(m);
+        model.commit();
+        return true;
+    }
+
+    /**
     public boolean save(Model m) {
         ResIterator ri = m.listSubjects();
         if (!ri.hasNext()) {
@@ -144,6 +175,7 @@ public class TDBReader {
         model.commit();
         return true;
     }
+    **/
 
     public boolean add(Model m) {
         model.begin();

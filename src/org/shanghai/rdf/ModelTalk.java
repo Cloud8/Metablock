@@ -60,6 +60,7 @@ public class ModelTalk implements RDFReader.Interface {
     }
 
     protected void log(Exception e) {
+        log("storage: " + servicePoint);
         log("/* shit happens */ " + e.toString());
         // e.printStackTrace(System.out);
     }
@@ -152,11 +153,17 @@ public class ModelTalk implements RDFReader.Interface {
         Model model = null;
         try {
            model = qexec.execConstruct();
+           //System.out.println(query);
+           //model.write(System.out, "TTL");
          } catch(Exception e) { log(query); log(e); }
            finally {
            qexec.close();
            return model;
          }
+    }
+
+    public void save(Model model) {
+        tdbReader.save(model);
     }
 
     /** TODO: find out how to retrieve better subject */

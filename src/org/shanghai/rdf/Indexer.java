@@ -144,8 +144,10 @@ public class Indexer {
             rdfCrawl.dispose();
         }
         long end = System.currentTimeMillis();
+        //records per second
+        double rs = rdfCrawl.count / ((end - start)/1000) ;
         log("indexed " + rdfCrawl.count + " records in " 
-                       + ((end - start)/1000) + " sec");
+                       + ((end - start)/1000) + " sec [" + rs +"]");
     }
 
     public void dump(String uri) {
