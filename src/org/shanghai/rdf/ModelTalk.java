@@ -157,7 +157,8 @@ public class ModelTalk implements RDFReader.Interface {
            //model.write(System.out, "TTL");
          } catch(Exception e) { log(query); log(e); }
            finally {
-           qexec.close();
+           if (model!=null)
+               qexec.close();
            return model;
          }
     }
