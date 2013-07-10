@@ -47,6 +47,8 @@ public class FileUtil {
                          Logger.getLogger(FileUtil.class.getName());
 
     public static String read(final String what) {
+        if (what==null)
+            return what;
         if (what.startsWith("/")) {
             InputStream stream = FileUtil.class.getResourceAsStream(what);
             String result = read(stream);

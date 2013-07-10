@@ -192,7 +192,8 @@ public class Config {
                 return prop;
             prop = getSimpleProperties();
             prop.setProperty("index.sparql", sparql);
-            prop.setProperty("index.probe", probe);
+            if (probe!=null)
+                prop.setProperty("index.probe", probe);
             prop.setProperty("index.enum", enum_);
             prop.setProperty("index.dump", dump);
             prop.setProperty("index.transformer", transformer);

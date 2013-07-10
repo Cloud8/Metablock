@@ -127,6 +127,8 @@ public class RDFTransporter {
     public int size() {
         if (size>0)
             return size;
+        if (probeQuery==null)
+            return 2000;
         String result = rdfReader.query(probeQuery);
         try { 
           if (result==null) {
