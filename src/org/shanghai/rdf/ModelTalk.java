@@ -4,6 +4,8 @@ import org.shanghai.jena.TDBReader;
 import org.shanghai.rdf.RDFReader;
 
 import java.util.logging.Logger;
+import java.util.Iterator;
+//import java.lang.StringBuilder;
 import java.io.StringWriter;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -60,9 +62,9 @@ public class ModelTalk implements RDFReader.Interface {
     }
 
     protected void log(Exception e) {
-        log("storage: " + servicePoint);
+        log("sparql: " + servicePoint);
         log("/* shit happens */ " + e.toString());
-        // e.printStackTrace(System.out);
+        e.printStackTrace(System.out);
     }
 
     @Override
@@ -95,22 +97,27 @@ public class ModelTalk implements RDFReader.Interface {
     @Override
     public String[] getSubjects(String query, int limit) {
         int k=0;
+        int r=0;
         String[] result = new String[limit];
         QueryExecution qexec = getExecutor(query);
         try {
             ResultSet results = qexec.execSelect();
             while ( results.hasNext() ) {
-	           int i = results.getRowNumber();
+	           r = results.getRowNumber();
                QuerySolution soln = results.nextSolution();
                String subject = getSubject(soln);
                if (subject!=null)
                    result[k++] = subject;
            }
+           //if (r==0) {
+           //    log("results: " + r);
+           //    log("query: " + query);
+           //}
          } catch(Exception e) { log(query + " [" + limit + "]"); log(e); }
            finally {
            qexec.close();
            //log("subjects: " + k + " limit " + limit);
-           if (0<k && k<limit) {
+           if (0<k && k<limit && 0<r) {
                log("subject array crunch " + k + " " + limit);
                String resultCopy[] = new String[k];
                for (int i=0; i<k; i++)
@@ -130,7 +137,12 @@ public class ModelTalk implements RDFReader.Interface {
         try {
             ResultSet results=qe.execSelect();
             QuerySolution soln = results.next();
-            result = soln.getLiteral("subject").getString();
+            if (soln.contains("subject")) {
+                result = soln.getLiteral("subject").getString();
+            } else {
+                //support anything
+                result = soln.toString();
+            }
         } catch( Exception e ) {
           log(query);
           log(e);
@@ -143,6 +155,12 @@ public class ModelTalk implements RDFReader.Interface {
     public String getDescription(String query) {
         String result = null;
         Model model = getModel(query);
+        //TODO: set prefixes by query scan
+        model.setNsPrefix("npg", "http://ns.nature.com/terms/");
+        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
+        model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
+        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.1/");
         StringWriter out = new StringWriter();
         model.write(out, "RDF/XML-ABBREV");
         return out.toString();

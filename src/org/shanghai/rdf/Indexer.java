@@ -14,7 +14,7 @@ import java.util.logging.Logger;
    @title A Command Interface for the Shanghai RDF Indexer
    @date 2013-01-17
    @abstract Indexer : RDFCrawl : RDFTransporter : RDFReader : ModelTalk
-                    RDFCrawl : XMLTransformer, SolrPost 
+                       RDFCrawl : XMLTransformer, SolrPost 
 */
 public class Indexer {
 
@@ -53,10 +53,22 @@ public class Indexer {
     public void dispose() {
     }
 
-    public void dump() {
+    public void probe() {
         rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();    
         rdfTransporter.probe();
+        rdfTransporter.dispose();    
+    }
+
+    public void dump() {
+        rdfTransporter = new RDFTransporter(prop);
+        rdfTransporter.create();    
+        //int size = rdfTransporter.size();
+        //log("store size: " + size);
+        //if (size==0)
+        //    return;
+        // int rand = (int)(Math.random()*size);
+        test(0);
         rdfTransporter.dispose();    
     }
 
@@ -71,24 +83,16 @@ public class Indexer {
     public void test() {
         rdfTransporter = new RDFTransporter(prop);
         rdfTransporter.create();    
-        int size = rdfTransporter.size();
-        log("store size: " + size);
-        if (size==0)
-            return;
-        int rand = (int)(Math.random()*size);
-        test(rand);
+        test(0);
         rdfTransporter.dispose();    
-
-        //rdfCrawl = new RDFCrawl(prop);
-        //rdfCrawl.create();
-        //rdfCrawl.dispose();
     }
 
     private void test(int off) {
         // int x = Integer.parseInt(what);
         int x = 22;
+        int i = 0;
         for(String id: rdfTransporter.getIdentifiers(off,x-1)) {
-            log( "[" + id + "]");
+            log(" " + (i++) + " [" + id + "]");
         }
     }
 
@@ -147,7 +151,7 @@ public class Indexer {
         //records per second
         double rs = rdfCrawl.count / ((end - start)/1000) ;
         log("indexed " + rdfCrawl.count + " records in " 
-                       + ((end - start)/1000) + " sec [" + rs +"]");
+                       + ((end - start)/1000) + " sec [" + rs +" rec/s]");
     }
 
     public void dump(String uri) {

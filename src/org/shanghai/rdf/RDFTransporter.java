@@ -91,9 +91,7 @@ public class RDFTransporter {
         else if (date!=null) {
             probeQuery = probeQuery.replace("<date>", date);
             indexQuery = indexQuery.replace("<date>", date);
-            // log(indexQuery);
         } else {
-            // log("zero date ?");
             probeQuery = probeQuery.replace("<date>", "1970-01-01");
             indexQuery = indexQuery.replace("<date>", "1970-01-01");
         }
@@ -110,7 +108,6 @@ public class RDFTransporter {
     }
 
     public String[] getIdentifiers(int offset, int limit) {
-        //log("offset " + offset + " limit " + limit);
         return rdfReader.getSubjects(indexQuery, offset, limit);
     }
 
@@ -119,11 +116,8 @@ public class RDFTransporter {
         return rdfReader.getDescription(descrQuery, subject);
     }
 
-    // public boolean delete(String bid) {
-    //     return rdfReader.delete(bid);
-    // }
-
-    /** should deliver the number of triples in the store */
+    /** May be later: nice to have the number of triples in the store */
+    /*** 
     public int size() {
         if (size>0)
             return size;
@@ -145,6 +139,7 @@ public class RDFTransporter {
         // log("size " + size);
         return size;
     }
+    **/
 
     public void talk(String what) {
         String rdf = rdfReader.getDescription(descrQuery, what);
@@ -170,15 +165,17 @@ public class RDFTransporter {
 
     /** test a random record */
     public void probe() {
-        int max = size();
-        if (max==0) {
-            log("No triples in the store. Check size.");
-            return;
-        }
-        int off = (int)(Math.random() * max);
-        String[] identifiers = rdfReader.getSubjects(indexQuery, off, 1);
-        String what = identifiers[0];
-        log( "resource " + off + ": " + what );
-        talk(what);
+        String result = rdfReader.query(probeQuery);
+        log(result);
+        // int max = size();
+        // if (max==0) {
+        //     log("No triples in the store. Check size.");
+        //     return;
+        // }
+        // int off = (int)(Math.random() * max);
+        // String[] identifiers = rdfReader.getSubjects(indexQuery, off, 1);
+        // String what = identifiers[0];
+        // log( "resource " + off + ": " + what );
+        // talk(what);
     }
 }

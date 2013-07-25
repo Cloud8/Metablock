@@ -19,11 +19,6 @@ public class Main extends org.shanghai.crawl.Main {
     protected OAIImporter importer;
     protected JenaCrawl crawl;
 
-    //public void create() {
-    //    importer = new OAIImporter(config).create();
-    //    return this;
-    //}
-
     public void dispose() {
 	    if (importer!=null)
 		    importer.dispose();

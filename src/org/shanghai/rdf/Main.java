@@ -82,8 +82,10 @@ public class Main {
 			getIndexer().test(args[argc++]);
         } else if (args.length>argc && args[argc].endsWith("-test")) {
 		    argc++;
-            // silence();
 			getIndexer().test();
+        } else if (args.length>argc && args[argc].endsWith("-probe")) {
+		    argc++;
+			getIndexer().probe();
         } else if (args.length>argc && args[argc].endsWith("-dump")) {
 		    argc++;
             if (args.length-1>argc) {
@@ -127,6 +129,7 @@ public class Main {
     protected void help() {
         String usage = "java org.shanghai.rdf.Main"
                      + " -prop [file.properties] \n"
+                     + "   -probe \n"
                      + "   -test  [offset]\n"
                      + "   -dump  [resource] [file]: resource dump\n"
                  //  + "   -post  [resource] : post a resource to solr\n"

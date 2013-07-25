@@ -124,21 +124,6 @@ public class TDBReader {
         return b;
     }
 
-    /** try to delete all statements 
-    private boolean XXdelete(Model m) {
-        ResIterator ri = m.listSubjects();
-        while (ri.hasNext()) {
-            Resource r = ri.nextResource();
-            if(r.isAnon())
-               continue;
-            //delete(r);
-            execute("DELETE WHERE { <" + r.toString() + "> ?p ?o. }");
-            //log("del: " + r.toString());
-        }
-        return true;
-    }
-    */
-
     public void remove(Model m) {
         model.begin();
         model.remove(m);

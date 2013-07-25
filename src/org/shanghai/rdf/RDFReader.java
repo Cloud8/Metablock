@@ -70,6 +70,8 @@ public class RDFReader implements RDFTransporter.Reader {
     /** return a concise bounded description for the subject */
     @Override
     public String getDescription(String query, String subject) {
+        if (subject==null) //support probe queries
+            return reader.getDescription(query);
         if ( isValidURI(subject) ) {
             String desc;
             // if (query==null)
