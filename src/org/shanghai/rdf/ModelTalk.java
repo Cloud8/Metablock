@@ -156,13 +156,18 @@ public class ModelTalk implements RDFReader.Interface {
         String result = null;
         Model model = getModel(query);
         //TODO: set prefixes by query scan
+        model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
         model.setNsPrefix("npg", "http://ns.nature.com/terms/");
         model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
         model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
         model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
         model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.1/");
         StringWriter out = new StringWriter();
-        model.write(out, "RDF/XML-ABBREV");
+        try {
+           model.write(out, "RDF/XML-ABBREV");
+        } catch(Exception e) {
+           model.write(System.out,"TTL");
+        }
         return out.toString();
     }
 

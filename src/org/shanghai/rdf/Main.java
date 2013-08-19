@@ -77,6 +77,18 @@ public class Main {
             return args.length;
         }
 
+        if (args.length>argc && args[argc].startsWith("-index")) {
+            if (args[argc].equals("-index")) {
+                indexer = getIndexer(config);
+            } else {
+                Config.Index idx = config.getIndex((args[argc].substring(1)));
+                prop = idx.getProperties();
+                indexer = getIndexer(prop);
+		        argc++;
+                System.out.println("index " + idx.name);
+            }
+        } 
+
         if (args.length-1>argc && args[argc].endsWith("-test")) {
 		    argc++;
 			getIndexer().test(args[argc++]);
@@ -100,19 +112,22 @@ public class Main {
         } else if (args.length-1>argc && args[argc].endsWith("-post")) {
 		    argc++;
             getIndexer().post(args[argc++]);
-        } else if (args.length-2>argc && args[argc].endsWith("-index")) {
-		    argc++;
-            getIndexer().index(args[argc++], args[argc++]);
-        } else if (args.length-1>argc && args[argc].endsWith("-index")) {
-		    argc++;
-            getIndexer().index(args[argc++]);
-        } else if (args.length>argc && args[argc].endsWith("-index")) {
-		    argc++;
-            getIndexer().index();
         } else if (args.length>argc && args[argc].startsWith("-h")) {
 		    argc++;
             help();
-        } 
+        } else if (args.length>argc && args[argc].startsWith("-index")) {
+            //System.out.println("# " + args[argc++] + " " + args[argc++]);
+		    argc++;
+            if (args.length-1>argc)
+                indexer.index(args[argc++],args[argc++]);
+            else if (args.length>argc)
+                indexer.index(args[argc++]);
+            else 
+                indexer.index();
+        }
+        System.out.println("rdf make # " + args.length + " # " + argc);
+        //if (args.length>argc && args[argc].startsWith("-")) 
+        //    return argc;
         return argc;
     }
 

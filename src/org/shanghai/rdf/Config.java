@@ -11,11 +11,8 @@ import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Selector;
 import com.hp.hpl.jena.rdf.model.SimpleSelector;
 
-import java.io.StringWriter;
-import java.io.Reader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.File;
+import java.io.StringWriter;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -29,17 +26,17 @@ import java.text.SimpleDateFormat;
 import java.lang.reflect.Field;
 import java.lang.NoSuchFieldException;
 import java.lang.IllegalAccessException;
+import java.lang.ClassLoader;
 
 /**
-   @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
-   @title Turtle Adventures: First Blood. 
-   @date 2013-03-09
+    @license http://www.apache.org/licenses/LICENSE-2.0
+    @author Goetz Hatop 
+    @title Turtle Adventures: First Blood. 
+    @date 2013-03-09
 */
 public class Config {
 
-    public static final String SH = "http://localhost/terms/";
-
+    private static final String SH = "http://localhost/terms/";
     private static final Logger log = Logger.getLogger(Config.class.getName());
     private Model model;
     private ArrayList<String> verbs;
@@ -53,6 +50,10 @@ public class Config {
 
     public Config(String file) {
         turtle = file;
+    }
+
+    public void dispose() {
+        model.close();
     }
 
     public Config create() {
@@ -75,10 +76,19 @@ public class Config {
         return create(in);
     }
 
+    /** return properties from store */
+    public Properties getProperties() {
+        return getIndexList().get(0).getProperties();
+    }
+
     public Config create(InputStream in) {
-        model = ModelFactory.createDefaultModel();
+		try {
+            model = ModelFactory.createDefaultModel();
+		} catch(java.lang.ExceptionInInitializerError e) {
+		    log("Config: " + e.getCause());
+            e.printStackTrace();
+		}
         model.read(in, SH, "TURTLE");
-        if (test) model.write(System.out);
         return this;
     }
 
@@ -91,21 +101,12 @@ public class Config {
         verbs.add("crawl.create");
         verbs.add("crawl.cache");
         verbs.add("crawl.base");
-        verbs.add("store.tdb");
-        verbs.add("store.graph");
+        verbs.add("crawl.store");
+        verbs.add("crawl.graph");
     }
 
-    public void dispose() {
-        model.close();
-    }
-
-    public String get(String what) {
+    private String get(String what) {
         return getData(what);
-    }
-
-    /** return properties from store */
-    public Properties getProperties() {
-        return getIndexList().get(0).getProperties();
     }
 
     private Properties getSimpleProperties() {
@@ -115,13 +116,15 @@ public class Config {
             String val = getData(verb);
             if ( val!=null )
                  prop.setProperty(verb, val);
+            else {
+                 // log("not found: " + verb);
+            }
         }
         changeProp(prop);
         return prop;
     }
 
     private void log(String msg) {
-        //System.out.println(msg);
         log.info(msg);
     }
 
@@ -166,6 +169,7 @@ public class Config {
     }
 
     public class Index {
+	    public String name;
 	    public String sparql;
 	    public String probe;
 	    public String enum_;
@@ -177,7 +181,8 @@ public class Config {
         public String days;
         public String count;
         public void show() {
-           log("Index: " + sparql  + "\n"
+           log("Index: " + name  + "\n"
+		    + "      : " + sparql + "\n"
 		    + "      : " + probe + "\n"
 		    + "      : " + enum_ + "\n"
 		    + "      : " + dump + "\n"
@@ -201,7 +206,7 @@ public class Config {
             prop.setProperty("index.solr", solr);
             if (date!=null)
                 prop.setProperty("index.date", 
-                             date.substring(0,date.indexOf("^^")));
+                                  date.substring(0,date.indexOf("^^")));
             if (days!=null) {
                 days = days.substring(0, days.indexOf("^^"));
                 date = getBack(Integer.parseInt(days));
@@ -212,6 +217,18 @@ public class Config {
                              count.substring(0, count.indexOf("^^")));
             return prop;
         }
+    }
+
+    /** get index by name */
+    public Index getIndex(String name) {
+        //if ("index".equals(name))
+        //    return getList("index").get(0); // first defined index is default
+        for (Index idx : getList("index")) {
+            log(idx.name);
+            if ((SH+name).equals(idx.name))
+                return idx;
+        }
+        return null;
     }
  
     public List<Index> getIndexList() {
@@ -230,6 +247,7 @@ public class Config {
             Statement stmt = iter.nextStatement();
             Resource r = stmt.getResource();
             Property part = stmt.getPredicate();
+            idx.name = stmt.getResource().toString();
             Resource o = stmt.getObject().asResource();
             Selector sel2 = new SimpleSelector(o, (Property)null, (String)null);
             StmtIterator iter2 = model.listStatements(sel2);
@@ -242,11 +260,19 @@ public class Config {
                     String pn = p2.getLocalName();
                     if ("enum".equals(pn))
                          pn = "enum_";
-                    if ("sparql".equals(pn) && val.equals(SH + "store"))
-                        isStore = true;
                     Field f = Index.class.getDeclaredField(pn);
                     f.setAccessible(true);
-                    f.set(idx, val);
+                    //if ("sparql".equals(pn) && val.equals(SH + "store")) {
+                    if ("sparql".equals(pn) && val.startsWith(SH)) {
+                        Statement store = model.getProperty(stmt2.getResource(),
+                                          model.createProperty(SH+"store"));
+                        String storage = store.getLiteral().getString();
+                        //log("# " + pn + " :" + val + " [" + store + "]");
+                        isStore = true;
+                        f.set(idx, storage);
+                    } else {
+                        f.set(idx, val);
+                    }
                 } catch(NoSuchFieldException e) { log(e); }
                   catch(IllegalAccessException e) { log(e); }
             }
@@ -385,22 +411,28 @@ public class Config {
 
     public void test() {
         log("configured by " + turtle);
-        // getSimpleProperties().list(System.out);
+        getSimpleProperties().list(System.out);
         //log( getData("index.probe") );
-        List<OAI> oaiList = getOAIList();
-        for (OAI oai: oaiList) {
-            oai.show();
-        }
-        List<Index> idxList = getIndexList();
-        for (Index idx: idxList) {
-            idx.show();
-        }
+        // List<OAI> oaiList = getOAIList();
+        // for (OAI oai: getOAIList()) {
+        //     oai.show();
+        // }
+        //int i=0;
+        //List<Index> idxList = getIndexList();
+        //for (Index idx: idxList) {
+        //     idx.show();
+        //}
+        //Index idx = getIndexList().get(1);
+        //idx.show();
+        //idx.getProperties().list(System.out);
         getProperties().list(System.out);
+        //getIndex("index05").show();
     }
 
     private void show() {
         StringWriter out = new StringWriter();
-        model.write(out, "RDF/XML-ABBREV");
+        //model.write(out, "RDF/XML-ABBREV");
+        model.write(out, "TTL");
         String result = out.toString();
         log(result);
     }
@@ -429,7 +461,7 @@ public class Config {
     private String getObject(Model model, Resource res, Property p) {
         Statement st = model.getProperty(res, p);
         if (st==null) {
-            // log("no statement about " + p.toString());
+            // log("No statement about " + p.toString());
             return null;
         }
         RDFNode rdf = st.getObject();
@@ -444,10 +476,12 @@ public class Config {
         Config c = new Config();
         c.create();
         int argc = 0;
-        if (args.length>argc && args[argc].equals("-show")) 
-            c.show();
-        else if (args.length>argc && args[argc].equals("-test")) 
+        if (args.length>argc && args[argc].equals("-show")) {
+             c.show();
+        } else if (args.length>argc && args[argc].equals("-test")) {
+            //c.show();
             c.test();
+        }
         c.dispose();
     }
 

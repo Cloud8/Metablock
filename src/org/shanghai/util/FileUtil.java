@@ -46,6 +46,10 @@ public class FileUtil {
     private static final Logger logger =
                          Logger.getLogger(FileUtil.class.getName());
 
+    private static void log(String msg) {
+        logger.info(msg);
+    }
+
     public static String read(final String what) {
         if (what==null)
             return what;
@@ -55,16 +59,18 @@ public class FileUtil {
             try {
                 stream.close();
             } finally {
-                if (result==null)
+                if (result==null || result.length()==0) {
                     logger.info("resource " + what + " not found.");
+                    return read(new FileUtil(), what);
+                }
                 return result;
             }
         } else {
             File check = new File(what);
             if (check.exists())
                 return read(check);
+            return null;
         }
-        return null;
     }
 
     public static String read(final File f) {
@@ -126,6 +132,28 @@ public class FileUtil {
         } catch(MalformedURLException e) { e.printStackTrace(); }
           catch(IOException e) { e.printStackTrace(); }
     }   
+
+    private static String read(Object who, String what) {
+        InputStream is = FileUtil.class.getResourceAsStream(what);
+        if (is==null) {
+            is = FileUtil.class.getResourceAsStream("lib" + what);
+            if (is!=null) log("load lib " + what);        }
+        if (is==null) {
+            is = who.getClass().getClassLoader().getResourceAsStream(what);
+            if (is!=null) log("class load " + what);
+        }
+        if (is==null) {
+            is = who.getClass().getClassLoader().getResourceAsStream("lib"+what);
+            if (is!=null) log("class load lib " + what);
+        }
+        if (is==null) {
+            return null;
+        }
+        //stupid scanner tricks
+        //java.util.Scanner s = new java.util.Scanner(is, "UTF-8").useDelimiter("\\A");
+        //return s.hasNext() ? s.next() : "";
+        return FileUtil.read(is);
+    }
 
     //public static String readFile(String path) throws IOException {
 	//    return readFile(new File(path));

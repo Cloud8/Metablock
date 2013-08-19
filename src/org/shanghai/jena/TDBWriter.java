@@ -108,4 +108,7 @@ public class TDBWriter {
         return true;
     }
 
+    public void add(String s, String p, String o) {
+    }
+
 }

@@ -32,8 +32,8 @@ public class OAIImporter {
 
     public OAIImporter create() {
         tdbWriter = new TDBWriter(
-                    config.getProperties().getProperty("store.tdb"),
-                    config.getProperties().getProperty("store.graph"));
+                    config.getProperties().getProperty("crawl.store"),
+                    config.getProperties().getProperty("crawl.graph"));
         oais = config.getOAIList();
         tdbWriter.create();
         return this;

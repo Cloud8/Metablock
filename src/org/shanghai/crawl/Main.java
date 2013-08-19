@@ -1,7 +1,7 @@
 package org.shanghai.crawl;
 
 import org.shanghai.crawl.Crawl;
-import org.shanghai.rdf.Indexer;
+//import org.shanghai.rdf.Indexer;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.logging.Level;
 public class Main extends org.shanghai.rdf.Main {
 
     protected Crawl crawl;
-    protected Indexer indexer;
+    //protected Indexer indexer;
 
     public Crawl getCrawl(Properties prop) {
         if (crawl==null)
@@ -29,11 +29,11 @@ public class Main extends org.shanghai.rdf.Main {
         return crawl;
     }
 
-    public Indexer getIndexer(Properties prop) {
-        if (indexer==null)
-            indexer = new Indexer(prop).create();
-        return indexer;
-    }
+    //public Indexer getIndexer(Properties prop) {
+    //    if (indexer==null)
+    //        indexer = new Indexer(prop).create();
+    //    return indexer;
+    //}
    
     public void dispose() {
 	    if (crawl!=null)
@@ -44,6 +44,7 @@ public class Main extends org.shanghai.rdf.Main {
 
     public int make(String[] args) {
         int argc = super.make(args);
+        // System.out.println("crawl make # " + argc + " # " + args.length);
         if (argc==args.length)
             return argc;
 
@@ -74,7 +75,7 @@ public class Main extends org.shanghai.rdf.Main {
         } else {
         //    help();
         }
-
+        //System.out.println("crawl Main # " + argc);
         return argc;
     }
 

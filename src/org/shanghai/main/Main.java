@@ -9,12 +9,7 @@ package org.shanghai.main;
 public class Main {
 
     public static void main(String[] args) {
-      JarClassLoader jcl = new JarClassLoader();
-      try {
-            jcl.invokeMain("org.shanghai.oai.Main", args);
-      } catch (Throwable e) {
-            e.printStackTrace();
-      }
+        org.shanghai.oai.Main.main(args);
     }
 
 }

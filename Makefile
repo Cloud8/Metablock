@@ -26,20 +26,20 @@ deploy:
 
 compile: $(CLASS)
 
-shanghai.jar: dlib/manifest $(CLASS)
-	jar cfm $@ dlib/manifest
-	@#rm -rf dlib/META-INF dlib/manifest
-	jar uf $@ -C dlib org
-	jar uf $@ lib
+main/main.jar: $(CLASS)
+	mkdir -p main
+	jar cf $@ -C dlib org
+
+fat: ubcat.jar
+
+ubcat.jar: dlib/manifest main/main.jar
+	jar cfm $@ dlib/manifest main lib -C dlib com
 
 dlib/manifest: Makefile
 	@echo "Created-By: Nirvana Coorporation" >$@
-	@#echo "Class-Path: . lib $(wildcard lib/*)" >>$@
-	@echo "Class-Path: . lib " >>$@
-	@echo "Main-Class: org.shanghai.main.Main" >>$@
+	@echo "Main-Class: com.simontuffs.onejar.Boot" >>$@
+	@echo "One-Jar-Main-Class: org.shanghai.main.Main" >>$@
 
-fat: shanghai.jar
-	
 DIRS:= /srv/archiv/eb /srv/archiv/diss
 DIRS:= $(DIRS) /srv/archiv/ep/0002 /srv/archiv/ep/0003
 DIRS:= $(DIRS) /srv/archiv/es /srv/archiv/ed

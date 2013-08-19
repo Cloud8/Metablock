@@ -17,7 +17,7 @@ public class RecordFactory {
 
     public static BiblioRecord getRecord(String directory, File file) {
         BiblioRecord b = new BiblioRecord();
-	    b.recordtype = "code";
+	    b.recordtype = "rdf";
 	    String id = file.getPath();
         b.setUrl(id);
 	    id = directory==null ? 

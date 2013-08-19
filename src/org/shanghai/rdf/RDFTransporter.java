@@ -25,7 +25,6 @@ import java.io.UnsupportedEncodingException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
@@ -84,11 +83,9 @@ public class RDFTransporter {
         String date = prop.getProperty("index.date");
         probeQuery = FileUtil.read(prop.getProperty("index.probe"));
         indexQuery = FileUtil.read(prop.getProperty("index.enum"));
-        if (probeQuery==null || probeQuery.trim().length()==0) 
-            log("missing " + prop.getProperty("index.probe"));
-        else if (indexQuery==null) 
-            log("missing " + prop.getProperty("index.enum"));
-        else if (date!=null) {
+        if (indexQuery==null || indexQuery.trim().length()==0) 
+            log("everything is wrong.");
+        if (date!=null) {
             probeQuery = probeQuery.replace("<date>", date);
             indexQuery = indexQuery.replace("<date>", date);
         } else {
@@ -96,8 +93,6 @@ public class RDFTransporter {
             indexQuery = indexQuery.replace("<date>", "1970-01-01");
         }
         descrQuery = FileUtil.read(prop.getProperty("index.dump"));
-        if (descrQuery==null)
-            log("missing " + prop.getProperty("index.dump"));
         rdfReader.create();
         size=0;
     }
@@ -150,6 +145,28 @@ public class RDFTransporter {
             FileUtil.write(testRdf, rdf);
             log("wrote " + testRdf);
         } 
+    }
+
+    private String readResource(String res) {
+        InputStream is = RDFTransporter.class.getResourceAsStream(res);
+        if (is==null) {            
+            is = RDFTransporter.class.getResourceAsStream("lib" + res);
+            if (is!=null) log("load lib " + res);        }
+        if (is==null) {
+            is = getClass().getClassLoader().getResourceAsStream(res);
+            if (is!=null) log("class load " + res);
+        }
+        if (is==null) {
+            is = getClass().getClassLoader().getResourceAsStream("lib"+res);
+            if (is!=null) log("class load lib " + res);
+        }
+        if (is==null) {
+            return null;
+        }
+        //stupid scanner tricks
+        //java.util.Scanner s = new java.util.Scanner(is, "UTF-8").useDelimiter("\\A");
+        //return s.hasNext() ? s.next() : "";
+        return FileUtil.read(is);
     }
 
     private void write(String outfile) {

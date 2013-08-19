@@ -147,11 +147,13 @@ public class TDBTransporter implements FileCrawl.Transporter {
 
     @Override
     public boolean create(File file) {
+        //log("create " + file.getName());
         return update(file, true);
     }
 
     @Override
     public boolean update(File file) {
+        //log("update " + file.getName());
         return update(file, false);
     }
 
@@ -163,12 +165,16 @@ public class TDBTransporter implements FileCrawl.Transporter {
                      continue;
                  if (create)
                      tdbReader.remove(m);
-                 if (tdbReader.save(m)) ;
-                 else log("FAILED " + file.getAbsolutePath());
-                 //log(tdbReader.getSubject(m));
-                 return true;
+                 if (tdbReader.save(m)) {
+                     //log("update for " + tdbReader.getSubject(m));
+                     return true;
+                 } else {
+                     log("FAILED " + file.getAbsolutePath());
+                     return false;
+                 }
              }
         }
+        //log("No scanner for " + file.getName());
         return false;
     }
 

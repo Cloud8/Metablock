@@ -34,22 +34,23 @@ public class Main extends org.shanghai.crawl.Main {
             System.out.println("No ttl config.");
             return argc;
         }
-
-        importer = new OAIImporter(config).create();
-            
-        if (args.length>argc && args[argc].endsWith("-oai")) {
-            importer.make();
-        } else if (args.length>argc && args[argc].endsWith("-otest")) {
-            importer.test();
-        } else if (args.length>argc && args[argc].endsWith("-republish")) {
-            importer.show();
-            // crawl = new JenaCrawl( config.getProperties() );
-            // crawl.create();
-            // crawl.crawl();
-		    // crawl.dispose();
-        } else {
+        if (args.length>argc && args[argc].endsWith("-show")) {
+            return argc;
         }
 
+        if (args.length>argc && args[argc].endsWith("-oai")) {
+            importer = new OAIImporter(config).create();
+            importer.make();
+        } else if (args.length>argc && args[argc].endsWith("-otest")) {
+            importer = new OAIImporter(config).create();
+            importer.test();
+        } else if (args.length>argc && args[argc].endsWith("-republish")) {
+            importer = new OAIImporter(config).create();
+            importer.show();
+        } else {
+            //Nothing to do.
+        }
+        //System.out.println("oai make # " + argc);
         return argc;
     }
 

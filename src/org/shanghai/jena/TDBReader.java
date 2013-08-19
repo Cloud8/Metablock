@@ -125,8 +125,14 @@ public class TDBReader {
     }
 
     public void remove(Model m) {
+        //model.remove(m);
         model.begin();
-        model.remove(m);
+        ResIterator ri = m.listSubjects();
+        while(ri.hasNext()) {
+            Resource r = ri.next();
+            delete(r.toString());
+            //log("remove " + r.toString());
+        }
         model.commit();
     }
 

@@ -17,6 +17,10 @@ import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Selector;
 import com.hp.hpl.jena.rdf.model.SimpleSelector;
 
+//import com.hp.hpl.jena.ontology.OntClass;
+//import com.hp.hpl.jena.ontology.Individual;
+//import com.hp.hpl.jena.ontology.OntModel;
+
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.DC;
 
@@ -78,16 +82,18 @@ public class BiblioModel {
         e.printStackTrace();
     }
 
-    public Model getModel(BiblioRecord bib) { 
+    //public Model getModel(BiblioRecord bib) { 
+    //    String fabio = "http://purl.org/spar/fabio/";
+    //    String concept = fabio + "BibliographicResource";
+    //    return getModel(bib, concept);
+    //}
+
+    public Model getModel(BiblioRecord bib, String concept) { 
         Model model = ModelFactory.createDefaultModel();
-      //Model model = ModelFactory.createModel("dcterms:BibliographicResource");
         model.setNsPrefix("dct", DCTerms.NS);
-        // model.setNsPrefix("dc", DC.NS);
         model.setNsPrefix("shg", SHG);
         String about = null;
         try {
-            //GH2013-05 : this gets out of control
-            //about = cwd.resolve(bib.id).toURL().toString();
             about = cwd.resolve(bib.id.replace(":","/")).toURL().toString();
         } catch(MalformedURLException e) { 
             log("bib.id: " + bib.id); 
@@ -102,7 +108,10 @@ public class BiblioModel {
               // log("cover: " + cover.toString() + " " + coverStr);
             } catch(MalformedURLException e) { log(e); }
         }
-        Resource r = model.createResource(about);
+
+        Resource rConcept = model.createResource(concept);
+        Resource r = model.createResource(about, rConcept);
+
         if (bib.fulltext!=null)
             r.addProperty(DCTerms.abstract_, bib.fulltext);
         if (bib.getUrl()!=null) {

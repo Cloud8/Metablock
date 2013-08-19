@@ -35,7 +35,8 @@ public class Crawl {
     public Crawl(Properties prop) {
         this.prop = prop;
         transporter = new TDBTransporter(
-               prop.getProperty("store.tdb"), prop.getProperty("store.graph"));
+               prop.getProperty("crawl.store"), 
+               prop.getProperty("crawl.graph"));
         crawler = new FileCrawl(transporter, prop);
         base = prop.getProperty("crawl.base");
     }

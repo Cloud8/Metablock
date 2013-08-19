@@ -32,9 +32,12 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   limit.
   You can formulate a probe-query which is intended as a "Hello World"
   use case, to just make sure that everything works.
+  If that works, try
 
   <code>shanghai -test</code> : get some URIs based on enumeration query.
+
   <code>shanghai -dump</code> : dump a specific resource
+
   <code>shanghai -index 0 1</code> : dump first resource, transform and index.
 
 ##### RDF crawling && OAI harvesting

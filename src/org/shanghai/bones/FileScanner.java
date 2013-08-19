@@ -73,7 +73,8 @@ public class FileScanner implements TDBTransporter.Scanner {
 		    this.scanFile(file, b);
         } catch(FileNotFoundException e) { log(e); }
           catch(IOException e) { log(e); }
-        Model m = bibModel.getModel(b);
+        Model m = bibModel.getModel(b,
+                  "http://purl.org/spar/fabio/ComputerProgram");
         //if (count++==3)
         //    m.write(new PrintWriter(System.out));
         return m;

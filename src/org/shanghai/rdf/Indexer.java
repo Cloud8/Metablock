@@ -7,6 +7,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.lang.Character;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -126,7 +127,7 @@ public class Indexer {
         if (offset.equals("test"))
             testCrawl();
         else
-            index(offset, "42");
+            index(offset, "12");
     }
 
     public void index() {
