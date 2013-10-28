@@ -3,69 +3,66 @@ package org.shanghai.rdf;
 import org.shanghai.util.FileUtil;
 
 import java.io.IOException;
-import java.util.Properties;
 import java.util.logging.Logger;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A RDF Crawler for the purpose of Solr indexing
+   @author Goetz Hatop 
+   @title RDF Crawler for the purpose of Solr indexing
    @date 2013-01-31
 */
 public class RDFCrawl {
 
-    private static final Logger logger =
-                         Logger.getLogger(RDFCrawl.class.getName());
+    /** read from here */
+    public interface Transporter {
+        public void create();
+        public void dispose();
+        public void probe();
+        public Model read(String resource);
+        public String[] getIdentifiers(int off, int limit);
+    }
 
-	RDFTransporter rdfTransporter;
-    XMLTransformer xmlTransformer;
+    /** write to there */
+    public interface Storage {
+        public void create();
+        public void dispose();
+        public boolean delete(String resource);
+        public boolean post(String data);
+        public void destroy();
+    }
 
-    SolrPost solrPost;
-    private Properties prop;
-    private boolean local;
     int count;
-    int chunkSize;
-    int logC = 0;
 
-    public RDFCrawl(Properties prop) {
-        this.prop = prop;
-        if (prop.getProperty("index.count")!=null) {
-            this.logC = Integer.parseInt(prop.getProperty("index.count"));
-        }
-    }
+	private Transporter transporter;
+    private Storage storage;
+    private XMLTransformer xmlTransformer;
 
-    private void log(String msg) {
-        logger.info(msg);
-    }
+    private String xsltFile;
+    private String testFile;
+    private int chunkSize;
+    private int logC = 0;
 
-    private void log(Exception e) {
-        log(e.toString());
-        //e.printStackTrace(System.out);
+    public RDFCrawl(Transporter r, Storage s, String x, String t, int c) {
+        this.transporter = r;
+        this.storage = s;
+        this.xsltFile = x;
+        this.logC = c;
+        this.testFile = t;
     }
 
     public void create() {
         chunkSize = 200;
         count = 0;
-        String xslt = FileUtil.read(prop.getProperty("index.transformer"));
-        if (xslt==null)
-            log(prop.getProperty("index.transformer") + " not found!");
+        String xslt = FileUtil.read(xsltFile);
+        if (xslt==null) 
+            log(xsltFile + " not found!");
         xmlTransformer = new XMLTransformer(xslt);
-	    rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();
-        if (prop.getProperty("index.solr").startsWith("http://")) {
-            solrPost = new SolrPost(prop.getProperty("index.solr"));
-            solrPost.create();
-            local = false;
-        } else {
-            local = true;
-        }
+        xmlTransformer.create();
     }
 
     public void dispose() {
-	    if (solrPost!=null)
-		    solrPost.dispose();
-	    if (rdfTransporter!=null)
-            rdfTransporter.dispose();
+        xmlTransformer.dispose();
     }
 
     public void index() {
@@ -73,64 +70,88 @@ public class RDFCrawl {
         for (boolean b=true; b; b=index((i-1)*chunkSize, chunkSize)) {
              i++;
         }
-        if (!local)
-	        solrPost.commit();
     }
 
     public boolean index(int offset, int limit) {
-        boolean result = false;
-        String[] identifiers = rdfTransporter.getIdentifiers(offset,limit);
-        for (String bid : identifiers) {
-             if (bid==null) {
+        boolean result = true;
+        String[] identifiers = transporter.getIdentifiers(offset,limit);
+        for (String id : identifiers) {
+             if (id==null) {
                  return false;
              }
-             String rdf = rdfTransporter.getDescription(bid);
-             if (rdf==null) {
-                 //if server sends garbage, we dont care.
+             Model mod = transporter.read(id);
+             if (mod==null) {//if server sends garbage, dont care.
                  continue;
              }
-             String solrDoc = xmlTransformer.transform(rdf);
+             String solrDoc = xmlTransformer.transform(mod);
              if (solrDoc.length() <42) {
-                 // log("problem: " + bid + " no index!"); 
-                 // rdfTransporter.talk(bid);
                  continue;
              }
-             if (local) {
-                 String path = prop.getProperty("index.solr") 
-                        + bid.substring(bid.lastIndexOf("/")+1) + ".xml";
-                 FileUtil.write( path, solrDoc);
-             } else {
-                 result = solrPost.post(solrDoc);
-             }
-             if(!result && !local) {
-                 log("problem: " + bid + " solr doc length " +solrDoc.length());
-                 rdfTransporter.talk(bid);
+             result=storage.post(solrDoc);
+             if(!result) {
+                 log("problem: " + id + " solr doc length " +solrDoc.length());
+                 dump(id);
+                 result=true;//dont stop the show
              }
              count++;
              if (logC!=0 && count%logC==0)
-                 log(bid + " index " + count);
+                 log(id + " index " + count);
         }
         return result;
     }
 
-    public void post(String bid) {
-        String rdfDoc = rdfTransporter.getDescription(bid);
-        String solrDoc = xmlTransformer.transform(rdfDoc);
-        solrPost.post(solrDoc);
+    public String read(String resource) {
+        Model mod = transporter.read(resource);
+        String rdf = xmlTransformer.asString(mod);
+        return rdf;
     }
 
-    void test() {
-        String[] identifiers = rdfTransporter.getIdentifiers(0,7);
-        for (String bid : identifiers) {
-             if (bid==null)
-                 continue;
-             log(bid);
+    public void post(String resource) {
+        Model mod = transporter.read(resource);
+        if (mod==null) {
+            log("cant post " + resource);
+        } else {
+            String solr = xmlTransformer.transform(mod);
+            storage.post(solr);
         }
-        String rdfDoc = rdfTransporter.getRecord();
-        String solrDoc = xmlTransformer.transform(rdfDoc);
-        solrPost.post(solrDoc);
-        String testfile = prop.getProperty("test.solr");
-        FileUtil.write(testfile, solrDoc);
     }
 
+    public void test() {
+        String[] identifiers = transporter.getIdentifiers(0,7);
+        String resource = null;
+        for (String id : identifiers) {
+             if (id==null)
+                 continue;
+             resource = id;
+        }
+        if (resource!=null) {
+            log(resource);
+            post(resource);
+        }
+    }
+
+    private void dump(String id, String data) {
+        if (testFile==null) {
+            System.out.println(data);
+        } else {
+            FileUtil.write(testFile, data);
+            log("dump " + id + " to " + testFile);
+        } 
+    }
+
+    private void dump(String resource) {
+        String rdf = read(resource);
+        dump(resource,rdf);
+    }
+
+    private static final Logger logger =
+                         Logger.getLogger(RDFCrawl.class.getName());
+
+    private void log(String msg) {
+        logger.info(msg);
+    }
+
+    private void log(Exception e) {
+        log(e.toString());
+    }
 }

@@ -162,10 +162,7 @@ public class FileUtil {
     private static void writeFile(String path, String text) throws IOException {
         Writer out = new BufferedWriter(new OutputStreamWriter(
                      new FileOutputStream(path), "UTF-8"));
-        //PrintStream out = null;
         try {
-            //out = new PrintStream(new FileOutputStream(path));
-            //out.print(text);
             out.write(text);
         } catch(FileNotFoundException e) { 
             throw new IOException(e.toString()); 

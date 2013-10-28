@@ -31,13 +31,12 @@ import org.w3c.dom.Text;
 import org.shanghai.util.FileUtil;
 import org.shanghai.rdf.Config;
 import org.shanghai.rdf.XMLTransformer;
-import org.shanghai.jena.TDBWriter;
 
 /**
    ✪ (c) reserved.
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A Command Line Interface for the Shanghai OAI Importer
+   @title Another URN implementation because all other ones are garbage
    @date 2013-04-14
 */
 public class URN {
@@ -47,7 +46,7 @@ public class URN {
   String issue;
   String article;
   String urn; 
-  String url; // the pdf url
+  String url; 
 
   private DocumentBuilder dBuilder;
   private String prefix;
@@ -66,10 +65,9 @@ public class URN {
   public void dispose() {
   }
 
-  /** add a urn to the nlm document and return as xml */
+  /** add a urn to xml nlm document and return as xml */
   public String talk(String xml) {
-      Document doc = make(xml);
-	  // log(doc);
+      Document doc = makeDoc(xml);
       return asString(doc);
   }
 
@@ -78,7 +76,6 @@ public class URN {
   }
 
   private void log(Exception e) {
-      // e.printStackTrace();
       log(e.toString());
       try {
            throw(e);
@@ -107,7 +104,7 @@ public class URN {
       }
   }
 
-  private Document make(String xml) {
+  private Document makeDoc(String xml) {
       Document doc = null;
 	  try {
 	      InputSource is = new InputSource(new StringReader(xml));
@@ -152,7 +149,6 @@ public class URN {
                }
 	           urn = getUrn(journal, year, issue, article);
                NodeList subs = el.getElementsByTagName("self-uri");
-               // el.getElementsByTagName("self-uri").item(1);
                for (int i=0; i<subs.getLength(); i++) {
                     Element sub = (Element)subs.item(i);
                     if (sub.getAttribute("content-type")!=null
@@ -163,13 +159,36 @@ public class URN {
 		   }
       }
 	  if (urn!=null) {
-	      Text text = doc.createTextNode(urn);
-	      Element el = doc.createElement("urn");
-	      el.appendChild(text);
-	      // nList.item(0).getParentNode().insertBefore(urn, nList.item(0));
-	      nList.item(0).appendChild(el);
+          deleteElement(doc, "urn");
+          deleteElement(doc, "article-urn");
+          addElement(doc, "article-urn", urn, nList.item(0));
+	  }
+
+	  String issueUrn = getUrn(journal, year, issue);
+	  if (issueUrn!=null) {
+          deleteElement(doc, "issue-urn");
+          addElement(doc, "issue-urn", issueUrn, nList.item(0));
+	  }
+
+	  String journalUrn = getUrn(journal);
+	  if (journalUrn!=null) {
+          deleteElement(doc, "journal-urn");
+          addElement(doc, "journal-urn", journalUrn, nList.item(0));
 	  }
       return doc;
+  }
+
+  private void deleteElement(Document doc, String tag) {
+      Element element = (Element) doc.getElementsByTagName(tag).item(0);
+      if (element!=null)
+          element.getParentNode().removeChild(element);
+  }
+
+  private void addElement(Document doc, String tag, String strg, Node node) {
+	  Text text = doc.createTextNode(strg);
+	  Element element = doc.createElement(tag);
+	  element.appendChild(text);
+	  node.appendChild(element);
   }
 
   private String getUrn(String journal, String year, String issue, String aid) {
@@ -177,25 +196,20 @@ public class URN {
       return getUrnCheck(raw);
   }
 
-  /**
-       $conversionTable = array('9' => '41', '8' => '9', '7' => '8', '6' => '7', '5' => '6', '4' => '5', '3' => '4', '2' => '3', '1' => '2', '0' => '1', 'a' => '18', 'b' => '14', 'c' => '19', 'd' => '15', 'e' => '16', 'f' => '21', 'g' => '22', 'h' => '23', 'i' => '24', 'j' => '25', 'k' => '42', 'l' => '26', 'm' => '27', 'n' => '13', 'o' => '28', 'p' => '29', 'q' => '31', 'r' => '12', 's' => '32', 't' => '33', 'u' => '11', 'v' => '34', 'w' => '35', 'x' => '36', 'y' => '37', 'z' => '38', '-' => '39', ':' => '17', '_' => '43', '/' => '45', '.' => '47', '+' => '49');
+  private String getUrn(String journal, String year, String issue) {
+      String raw = prefix + journal + "-" + year + "-" + issue;
+      return getUrnCheck(raw);
+  }
 
-        $newURN = '';
-        for ($i = 0; $i < strlen($urnLower); $i++) {
-            $char = $urnLower[$i];
-            $newURN .= $conversionTable[$char];
-        }
-        $sum = 0;
-        for ($j = 1; $j <= strlen($newURN); $j++) {
-            $sum = $sum + ($newURN[$j-1] * $j);
-        }
-        $lastNumber = $newURN[strlen($newURN)-1];
-        $quot = $sum / $lastNumber;
-        $quotRound = floor($quot);
-        $quotString = (string)$quotRound;
+  private String getUrn(String journal, String year) {
+      String raw = prefix + journal + "-" + year;
+      return getUrnCheck(raw);
+  }
 
-        return $quotString[strlen($quotString)-1];
-    **/
+  private String getUrn(String journal) {
+      String raw = prefix + journal;
+      return getUrnCheck(raw);
+  }
 
   Map<String, String> map = null;
   private void createMap() {
@@ -225,7 +239,6 @@ public class URN {
       map.put("m", "27");
       map.put("n", "13");
       map.put("o", "28");
-      //map.put("p", "19");
       map.put("p", "29");
       map.put("q", "31");
       map.put("r", "12");
@@ -259,21 +272,13 @@ public class URN {
       for (int i = 0; i < buf.length(); i++) {
             int x = Integer.parseInt(buf.substring(i,i+1));
 			int prod = x * (i+1);
-			// log("" + i + ": " + x + " : " + prod);
             sum += prod;
       }
-	  // sum +=102;
-      // int last = Integer.parseInt(raw.substring(raw.length()-1));
       int last = Integer.parseInt(buf.substring(buf.length()-1));
       float quot = sum / last;
       int quotRound = (int)Math.floor(quot)%10;
       String quotString = "" + quotRound;
       result = raw + quotString;
-	  //log("    sum: " + sum);
-	  //log("   last: " + last);
-	  //log("    raw: " + raw);
-      //log("   quot: " + quot);
-      //log(" result: " + result);
 	  return result;
   }
 
@@ -309,12 +314,42 @@ public class URN {
       test("urn:nbn:de:hebis:04-ep0002-2012-30-9834");
   }
 
+  public void make(String str) {
+      if (str.startsWith("urn:")) {
+          String urn = getUrnCheck(str);
+          System.out.println(urn);
+      } else if (str.startsWith("http://")) {
+          String src = str.substring(str.indexOf("//")+2);
+          src = src.substring(src.indexOf("/")+1);
+          src = src.replace("diss/","");
+          src = src.replaceFirst("/","");
+          src = src.replace("/","-");
+          String urn = getUrn(src);
+          log(urn);
+      }
+  }
+
+  public void make(String in, String outfile) {
+      String xml = FileUtil.read(in);
+      Document doc = this.makeDoc(xml);
+      if (outfile==null)
+          log(asString(doc));
+      FileUtil.write(outfile, this.asString(doc));
+  }
+
+  /***
   public static void main(String... args) {
       URN myself = new URN("urn:nbn:de:hebis:04-ep");
       myself.create();
-      if (args.length >0) {
+      if (args.length >0 && args[0].equals("-urn")) {
+          if (args[1]!=null) {
+              String urn = myself.getUrnCheck(args[1]);
+              //myself.log("urn: " + args[1] + " " + urn);
+              System.out.println(urn);
+          }
+      } else if (args.length >0) {
           String xml = FileUtil.read(args[0]);
-          Document doc = myself.make(xml);
+          Document doc = myself.makeDoc(xml);
           if (args.length >1)
               FileUtil.write(args[1], myself.asString(doc));
           else myself.log(myself.asString(doc));
@@ -328,4 +363,5 @@ public class URN {
       }
       myself.dispose();
   }
+  **/
 }

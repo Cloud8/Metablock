@@ -5,183 +5,222 @@ import org.shanghai.util.FileUtil;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Properties;
 import java.util.logging.Logger;
 import java.lang.Character;
 
 /**
-   @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
-   @title A Command Interface for the Shanghai RDF Indexer
-   @date 2013-01-17
-   @abstract Indexer : RDFCrawl : RDFTransporter : RDFReader : ModelTalk
-                       RDFCrawl : XMLTransformer, SolrPost 
+    @license http://www.apache.org/licenses/LICENSE-2.0
+    @author Goetz Hatop
+    @title Command Line Interface for the Shanghai RDF Indexer
+    @date 2013-10-17
 */
 public class Indexer {
 
-    RDFCrawl rdfCrawl = null;
-    RDFTransporter rdfTransporter = null;
-    Properties prop;
-    Config config;
-
-    private static final Logger logger =
-                         Logger.getLogger(Indexer.class.getName());
+    protected Config config;
+    private RDFCrawl rdfCrawl = null;
+    private RDFCrawl.Storage storage = null;
+    private RDFCrawl.Transporter transporter = null;
+    private Config.Index idx;
+    private int count = 0;
 
     public Indexer(Config c) {
         this.config = c;
+        this.idx = config.getIndex();
     }
 
-    public Indexer(Properties prop) {
-        this.prop = prop;
-    }
-
-    static void log(String msg) {
-        //logger.info(msg);
-        System.out.println(msg);
-    }
-
-    static void log(Exception e) {
-        log(e.toString());
-        e.printStackTrace(System.out);
-    }
-
-    public Indexer create() {
-        if (prop==null)
-            prop = config.getProperties();
-        return this;
+    public Indexer(Config c, String index) {
+        this.config = c;
+        this.idx = config.getIndex(index);
+        if (idx==null)
+             log("Bad Index definition. Will break");
+        else log("active enum: " + idx.enum_);
     }
 
     public void dispose() {
+        if (transporter!=null)
+            transporter.dispose();
+        transporter = null;
+        if (storage!=null)
+            storage.dispose();
+        storage = null;
+        if (rdfCrawl!=null)
+            rdfCrawl.dispose();
+        rdfCrawl = null;
     }
 
-    public void probe() {
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        rdfTransporter.probe();
-        rdfTransporter.dispose();    
+    public void create() {
+        String sparql = idx.sparql;
+        String probe = idx.probe;
+        String enum_ = idx.enum_;
+        String dump  = idx.dump;
+        String date  = idx.date;
+        if (sparql.equals("tdb")) {
+            sparql = config.get("tdb.store");
+        }
+        transporter = new RDFTransporter(sparql,probe,enum_,dump,date); 
+        transporter.create();
     }
 
-    public void dump() {
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        //int size = rdfTransporter.size();
-        //log("store size: " + size);
-        //if (size==0)
-        //    return;
-        // int rand = (int)(Math.random()*size);
-        test(0);
-        rdfTransporter.dispose();    
+    private void createStorage() {
+        String solr = idx.store;
+        if (solr.equals("solr")) {
+            solr = config.get("solr.url")+config.get("solr.core");
+        } 
+        storage = new SolrPost(solr);
+        storage.create();
+
+        String xsltFile = idx.transformer;
+        String testFile = idx.test;
+        int logC = idx.count;
+        rdfCrawl = new RDFCrawl(transporter,storage,xsltFile,testFile,logC);
+        rdfCrawl.create();
     }
 
-    public void test(String offset) {
-        int off = Integer.parseInt(offset);
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        test(off);
-        rdfTransporter.dispose();    
-    }
-
-    public void test() {
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        test(0);
-        rdfTransporter.dispose();    
-    }
-
-    private void test(int off) {
-        // int x = Integer.parseInt(what);
-        int x = 22;
-        int i = 0;
-        for(String id: rdfTransporter.getIdentifiers(off,x-1)) {
-            log(" " + (i++) + " [" + id + "]");
+    public void index(String[] args) {
+        int argc=0;
+        if (args.length==0 || args[argc].startsWith("-c") 
+            || args[argc].startsWith("-d") || args[argc].startsWith("-post") ) 
+            createStorage();
+        if (args.length==0) {
+            index(idx);
+        } else if (args[argc].startsWith("-clean")) {
+            clean();
+        } else if (args[argc].startsWith("-destroy")) {
+            clean();
+        } else if (args[argc].startsWith("-probe")) {
+			probe();
+        } else if (args[argc].startsWith("-test")) {
+            argc++;
+            if (args.length-argc==2)
+			    test(args[argc++],args[argc++]);
+            else if (args.length-argc==1)
+			    test(args[argc++]);
+			else
+                test();
+        } else if (args[argc].endsWith("-dump")) {
+            argc++;
+            if (args.length-argc==2) {
+                dump(args[argc++], args[argc++]);
+            } else if (args.length-argc==1) {
+                dump(args[argc++]);
+            } else {
+                dump();
+            }
+        } else if (args[argc].endsWith("-post")) {
+            argc++;
+            createStorage();
+            post(args[argc++]);
+        } else if (args[argc].startsWith("-del")) {
+            argc++;
+            if (args.length-argc==1) {
+                System.out.println("# remove solr record " + args[argc]);
+                remove(args[argc++]);
+            }
         }
     }
 
-    private void testCrawl() {
-        log("RDFCrawl test:");
-        RDFCrawl rdfCrawl = new RDFCrawl(prop);
-        rdfCrawl.create();
-        rdfCrawl.test();
-        rdfCrawl.dispose();
+    private void probe() {
+        transporter.probe();
     }
 
-    public void post(String what) {
-        log("post: " + what);
-        rdfCrawl = new RDFCrawl(prop);
-        rdfCrawl.create();
-        rdfCrawl.post(what);
-        rdfCrawl.dispose();
+    private void test() {
+        test(0,12);
     }
 
-    public void index(String offset, String limit) {
+    private void test(String offset) {
+        int off = Integer.parseInt(offset);
+        test(off,22);
+    }
+
+    private void test(String offset, String limit) {
+        int x = Integer.parseInt(offset);
+        int y = Integer.parseInt(limit) +1;
+        test(x,y);
+    }
+
+    private void test(int off, int count) {
+        int x = count;
+        int i = 0;
+        for(String id: transporter.getIdentifiers(off,count-1)) {
+            System.out.println(" " + (i++) + " [" + id + "]");
+        }
+    }
+
+    private void post(String resource) {
+        log("post: " + resource);
+        rdfCrawl.post(resource);
+    }
+
+    private void index(String offset, String limit) {
         int off = Integer.parseInt(offset);
         int max = Integer.parseInt(limit);
         log("index offset " + off + " limit " + max);
-        rdfCrawl = new RDFCrawl(prop);
-        rdfCrawl.create();
         boolean b = rdfCrawl.index(off, max);
-        rdfCrawl.dispose();
+        log("indexed " + rdfCrawl.count + " records."); 
     }
 
-    public void index(String offset) {
-        if (offset.equals("test"))
-            testCrawl();
-        else
-            index(offset, "12");
-    }
-
-    public void index() {
-        log("index routine starts.");
-        long start = System.currentTimeMillis();
-        if (config!=null)
-        for (Config.Index idx : config.getIndexList()) {
-            Properties prop = idx.getProperties();
-            log("indexing " + prop.getProperty("index.sparql"));
-            rdfCrawl = new RDFCrawl(prop);
-            rdfCrawl.create();
-            rdfCrawl.index();
-            rdfCrawl.dispose();
-        } else {
-            log("indexing " + prop.getProperty("index.sparql"));
-            rdfCrawl = new RDFCrawl(prop);
-            rdfCrawl.create();
-            rdfCrawl.index();
-            rdfCrawl.dispose();
+    private void index(Config.Index idx) {
+        if (idx==null) {
+            log("invalid.");
+            return;
         }
+        log("index routine " + idx.name + " starts.");
+        long start = System.currentTimeMillis();
+        rdfCrawl.index();
         long end = System.currentTimeMillis();
-        //records per second
-        double rs = rdfCrawl.count / ((end - start)/1000) ;
+        double rs = ((end - start)/1000);
+        if ( rs>0.0 ) //prevent div by zero
+             rs = rdfCrawl.count / rs ;
         log("indexed " + rdfCrawl.count + " records in " 
                        + ((end - start)/1000) + " sec [" + rs +" rec/s]");
     }
 
-    public void dump(String uri) {
+    private String getDescription(String uri) {
+        log(uri);
+        return rdfCrawl.read(uri); 
+    }
+
+    private void dump(String uri, String filename) {
+        FileUtil.write(filename, getDescription(uri));
+    }
+
+    private void dump(String uri) {
         String rdf = getDescription(uri);
         System.out.println(rdf);
     }
 
-    private String getDescription(String uri) {
-        log(uri);
-        rdfTransporter = new RDFTransporter(prop);
-        rdfTransporter.create();    
-        String rdf = rdfTransporter.getDescription(uri); 
-        rdfTransporter.dispose();    
-        return rdf;
+    private void dump() {
+        String uri = transporter.getIdentifiers(0,1)[0];
+        String rdf = getDescription(uri); 
+        System.out.println(rdf);
     }
 
-    public void dump(String uri, String filename) {
-        FileUtil.write(filename, getDescription(uri));
+    private void remove(String id) {
+        storage.delete(id);
     }
 
-    /** clean the solr index, not the triple store data */
-    public void cleanSolr() {
-        SolrPost solrPost = new SolrPost(prop.getProperty("index.solr"));
-        solrPost.create();
-        solrPost.clean();
-        solrPost.dispose();
+    private void clean() {
+        storage.destroy();
     }
 
-    public void talk() {
-        log("usage: to do");
+    private void log(String[] msg) {
+        String str = new String("[");
+        for(String s : msg) 
+            str += " "+s;
+        str += "]";
+        logger.info("args: " + str);
     }
+
+    private void log(String msg) {
+        logger.info(msg);
+    }
+
+    private void log(Exception e) {
+        log(e.toString());
+        e.printStackTrace(System.out);
+    }
+
+    private static final Logger logger =
+                         Logger.getLogger(Indexer.class.getName());
+
 }

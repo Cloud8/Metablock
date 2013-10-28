@@ -5,7 +5,7 @@
 JDIRS := $(shell find src -type d)
 FILES := $(foreach d,$(JDIRS),$(wildcard $(d)/*.java))
 CLASS := $(patsubst src/%.java,dlib/%.class,$(FILES))
-CPATH := dlib:$(subst $() $(),:,$(wildcard lib/*.jar))
+CPATH := dlib:lib:$(subst $() $(),:,$(wildcard lib/*.jar))
 JOPTS := -encoding UTF8
 
 .PHONY: deploy fat
@@ -21,8 +21,7 @@ dlib:
 	mkdir -p dlib
 
 deploy: 
-	@#rsync -av shanghai.jar archiv@archiv:/usr/local/opus/Shanghai
-	rsync -av --delete lib dlib shanghai archiv@archiv:/usr/local/opus/Shanghai/
+	rsync -a --delete * archiv@archiv:/usr/local/opus/Shanghai/
 
 compile: $(CLASS)
 
@@ -40,13 +39,13 @@ dlib/manifest: Makefile
 	@echo "Main-Class: com.simontuffs.onejar.Boot" >>$@
 	@echo "One-Jar-Main-Class: org.shanghai.main.Main" >>$@
 
-DIRS:= /srv/archiv/eb /srv/archiv/diss
+DIRS:= /srv/archiv/diss
+DIRS:= $(DIRS) /srv/archiv/eb 
 DIRS:= $(DIRS) /srv/archiv/ep/0002 /srv/archiv/ep/0003
-DIRS:= $(DIRS) /srv/archiv/es /srv/archiv/ed
-crawl-all:
-	rm -f /vol/vol01/data/jena.tdb/*
-	@java -cp $(DPATH):$(DPATH) org.shanghai.main.Main -crawl $(DIRS)
-	chmod 666 /vol/vol01/data/jena.tdb/*
+DIRS:= $(DIRS) /srv/archiv/es 
+DIRS:= $(DIRS) /srv/archiv/ed 
+crawl:
+	@java -cp $(CPATH) org.shanghai.main.Main -crawl $(DIRS)
 
 check:
 	@echo CPATH: $(CPATH)
@@ -58,5 +57,5 @@ clean:
 
 cleaner: clean
 	@rm -f lib/shanghai.jar
-	@rm -rf dlib/org
+	@rm -rf dlib/org dlib/com dlib/manifest main
 

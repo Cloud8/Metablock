@@ -7,5 +7,10 @@ dir=`dirname $0`
 CP=$dir/dlib:$dir/lib; for l in $dir/lib/*.jar; do
    CP=$CP:$l
 done
-java -cp $CP org.shanghai.main.Main $*
+
+case $1 in
+  *)
+    java -cp $CP org.shanghai.main.Main $*
+  ;;
+esac
 

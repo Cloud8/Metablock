@@ -6,17 +6,16 @@ import com.lyncode.xoai.serviceprovider.exceptions.HarvestException;
 import com.lyncode.xoai.serviceprovider.exceptions.InternalHarvestException;
 import com.lyncode.xoai.serviceprovider.verbs.Identify;
 
+/** test class */
 public class SimpleIdentify {
 
   public static void main(String... args) {
       Configuration config = new Configuration();
       config.setResumptionInterval(1000); // 1 second
 
-      //String baseUrl = "http://localhost:8080/xoai/request";
-      String baseUrl = "http://archiv.ub.uni-marburg.de/ep/0002/oai";
+      String baseUrl = "http://localhost:8080/xoai/request";
       int interval = 1000; 
 
-      //HarvesterManager harvester = new HarvesterManager(config, baseUrl);
       HarvesterManager harvester = new HarvesterManager(baseUrl, interval);
 
       try {

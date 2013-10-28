@@ -6,14 +6,13 @@ import com.lyncode.xoai.serviceprovider.data.Record;
 import com.lyncode.xoai.serviceprovider.exceptions.HarvestException;
 import com.lyncode.xoai.serviceprovider.iterators.RecordIterator;
 
+/** test class */
 public class SimpleRecordListing {
 
   public static void main(String... args) {
       Configuration config = new Configuration();
       config.setResumptionInterval(1000); // 1 second
 
-      //String baseUrl = "http://localhost:8080/xoai/request";
-      //String metadataPrefix = "oai_dc";
       String metadataPrefix = "nlm";
 
       //HarvesterManager harvester = new HarvesterManager(config, baseUrl);
