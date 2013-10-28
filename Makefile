@@ -8,7 +8,7 @@ CLASS := $(patsubst src/%.java,dlib/%.class,$(FILES))
 CPATH := dlib:lib:$(subst $() $(),:,$(wildcard lib/*.jar))
 JOPTS := -encoding UTF8
 
-.PHONY: deploy fat
+.PHONY: deploy
 
 dlib/%.class: src/%.java
 	@echo $<
@@ -20,32 +20,7 @@ default: compile
 dlib:
 	mkdir -p dlib
 
-deploy: 
-	rsync -a --delete * archiv@archiv:/usr/local/opus/Shanghai/
-
 compile: $(CLASS)
-
-main/main.jar: $(CLASS)
-	mkdir -p main
-	jar cf $@ -C dlib org
-
-fat: ubcat.jar
-
-ubcat.jar: dlib/manifest main/main.jar
-	jar cfm $@ dlib/manifest main lib -C dlib com
-
-dlib/manifest: Makefile
-	@echo "Created-By: Nirvana Coorporation" >$@
-	@echo "Main-Class: com.simontuffs.onejar.Boot" >>$@
-	@echo "One-Jar-Main-Class: org.shanghai.main.Main" >>$@
-
-DIRS:= /srv/archiv/diss
-DIRS:= $(DIRS) /srv/archiv/eb 
-DIRS:= $(DIRS) /srv/archiv/ep/0002 /srv/archiv/ep/0003
-DIRS:= $(DIRS) /srv/archiv/es 
-DIRS:= $(DIRS) /srv/archiv/ed 
-crawl:
-	@java -cp $(CPATH) org.shanghai.main.Main -crawl $(DIRS)
 
 check:
 	@echo CPATH: $(CPATH)
