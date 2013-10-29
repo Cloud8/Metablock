@@ -1,26 +1,32 @@
 #
-# Makefile Forever Agency
+# Makefile Security Agency
 #
 
 JDIRS := $(shell find src -type d)
 FILES := $(foreach d,$(JDIRS),$(wildcard $(d)/*.java))
-CLASS := $(patsubst src/%.java,dlib/%.class,$(FILES))
-CPATH := dlib:lib:$(subst $() $(),:,$(wildcard lib/*.jar))
+CLASS := $(patsubst src/%.java,lib/%.class,$(FILES))
+CPATH := lib:$(subst $() $(),:,$(wildcard lib/*.jar))
 JOPTS := -encoding UTF8
 
 .PHONY: deploy
 
-dlib/%.class: src/%.java
+lib/%.class: src/%.java
 	@echo $<
-	@javac $(JOPTS) -cp src:$(CPATH) -d dlib $<
+	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
-default: compile
-	@echo "All compiled now, I believe."
+default: lib/shanghai.jar
+	@echo "All compiled: make clean, make test"
 
-dlib:
-	mkdir -p dlib
+compile: $(CLASS) 
 
-compile: $(CLASS)
+lib/shanghai.jar: $(CLASS) lib/shanghai.ttl
+	jar cf $@ -C lib org
+
+lib/shanghai.ttl: lib/template.ttl
+	@cp $< $@
+
+test: 
+	java -cp lib:lib/* org.shanghai.main.Main
 
 check:
 	@echo CPATH: $(CPATH)
@@ -29,8 +35,4 @@ check:
 clean:
 	@rm -f $(CLASS)
 	@rm -rf lib/org
-
-cleaner: clean
-	@rm -f lib/shanghai.jar
-	@rm -rf dlib/org dlib/com dlib/manifest main
 

@@ -70,11 +70,11 @@ public class Crawl {
             String graph = config.get("tdb.graph");
             storage = new RDFStorage(tdb,graph);
             storage.create();
-        } else if (store.equals("virt")) {
-            String virt = config.get("virt.store");
-            String graph = config.get("virt.graph");
-            String dbuser = config.get("virt.dbuser");
-            String dbpass = config.get("virt.dbpass");
+        } else if (store.startsWith("virt")) {
+            String virt = config.get(store+".store");
+            String graph = config.get(store+".graph");
+            String dbuser = config.get(store+".dbuser");
+            String dbpass = config.get(store+".dbpass");
             storage = new RDFStorage(virt,graph,dbuser,dbpass);
             storage.create();
         }

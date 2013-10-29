@@ -2,15 +2,9 @@
 
 dir=`dirname $0`
 
-## java -jar shanghai.jar $*
-
-CP=$dir/dlib:$dir/lib; for l in $dir/lib/*.jar; do
-   CP=$CP:$l
+CP=$dir/lib; for l in $dir/lib/*.jar; do
+  CP=$CP:$l
 done
 
-case $1 in
-  *)
-    java -cp $CP org.shanghai.main.Main $*
-  ;;
-esac
+java -cp $CP org.shanghai.main.Main $*
 
