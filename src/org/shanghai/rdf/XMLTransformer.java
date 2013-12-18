@@ -22,17 +22,28 @@ import java.io.StringWriter;
 
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.dom.DOMSource;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
+
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.vocabulary.RDF;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -45,28 +56,38 @@ public class XMLTransformer {
     private static final Logger logger =
                          Logger.getLogger(XMLTransformer.class.getName());
 
-    Transformer transformer;
+    private Templates templates;
     private StringWriter stringWriter;
 
-    public XMLTransformer() {
-        stringWriter = new StringWriter();
-    }
+    private String xslt; 
+    private static TransformerFactory factory;
 
     public XMLTransformer(String xslt) {
-        this();
-        createTransformer(xslt);
+        if (xslt==null)
+            log("bad xslt");
+        this.xslt = xslt;
     }
 
-    private void log(String msg) {
+    private static void log(String msg) {
         logger.info(msg);    
     }
 
-    private void log(Exception e) {
+    private static void log(Exception e) {
         log(e.toString());
         e.printStackTrace(System.out);
     }
 
     public void create() {
+        stringWriter = new StringWriter();
+        factory = TransformerFactory.newInstance();
+        try {
+            InputStream in = new ByteArrayInputStream(xslt.getBytes("UTF-8"));
+            Source src = new StreamSource(in);
+            templates = factory.newTemplates(src);
+            //transformer.setOutputProperty("omit-xml-declaration", "yes");
+            if (in!=null) in.close();
+        } catch(TransformerConfigurationException e) { log(e); }
+          catch(IOException e) { log(e); }
     }
 
     public void dispose() {
@@ -74,43 +95,42 @@ public class XMLTransformer {
         catch(IOException e) {log(e);}
     }
 
-    //dirty
     public String transform( Model mod ) {
         return transform( asString(mod) );
+        //return transform( asDocument(mod) );
     }
 
     public String transform( Document doc ) {
-		transformer.reset();
 	    String result = null;
 	    try {
+          Transformer transformer = templates.newTransformer();
 		  StringWriter writer = new StringWriter();
 		  transformer.transform( new DOMSource(doc), 
 			                     new StreamResult(writer));
           result = writer.toString();
+          //transformer.reset();
         } catch(TransformerException e) { log(e); }
           finally {
-          return result;
+              return result;
         }
     }
 
     public String transform( String xmlString ) {
-		transformer.reset();
 	    String result = null;
 	    try {
-          StringReader reader = new StringReader(xmlString);
-		  StringWriter writer = new StringWriter();
-		  transformer.transform( new StreamSource(reader), 
+            StringReader reader = new StringReader(xmlString);
+		    StringWriter writer = new StringWriter();
+            Transformer transformer = templates.newTransformer();
+		    transformer.transform( new StreamSource(reader), 
 			                     new StreamResult(writer));
-          result = writer.toString();
-        } catch(TransformerException e) { log(e); }
-          finally {
-          return result;
+            result = writer.toString();
+            //transformer.reset();
+        } catch(TransformerException e) { 
+            result = null;
+            log(e); 
+        } finally {
+            return result;
         }
-    }
-
-    /** Add a parameter for the transformation */
-    public void setParameter(String name, String value) {
-        transformer.setParameter(name, value);
     }
 
     String asString(Model model) {
@@ -133,20 +153,82 @@ public class XMLTransformer {
         }
     }
 
-    private void createTransformer(String text) {
+    String asString(Document doc) {
+        String text = null;
         try {
-            TransformerFactory factory = TransformerFactory.newInstance();
-            InputStream in = new ByteArrayInputStream(text.getBytes("UTF-8"));
-            if (in==null) {
-                log ("xslt dirty.");
-                return;
-            }
-            Source xslt = new StreamSource(in);
-            transformer = factory.newTransformer(xslt);
-            transformer.setOutputProperty("omit-xml-declaration", "yes");
-            if (in!=null) in.close();
-        } catch(TransformerConfigurationException e) { log(e); }
-          catch(IOException e) { log(e); }
+            DOMSource domSource = new DOMSource(doc);
+            Transformer transformer = factory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            transformer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
+            transformer.setOutputProperty
+                ("{http://xml.apache.org/xslt}indent-amount", "4");
+            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            java.io.StringWriter sw = new java.io.StringWriter();
+            StreamResult sr = new StreamResult(sw);
+            transformer.transform(domSource, sr);
+            text = sw.toString();
+        } //catch(javax.xml.parsers.ParserConfigurationException e) { log(e); }
+          catch(javax.xml.transform.TransformerException e) { log(e); }
+        return text;
     }
+
+    private Document asDocument(Model model) {
+        String subject = null;
+        String property = null;
+        String object = null;
+
+	    Document doc=null;	
+		try {
+		    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		    DocumentBuilder db = dbf.newDocumentBuilder();
+		    doc = db.newDocument();
+		} catch(ParserConfigurationException pce) {
+		    //throw new org.apache.xml.utils.WrappedRuntimeException(pce);
+            log(pce);
+		}	
+		 
+		Element root= doc.createElementNS(RDF.getURI(),"rdf:RDF");
+		root.setAttributeNS("http://www.w3.org/2000/xmlns/", 
+                            "xmlns:rdf",RDF.getURI());
+		StmtIterator iter=model.listStatements(
+		    isEmpty(subject)?null:ResourceFactory.createResource(subject),
+		    isEmpty(property)?null:ResourceFactory.createProperty(property),
+		    isEmpty(object)?null: (isURI(object)?
+            ResourceFactory.createResource(object):model.createLiteral(object))
+		);
+
+		while(iter.hasNext()) {
+		    Statement stmt= iter.nextStatement();
+		    Element S=doc.createElementNS(RDF.getURI(),"rdf:Statement");
+		    root.appendChild(S);
+		    Element f=doc.createElementNS(RDF.getURI(),"rdf:subject");
+		    S.appendChild(f);
+		    f.setAttributeNS(RDF.getURI(),
+                             "rdf:resource",stmt.getSubject().getURI());
+		    f=doc.createElementNS(RDF.getURI(),"rdf:predicate");
+		    S.appendChild(f);
+		    f.setAttributeNS(RDF.getURI(),
+                              "rdf:resource",stmt.getPredicate().getURI());
+		    f=doc.createElementNS(RDF.getURI(),"rdf:object");
+		    S.appendChild(f);
+		    if(stmt.getObject().isLiteral()) {
+		        f.appendChild(
+                    doc.createTextNode(""+stmt.getLiteral().getValue()));
+		    } else {
+		        f.setAttributeNS(RDF.getURI(),
+                   "rdf:resource",stmt.getResource().getURI());
+		    }
+		}
+		iter.close();
+		return doc;
+	}
+
+	private static boolean isEmpty(String s) {
+	    return s==null || s.isEmpty();
+	}
+
+	private static boolean isURI(String s) {
+	    return s.startsWith("http://");
+	}
 
 }

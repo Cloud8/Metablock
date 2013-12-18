@@ -68,13 +68,13 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
 
 ### Compile
   
-  Only Java 7 and upwards...
+  Java 7 and upwards...
 
-###May be later
+### May be later
 
   - add an OAI server to expose metadata from the local store as RDF/XML
 
-###Collaboration
+### Collaboration
   We're *open to pull requests*! If you'd like to collaborate, 
   offer feedback, know better english or best of all - better code, 
   feel free to do so. 

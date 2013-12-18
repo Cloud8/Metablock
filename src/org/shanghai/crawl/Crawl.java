@@ -37,30 +37,46 @@ public class Crawl {
     }
 
     public void create() {
-        createStorage(config.get("crawl.store"));
-        if (storage==null) {
-            log("Bad storage : will break.");
-            return;
-        }
-        createTransporter("crawl");
         String testFile = config.get("crawl.test");
         int logC = config.getInt("crawl.count");
         boolean create = config.getBoolean("crawl.create");
-        crawler = new MetaCrawl(transporter,storage,testFile,logC,create);
-        crawler.create();
+        createTransporter(config.get("crawl.source"));
+
+        if ("test".equals(config.get("crawl.target"))) {
+            crawler = new MetaCrawl(transporter,testFile);
+            crawler.create();
+        } else {
+            createStorage(config.get("crawl.target"));
+            if (storage==null) 
+                log("Bad storage : will break.");
+            crawler = new MetaCrawl(transporter,storage,testFile,logC,create);
+            crawler.create();
+        }
     }
 
     protected void createTransporter(String crawl) {
-        if ("crawl".equals(crawl)) {
-            String suffix = config.get("crawl.suffix");
-            int depth = config.getInt("crawl.depth");
-            int logC = config.getInt("crawl.count");
+        if ("files".equals(crawl)) {
+            String suffix = config.get("files.suffix");
+            int depth = config.getInt("files.depth");
+            int logC = config.getInt("files.count");
             FileCrawl fc = new FileCrawl(suffix,depth,logC);
             fc.create(); 
             transporter = fc.addScanner(new TrivialScanner().create());
-            //log("createTransporter " + crawl);
+            log("createTransporter " + crawl);
+        } else if ("data".equals(crawl)) {
+            String store = config.get("data.store");
+            if (store.equals("tdb")) {
+                store = config.get("tdb.store");
+            }
+            String probe = config.get("data.probe");
+            String enum_ = config.get("data.enum");
+            String dump = config.get("data.dump");
+            String date = config.get("data.date");
+            transporter = new TDBTransporter(store, probe, enum_, dump, date);
+            transporter.create();
+            log("createTransporter " + crawl);
         } else {
-            //log("createTransporter failed");
+            log("createTransporter failed");
         }
     }
 
@@ -77,6 +93,22 @@ public class Crawl {
             String dbpass = config.get(store+".dbpass");
             storage = new RDFStorage(virt,graph,dbuser,dbpass);
             storage.create();
+        } else if (store.startsWith("solr")) {
+            String solr=config.get(store+".url")+"/"+config.get(store+".core");
+            String transformer = config.get(store+".transformer");
+            if (transformer==null)
+                log("Missing transformer [" + transformer + "]. Will break.");
+            log("createStorage [" + store + "] [" + transformer + "]");
+            storage = new SolrStorage(solr,transformer);
+            storage.create();
+        } else if (store.startsWith("files")) {
+            String directory = config.get(store+".directory");
+            String transformer = config.get(store+".transformer");
+            storage = new FileStorage(directory,transformer);
+            storage.create();
+            log("createStorage [" + store + "] [" + transformer + "]");
+        } else {
+            log("No storage! [" + store + "]");
         }
     }
 
@@ -121,6 +153,8 @@ public class Crawl {
         //log("make " + cmd);
         if (cmd.startsWith("-test"))
             crawler.test();
+        else if (cmd.startsWith("-probe"))
+            crawler.probe();
         else if (cmd.startsWith("-destroy"))
             crawler.destroy();
     }

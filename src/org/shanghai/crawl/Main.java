@@ -36,7 +36,7 @@ public class Main {
 
         if (args[0].endsWith("-crawl")) {
             if (1<args.length) {
-                System.out.println(" # crawl " + args[0] + " " + args[1]);
+                //System.out.println(" # crawl " + args[0] + " " + args[1]);
                 create();
                 crawl.crawl(args);
                 dispose();

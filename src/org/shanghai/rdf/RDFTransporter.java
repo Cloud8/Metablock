@@ -77,13 +77,16 @@ public class RDFTransporter implements RDFCrawl.Transporter {
     }
 
     @Override
-    public void probe() {
+    public String probe() {
         if(probeQuery==null) {
             log("no probe query");
-            return;
+            return null;
         }
         String result = storage.probe(probeQuery);
         log("probed result: " + result);
+        //if(result.equals("0"))
+        //   log(probeQuery);
+        return result;
     }
 
     @Override

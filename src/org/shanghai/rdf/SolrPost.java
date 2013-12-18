@@ -44,7 +44,9 @@ public class SolrPost implements RDFCrawl.Storage {
 
     @Override
     public void dispose() {
-        //log("solr commit received");
+        //if (server==null)
+        //    return;
+        log("solr commit");
         try {
           server.commit();
         } catch(SolrServerException e) { log(e); }
@@ -54,6 +56,8 @@ public class SolrPost implements RDFCrawl.Storage {
     @Override
     public boolean post(String data) {
        boolean b = false;
+       if (data==null || data.length()==0)
+           return b;
        try {
          DirectXmlRequest up = new DirectXmlRequest( "/update", data );
          server.request( up ); 

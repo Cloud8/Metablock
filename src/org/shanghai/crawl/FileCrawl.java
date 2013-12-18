@@ -25,7 +25,7 @@ public class FileCrawl implements MetaCrawl.Transporter {
         public void dispose();
         public void setDirectory(String dir);
         public boolean canRead(File file);
-        public void addScanner(TDBTransporter.Scanner scanner);
+        public void addScanner(FileTransporter.Scanner scanner);
         public Model read(String resource);
     }
 
@@ -44,7 +44,7 @@ public class FileCrawl implements MetaCrawl.Transporter {
         this.suffix = suffix;
         this.depth = depth;
         this.logC = logC;
-        delegate = new TDBTransporter();
+        delegate = new FileTransporter();
         identifiers = new ArrayList<String>();
     }
 
@@ -107,7 +107,7 @@ public class FileCrawl implements MetaCrawl.Transporter {
     }
 
     //@Override
-    public FileCrawl addScanner(TDBTransporter.Scanner s) {
+    public FileCrawl addScanner(FileTransporter.Scanner s) {
          delegate.addScanner(s); 
          return this;
     }
@@ -151,7 +151,7 @@ public class FileCrawl implements MetaCrawl.Transporter {
             identifiers.add(f.getPath());
             count++;
         }
-        if (logC!=0 && count%logC==1)
+        if (logC!=0&&count%logC==0)
             log("" + count + ": " + f.getAbsolutePath() +" ["+ level +"]");
     }
 

@@ -37,7 +37,7 @@ import java.util.Collections;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
+   @author Goetz Hatop 
    @title Simple Utility Class to wrap Filesystem access
    @date 2013-01-18
 */
@@ -155,10 +155,6 @@ public class FileUtil {
         return FileUtil.read(is);
     }
 
-    //public static String readFile(String path) throws IOException {
-	//    return readFile(new File(path));
-    //}
-
     private static void writeFile(String path, String text) throws IOException {
         Writer out = new BufferedWriter(new OutputStreamWriter(
                      new FileOutputStream(path), "UTF-8"));
@@ -171,7 +167,7 @@ public class FileUtil {
         }
     }
 
-    /** Cannot read UTF8. Seems channels work better */
+    /** Cannot read UTF8. 
     private static String readX(final InputStream is, final int bufferSize)
     {
       final char[] buffer = new char[bufferSize];
@@ -189,10 +185,11 @@ public class FileUtil {
         finally {
           in.close();
         }
-      } catch (UnsupportedEncodingException ex) { /* ... */ }
-        catch (IOException ex) { /* ... */ }
+      } catch (UnsupportedEncodingException ex) {ex.printStackTrace(); }
+        catch (IOException ex) { ex.printStackTrace(); }
       return out.toString();
     }
+    /* Seems channels work better */
 
     public static void main (String... args) {
         int argc = args.length;
