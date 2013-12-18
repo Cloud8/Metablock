@@ -1,0 +1,25 @@
+
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX fabio: <http://purl.org/spar/fabio/>
+
+# resource enumeration : every subject, but no blank nodes
+select distinct ?subject 
+FROM NAMED <http://archiv.ub.uni-marburg.de>
+where {
+  GRAPH <http://archiv.ub.uni-marburg.de> {
+    ## ?subject a fabio:JournalArticle .
+    ?subject ?p ?o .
+    ?subject dct:identifier ?o .
+    FILTER (!isBlank(?subject)) .
+    ## FILTER (?date > "<date>") .
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ed')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/es')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/diss')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/eb')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ep')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/eb/2012')
+  }
+}
+## ORDER BY DESC(?subject)
+

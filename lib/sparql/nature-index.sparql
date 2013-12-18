@@ -1,0 +1,17 @@
+PREFIX  dct:  <http://purl.org/dc/terms/>
+PREFIX  npg:  <http://ns.nature.com/terms/>
+PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX  bibo: <http://purl.org/ontology/bibo/>
+PREFIX  prism: <http://prismstandard.org/namespaces/basic/2.1/>
+
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dc:  <http://purl.org/dc/elements/1.1/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+select distinct ?subject 
+where {
+   ?subject  ?p ?o .
+   ?subject a npg:Article .
+   FILTER (!isBlank(?subject)) .
+}
+

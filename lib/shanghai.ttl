@@ -1,0 +1,74 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix : <http://localhost/terms/> .
+
+## Information, not evaluated. 
+:about dct:title  "Configurator" ;
+       dct:date   "2013-10-19" ;
+       dct:description "A Turtle Adventure" .
+
+## crawl local file system (shanghai -crawl) for RDF data collection
+## stores to :tdb jena or :virt virtuoso 
+:crawl :depth  "3"^^xsd:integer ;
+       :suffix ".rdf"^^xsd:string ;
+       :test   "data/crawl-test.tmp"^^xsd:string ;
+       :count  "400"^^xsd:integer ;
+       :create "true"^^xsd:boolean ;
+       :store :virt .
+
+## jena tdb store parameters
+:tdb   :store  "/vol/vol01/data/jena.tdb" .
+
+## virtuoso store parameters
+:virt  :store "jdbc:virtuoso://localhost:1111" ;
+       :graph "http://archiv.ub.uni-marburg.de" ;
+       :dbuser "xxxxx" ;
+       :dbpass "zzzzz" .
+
+## first part is standard index, or use indexName switch. 
+:index :hasPart :index01 ;
+       :hasPart :index02 ;
+       .
+
+## Use the sparql service point (or :tdb) for data retrieval,
+## use queries and transformation from the files. 
+## If asked for a -dump, use the given test file as storage.
+## Transformed records goes to :store (a valid solr uri).
+:index01 :sparql "http://localhost:8890/sparql" ;
+       :probe  "/sparql/shanghai-probe.sparql" ;
+       :enum   "/sparql/shanghai-index.sparql" ;
+       :dump   "/sparql/shanghai-about.sparql" ;
+       :transformer "/xslt/shanghai-transform.xslt" ;
+       :count  "600"^^xsd:integer ;
+       :test   "data/shanghai-about.solr" ;
+       :store  "http://localhost:8080/solr/biblio" .
+
+:index02 :sparql :tdb ;
+       :probe  "/sparql/archiv-probe.sparql" ;
+       :enum   "/sparql/archiv-index.sparql" ;
+       :dump   "/sparql/archiv-about.sparql" ;
+       :transformer "/xslt/shanghai-transform.xslt" ;
+       :count  "600"^^xsd:integer ;
+       :test   "data/archiv-about.solr" ;
+       :store  "http://localhost:8080/solr/biblio" .
+
+## OAI harvesting (shanghai -oai) 
+:oai   :hasPart :oai01 ;
+       :urnPrefix "urn:nbn:de:example:04-" ;
+       :store :virt .
+
+## harvest records from this source not older than <days>,
+## retrieve <maxRequest> records and do not make more than 
+## one request every <interval> seconds.
+## from and until are allowed too and will override day settings.
+:oai01 :harvest "http://www.pubmedcentral.nih.gov/oai/oai.cgi" ;
+       :prefix  "pmc" ;
+       :days    "1"^^xsd:integer ;
+       :maxRequest "20"^^xsd:integer ;
+       :interval "3"^^xsd:integer ;
+       :rawtest "data/pubmed-test.xml" ;
+       :rdftest "data/pubmed-test.rdf" ;
+       :transformer "/xslt/nlmJArticle.xslt" .
+
+#--#-#-#-#-#-#-# end of turtle adventure #-#-#-#-#-#-#-#-#-#
