@@ -21,7 +21,7 @@ import org.xml.sax.SAXException;
    @title RDF Crawler for the purpose of Solr indexing
    @date 2013-01-31
 */
-public class RDFCrawl {
+public class MetaCrawl {
 
     /** read from here */
     public interface Transporter {
@@ -38,6 +38,8 @@ public class RDFCrawl {
         public void dispose();
         public boolean delete(String resource);
         public boolean post(String data);
+        public boolean write(Model mod);
+        public boolean update(Model mod);
         public void destroy();
     }
 
@@ -54,7 +56,7 @@ public class RDFCrawl {
 
     private DocumentBuilder builder;
 
-    public RDFCrawl(Transporter r, Storage s, String x, String t, int c) {
+    public MetaCrawl(Transporter r, Storage s, String x, String t, int c) {
         this.transporter = r;
         this.storage = s;
         this.xsltFile = x;
@@ -212,7 +214,7 @@ public class RDFCrawl {
     }
 
     private static final Logger logger =
-                         Logger.getLogger(RDFCrawl.class.getName());
+                         Logger.getLogger(MetaCrawl.class.getName());
 
     private void log(String msg) {
         logger.info(msg);

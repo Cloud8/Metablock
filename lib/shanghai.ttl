@@ -3,28 +3,59 @@
 @prefix dct: <http://purl.org/dc/terms/> .
 @prefix : <http://localhost/terms/> .
 
-## Information, not evaluated. 
 :about dct:title  "Configurator" ;
        dct:date   "2013-10-19" ;
        dct:description "A Turtle Adventure" .
 
-## crawl local file system (shanghai -crawl) for RDF data collection
-## stores to :tdb jena or :virt virtuoso 
-:crawl :depth  "3"^^xsd:integer ;
-       :suffix ".rdf"^^xsd:string ;
-       :test   "data/crawl-test.tmp"^^xsd:string ;
-       :count  "400"^^xsd:integer ;
-       :create "true"^^xsd:boolean ;
-       :store :virt .
+:crawl :source :web ;
+       :target :solr3 ;
+       :count  "10"^^xsd:integer ;
+       :test   "data/crawl-test.rdf"^^xsd:string ;
+       :iri    "http://localhost/view/nlp/" ;
+       :nlp    "grobid lang"^^xsd:string ; ## grobid cermine lang
+       :create "false"^^xsd:boolean .
 
-## jena tdb store parameters
-:tdb   :store  "/vol/vol01/data/jena.tdb" .
+:files :depth  "5"^^xsd:integer ;
+       :suffix ".rdf .pdf .java .epub"^^xsd:string ; 
+       # :suffix ".rdf"^^xsd:string ; 
+       :count  "100"^^xsd:integer ; 
+       :cache  "/var/cache/apache2/cover" ; ## pdf cover images
+       :base   "http://localhost/view/page/" ; ## pdf view base
+       :book   "http://localhost/view/book/" ; ## epub view base
+       :store "data" .
 
-## virtuoso store parameters
+:tdb   :store  "/vol/vol01/data/jena.tdb" ;
+       :probe  "/sparql/rdf-probe.sparql" ;
+       :enum   "/sparql/rdf-index.sparql" ;
+       :dump   "/sparql/rdf-about.sparql" .
+       # :date "2014-01-01"
+
 :virt  :store "jdbc:virtuoso://localhost:1111" ;
        :graph "http://archiv.ub.uni-marburg.de" ;
        :dbuser "xxxxx" ;
-       :dbpass "zzzzz" .
+       :dbpass "zzzzz" ;
+       :probe  "/sparql/rdf-probe.sparql" ;
+       :enum   "/sparql/rdf-index.sparql" ;
+       :dump   "/sparql/rdf-about.sparql" .
+
+:solr1 :url   "http://localhost:8080/solr" ;
+       :transformer "/xslt/shanghai-transform.xslt" ;
+       :transporter "/xslt/solr2rdf.xslt" ;
+       :core  "biblio" .
+
+:solr2 :url   "http://localhost:8080/solr" ;
+       :transformer "/xslt/opac-transform.xslt" ;
+       :core  "biblio" .
+
+:solr3 :url   "http://localhost:8080/solr" ;
+       :transformer "/xslt/analyzer-transform.xslt" ;
+       :transporter "/xslt/solr2rdf.xslt" ;
+       :core  "website" .
+
+## source, no target 
+:web   :crawl "http://www.uni-marburg.de/bis" ;
+       :cache "/vol/vol01/data/cache" ;
+       :robots "4"^^xsd:integer .
 
 ## first part is standard index, or use indexName switch. 
 :index :hasPart :index01 ;
@@ -41,34 +72,15 @@
        :dump   "/sparql/shanghai-about.sparql" ;
        :transformer "/xslt/shanghai-transform.xslt" ;
        :count  "600"^^xsd:integer ;
-       :test   "data/shanghai-about.solr" ;
+       :test   "data/shanghai-about.rdf" ;
        :store  "http://localhost:8080/solr/biblio" .
 
 :index02 :sparql :tdb ;
-       :probe  "/sparql/archiv-probe.sparql" ;
-       :enum   "/sparql/archiv-index.sparql" ;
-       :dump   "/sparql/archiv-about.sparql" ;
-       :transformer "/xslt/shanghai-transform.xslt" ;
-       :count  "600"^^xsd:integer ;
-       :test   "data/archiv-about.solr" ;
-       :store  "http://localhost:8080/solr/biblio" .
-
-## OAI harvesting (shanghai -oai) 
-:oai   :hasPart :oai01 ;
-       :urnPrefix "urn:nbn:de:example:04-" ;
-       :store :virt .
-
-## harvest records from this source not older than <days>,
-## retrieve <maxRequest> records and do not make more than 
-## one request every <interval> seconds.
-## from and until are allowed too and will override day settings.
-:oai01 :harvest "http://www.pubmedcentral.nih.gov/oai/oai.cgi" ;
-       :prefix  "pmc" ;
-       :days    "1"^^xsd:integer ;
-       :maxRequest "20"^^xsd:integer ;
-       :interval "3"^^xsd:integer ;
-       :rawtest "data/pubmed-test.xml" ;
-       :rdftest "data/pubmed-test.rdf" ;
-       :transformer "/xslt/nlmJArticle.xslt" .
+       :probe  "/sparql/rdf-probe.sparql" ;
+       :enum   "/sparql/rdf-index.sparql" ;
+       :dump   "/sparql/rdf-about.sparql" ;
+       :count  "10"^^xsd:integer ;
+       :test   "data/shanghai-about.rdf" ;
+       :store  :solr1 .
 
 #--#-#-#-#-#-#-# end of turtle adventure #-#-#-#-#-#-#-#-#-#

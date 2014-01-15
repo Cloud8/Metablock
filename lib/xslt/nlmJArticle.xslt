@@ -166,13 +166,16 @@
 </xsl:template>
 
 <xsl:template match="nlm:pub-date[@pub-type='collection']">
+ <!--
  <dct:issued>
       <xsl:value-of select="nlm:year"/>-<xsl:value-of select="../nlm:pub-date[@pub-type='epub']/nlm:month"/>-<xsl:value-of select="../nlm:pub-date[@pub-type='epub']/nlm:day"/>
  </dct:issued>
+ -->
 </xsl:template>
 
 <xsl:template match="nlm:pub-date[@pub-type='epub']">
   <dct:modified><xsl:value-of select="nlm:year"/>-<xsl:value-of select="nlm:month"/>-<xsl:value-of select="nlm:day"/></dct:modified>
+  <dct:issued><xsl:value-of select="nlm:year"/>-<xsl:value-of select="nlm:month"/>-<xsl:value-of select="nlm:day"/></dct:issued>
 </xsl:template>
 
 <xsl:template match="nlm:kwd-group">

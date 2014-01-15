@@ -80,11 +80,11 @@ public class XMLTransformer {
     public void create() {
         stringWriter = new StringWriter();
         factory = TransformerFactory.newInstance();
+        //factory.setExpandEntityReferences();
         try {
             InputStream in = new ByteArrayInputStream(xslt.getBytes("UTF-8"));
             Source src = new StreamSource(in);
             templates = factory.newTemplates(src);
-            //transformer.setOutputProperty("omit-xml-declaration", "yes");
             if (in!=null) in.close();
         } catch(TransformerConfigurationException e) { log(e); }
           catch(IOException e) { log(e); }
@@ -115,6 +115,7 @@ public class XMLTransformer {
         }
     }
 
+    //@SuppressWarnings("org.apache.xerces.parsers.SAXParser")
     public String transform( String xmlString ) {
 	    String result = null;
 	    try {
@@ -158,10 +159,10 @@ public class XMLTransformer {
         try {
             DOMSource domSource = new DOMSource(doc);
             Transformer transformer = factory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            transformer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
-            transformer.setOutputProperty
-                ("{http://xml.apache.org/xslt}indent-amount", "4");
+            //transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+            //transformer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
+            //transformer.setOutputProperty
+            //    ("{http://xml.apache.org/xslt}indent-amount", "4");
             //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             java.io.StringWriter sw = new java.io.StringWriter();
             StreamResult sr = new StreamResult(sw);

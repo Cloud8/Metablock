@@ -21,12 +21,12 @@
 
 <xsl:template match="rdf:Description">
  <doc>
+    <xsl:apply-templates select="dct:identifier"/>
     <xsl:apply-templates select="nlp:*"/>
  </doc>
 </xsl:template>
 
-<!-- identifiers from solr -->
-<xsl:template match="nlp:id">
+<xsl:template match="dct:identifier">
   <field name="id"><xsl:value-of select="." /></field>
 </xsl:template>
 
@@ -36,7 +36,7 @@
 </xsl:template>
 
 <xsl:template match="nlp:title">
-  <field name="title"><xsl:value-of select="." /></field>
+  <field name="title"><xsl:value-of select="normalize-space(.)" /></field>
 </xsl:template>
 
 <xsl:template match="nlp:name">
@@ -84,7 +84,7 @@
 
 <!-- from Summarizer -->
 <xsl:template match="nlp:summary">
-  <field name="description"><xsl:value-of select="."/></field>
+  <field name="description"><xsl:value-of select="substring(.,0,256)"/></field>
 </xsl:template>
 
 <xsl:template match="nlp:category">

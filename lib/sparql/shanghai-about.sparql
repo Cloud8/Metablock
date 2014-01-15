@@ -3,15 +3,41 @@ PREFIX  foaf:  <http://xmlns.com/foaf/0.1/>
 PREFIX  fabio: <http://purl.org/spar/fabio/>
 PREFIX  aiiso: <http://purl.org/vocab/aiiso/schema#>
 PREFIX  frbr: <http://purl.org/vocab/frbr/core#>
+PREFIX  pica: <http://localhost/view/>
+PREFIX  daia: <http://purl.org/ontology/daia/>
+# PREFIX  cito: <http://purl.org/spar/cito/>
 
 ## resource dump.
 construct {
     <subject> ?p ?o .
-    ?o ?b ?c . 
+    ?o ?x ?y . 
 } where {
-     <subject> ?p ?o .
-     optional {
-         ?o ?b ?c .
-     }
-}
+  { 
+        <subject> ?p ?o .
+  } union {
+        <subject> dct:creator ?o .
+        ?o ?x ?y .
+  } union {
+        <subject> dct:subject ?o .
+        ?o ?x ?y .
+  } union {
+        <subject> dct:publisher ?o .
+        ?o ?x ?y .
+  } union {
+        <subject> dct:isPartOf ?o .
+        optional {
+           ?o ?x ?y .
+           { ?o dct:title ?y . } union { ?o dct:identifier ?y . }
+        }
+  } union {
+        <subject> dct:hasPart ?o .
+        optional {
+           ?o ?x ?y .
+           { ?o dct:title ?y . } union { ?o dct:identifier ?y . }
+        }
+  } union {
+        <subject> frbr:exemplar ?o .
+        ?o ?x ?y .
+  } 
+} 
 

@@ -20,13 +20,10 @@ public class Main extends org.shanghai.crawl.Main {
 
     @Override
     public void create() {
-        super.create();
-    }
-
-    public void createThis() {
+        //super.create();
         //System.out.println("oai create");
         config = new Config(configFile).create();
-        crawl = new Crawl(config);
+        crawl = new OAICrawl(config);
         crawl.create();
     }
 
@@ -61,12 +58,13 @@ public class Main extends org.shanghai.crawl.Main {
             if (args.length==2) {
                 help();
             } else {
-                createThis(); 
+                create(); 
                 crawl.crawl(shorter(args));
                 dispose(); 
             }
         } else {
-            super.make(args);
+            help();
+            // super.make(args);
         }
         return 0;
     }

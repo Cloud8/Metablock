@@ -1,10 +1,16 @@
 package org.shanghai.rdf;
 
+import org.shanghai.util.FileUtil;
+
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.DirectXmlRequest;
+import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.common.SolrInputDocument;
+
+import com.hp.hpl.jena.rdf.model.Model;
+
 import java.util.logging.Logger;
 import java.io.File;
 import java.io.IOException;
@@ -19,13 +25,20 @@ import org.apache.solr.core.CoreContainer;
    @title Solr XML Post Class 
    @date 2013-02-02
 */
-public class SolrPost implements RDFCrawl.Storage {
+public class SolrPost implements MetaCrawl.Storage {
 
     protected SolrServer server;
     private String solr;
+    private XMLTransformer transformer;
 
     public SolrPost(String solr) {
        this.solr = solr;
+    }
+
+    public SolrPost(String solr, String xsltFile) {
+       this.solr = solr;
+       transformer = new XMLTransformer(FileUtil.read(xsltFile));
+       transformer.create();
     }
 
     @Override
@@ -51,6 +64,23 @@ public class SolrPost implements RDFCrawl.Storage {
           server.commit();
         } catch(SolrServerException e) { log(e); }
           catch(IOException e) { log(e); }
+        if (transformer!=null) {
+            transformer.create();
+            transformer=null;
+        }
+    }
+
+    public boolean exists(String resource) {
+        SolrQuery q = new SolrQuery("id:" + resource.replace(":","\\:"));
+        q.setRows(0); // don't actually request any data
+        boolean b = false;
+        try {
+            long found = server.query(q).getResults().getNumFound();
+            b = (found!=0L);
+        } catch(SolrServerException e) { log(e); }
+        finally {
+            return b;
+        }
     }
 
     @Override
@@ -89,6 +119,18 @@ public class SolrPost implements RDFCrawl.Storage {
           server.deleteByQuery( "*:*" );
         } catch(SolrServerException e) { log(e); }
         catch(IOException e) { log(e); }
+    }
+
+    @Override
+    public synchronized boolean write(Model mod) {
+        String xml = transformer.transform(mod);
+        boolean b = post(xml);
+        return b;
+    }
+
+    @Override
+    public boolean update(Model mod) {
+        return write(mod);
     }
 
     private static final Logger logger =

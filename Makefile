@@ -22,9 +22,6 @@ compile: $(CLASS)
 lib/shanghai.jar: $(CLASS) lib/shanghai.ttl
 	jar cf $@ -C lib org
 
-lib/shanghai.ttl: lib/template.ttl
-	@cp $< $@
-
 test: 
 	java -cp lib:lib/* org.shanghai.main.Main
 

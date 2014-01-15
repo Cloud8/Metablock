@@ -60,7 +60,7 @@ public class FileUtil {
                 stream.close();
             } finally {
                 if (result==null || result.length()==0) {
-                    logger.info("resource " + what + " not found.");
+                    logger.info("FileUtil: resource " + what + " not found.");
                     return read(new FileUtil(), what);
                 }
                 return result;

@@ -7,7 +7,10 @@ PREFIX fabio: <http://purl.org/spar/fabio/>
 select distinct ?subject 
 where {
     ?subject ?p ?o .
-    FILTER (!isBlank(?subject)) .
+    ?subject dct:identifier ?o .
+    ##?subject dct:references ?x .
+    ##?subject dct:fulltext ?y .
+    ## FILTER (!isBlank(?subject)) .
 }
 ORDER BY DESC(?subject)
 

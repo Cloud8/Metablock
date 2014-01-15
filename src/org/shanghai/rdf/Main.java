@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
     @author Goetz Hatop
-    @title A Command Line Interface for the Shanghai RDF Indexer
+    @title Command Line Interface for the Shanghai RDF Indexer
     @date 2013-03-01
 */
 public class Main {
@@ -31,48 +31,75 @@ public class Main {
         config = new Config(configFile).create();
     }
 
-    public int make(String[] args) {
+    public int index(String[] args) {
         int argc=0;
         if (args.length==0) {
-            return help();
+            help();
+            return 0;
         } 
 
         create();
         if (args[0].startsWith("-show")) {
             config.test();
-        } if (args[0].startsWith("-index")) {
-            String [] cmd = shorter(args);
-            if (args.length>1 && !args[1].startsWith("-")) {
-                cmd = shorter(cmd);
-                indexer = new Indexer(config, args[1]);
+        } else if (args[0].equals("-index")) {
+            if (args.length==1) {
+                Indexer indexer = new Indexer(config);
                 indexer.create();
-                indexer.index(cmd);
+                indexer.index(); 
 		        indexer.dispose();
-            } else if (args.length>1 && args[1].startsWith("-all")) {
-                cmd = shorter(cmd);
-                for (Config.Index idx : config.getIndexList()) {
-                    indexer = new Indexer(config,idx.name);
+            } else if (args.length==2) {
+                if (args[1].equals("-probe")) {
+                    Indexer indexer = new Indexer(config);
                     indexer.create();
-                    indexer.index(cmd);
+                    indexer.probe(); 
+		            indexer.dispose();
+                } else if (args[1].equals("-test")) {
+                    Indexer indexer = new Indexer(config);
+                    indexer.create();
+                    indexer.test(); 
+		            indexer.dispose();
+                } else if (args[1].equals("-dump")) {
+                    Indexer indexer = new Indexer(config);
+                    indexer.create();
+                    indexer.dump(); 
+		            indexer.dispose();
+                } else if (args[1].equals("-clean")) {
+                    Indexer indexer = new Indexer(config);
+                    indexer.create();
+                    indexer.clean(); 
+		            indexer.dispose();
+                } else if (args[1].equals("-all")) {
+                    for (Config.Index idx : config.getIndexList()) {
+                        indexer = new Indexer(config,idx.name);
+                        indexer.create();
+                        indexer.index();
+		                indexer.dispose();
+                    }
+                }
+            } else if (args.length==3) {
+                if (args[1].equals("-test")) {
+                    Indexer indexer = new Indexer(config);
+                    indexer.create();
+                    indexer.test(args[2]); 
+		            indexer.dispose();
+                } else if (args[1].equals("-dump")) {
+                    Indexer indexer = new Indexer(config);
+                    indexer.create();
+                    indexer.dump(args[2]); 
+		            indexer.dispose();
+                } else if (args[1].equals("-index")) {
+                    indexer = new Indexer(config, args[2]);
+                    indexer.create();
+                    indexer.index();
 		            indexer.dispose();
                 }
-            } else {
-                indexer = new Indexer(config);
-                indexer.create();
-                indexer.index(cmd);
-		        indexer.dispose();
             }
-        } else {
-            indexer = new Indexer(config);
-            indexer.create();
-            indexer.index(args);
-		    indexer.dispose();
-        }
+        } 
         dispose();
         return 0;
     }
 
-    protected int help() {
+    public static void help() {
         String usage = "java org.shanghai.rdf.Main\n"
                      + "   -config file.ttl (default is lib/shanghai.ttl)\n"
                      + "   -index [index name] [command]\n"
@@ -85,7 +112,6 @@ public class Main {
                      + "           [offset limit] limited build\n"
                      + "";
         System.out.print(usage);
-        return 0;
     }
 
     private static final Logger logger = Logger.getLogger(Main.class.getName());
@@ -97,13 +123,6 @@ public class Main {
         logger.info(msg);
     }
 
-    private static String[] shorter(String[] dirs) {
-        String[] result = new String[dirs.length-1];
-        for (int i=0; i<dirs.length-1; i++)
-             result[i] = dirs[i+1];
-        return result;
-    }
-
     public static void log(String[] msg) {
         String result = new String();
         for (String str : msg) 
@@ -112,7 +131,16 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        Main myself = new Main();
-        myself.make(args);
+        String configFile = "lib/shanghai.ttl";
+        if (args.length>1 && args[0].startsWith("-conf")) {
+            if (1<args.length) {
+                configFile = args[1];
+                args = Config.shorter(Config.shorter(args));
+            } 
+            System.out.println("configured by " + configFile);
+        }
+        Main myself = new Main(configFile);
+        myself.index(args);
     }
+
 }

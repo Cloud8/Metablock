@@ -5,21 +5,21 @@ import org.shanghai.util.FileUtil;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.logging.Logger;
 import java.lang.Character;
+import java.util.logging.Logger;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
     @author Goetz Hatop
-    @title Command Line Interface for the Shanghai RDF Indexer
+    @title Interface for the Shanghai RDF Indexer
     @date 2013-10-17
 */
 public class Indexer {
 
     protected Config config;
-    private RDFCrawl rdfCrawl = null;
-    private RDFCrawl.Storage storage = null;
-    private RDFCrawl.Transporter transporter = null;
+    private MetaCrawl rdfCrawl = null;
+    private MetaCrawl.Storage storage = null;
+    private MetaCrawl.Transporter transporter = null;
     private Config.Index idx;
     private int count = 0;
 
@@ -62,74 +62,70 @@ public class Indexer {
     }
 
     private void createStorage() {
-        String solr = idx.store;
-        if (solr.equals("solr")) {
-            solr = config.get("solr.url")+config.get("solr.core");
-        } 
-        storage = new SolrPost(solr);
+        String store = idx.store;
+        String xsltFile = idx.transformer;
+        if (store.startsWith("solr")) {
+            String solr = config.get(store+".url")
+                        + "/" + config.get(store+".core");
+            storage = new SolrPost(solr);
+            xsltFile = config.get(store+".transformer");
+        } else { // support http:// signature
+            storage = new SolrPost(store);
+        }
         storage.create();
 
-        String xsltFile = idx.transformer;
         String testFile = idx.test;
         int logC = idx.count;
-        rdfCrawl = new RDFCrawl(transporter,storage,xsltFile,testFile,logC);
+        rdfCrawl = new MetaCrawl(transporter,storage,xsltFile,testFile,logC);
         rdfCrawl.create();
     }
 
-    public void index(String[] args) {
-        int argc=0;
-        if (args.length==0 || args[argc].startsWith("-c") 
-            || args[argc].startsWith("-d") || args[argc].startsWith("-post") ) 
-            createStorage();
-        if (args.length==0) {
-            index(idx);
-        } else if (args[argc].startsWith("-clean")) {
-            clean();
-        } else if (args[argc].startsWith("-destroy")) {
-            clean();
-        } else if (args[argc].startsWith("-probe")) {
-			probe();
-        } else if (args[argc].startsWith("-test")) {
-            argc++;
-            if (args.length-argc==2)
-			    test(args[argc++],args[argc++]);
-            else if (args.length-argc==1)
-			    test(args[argc++]);
-			else
-                test();
-        } else if (args[argc].endsWith("-dump")) {
-            argc++;
-            if (args.length-argc==2) {
-                dump(args[argc++], args[argc++]);
-            } else if (args.length-argc==1) {
-                dump(args[argc++]);
-            } else {
-                dump();
-            }
-        } else if (args[argc].endsWith("-post")) {
-            argc++;
-            createStorage();
-            post(args[argc++]);
-        } else if (args[argc].startsWith("-del")) {
-            argc++;
-            if (args.length-argc==1) {
-                System.out.println("# remove solr record " + args[argc]);
-                remove(args[argc++]);
-            }
-        }
-    }
-
-    private void probe() {
+    /** check source */
+    public void probe() {
         transporter.probe();
     }
 
-    private void test() {
+    /** test source */
+    public void test() {
         test(0,12);
     }
 
-    private void test(String offset) {
-        int off = Integer.parseInt(offset);
-        test(off,22);
+    /** test source */
+    public void test(String off) {
+        test(Integer.parseInt(off), 12);
+    }
+
+    /** resource dump */
+    public void dump() {
+        String uri = transporter.getIdentifiers(0,1)[0];
+        createStorage();
+        String rdf = getDescription(uri); 
+        System.out.println(rdf);
+    }
+
+    /** resource dump */
+    public void dump(String uri) {
+        String rdf = getDescription(uri);
+        System.out.println(rdf);
+    }
+
+    /** index source to target */
+    public void index() {
+        createStorage();
+        index(idx);
+    }
+
+    public void clean() {
+        createStorage();
+        storage.destroy();
+    }
+
+    public void index(String cmd, String arg1, String arg2) {
+        if (cmd.endsWith("-dump")) {
+            dump(arg1,arg2);
+        } else if (cmd.equals("-test")) {
+			test(arg1,arg2);
+        }
     }
 
     private void test(String offset, String limit) {
@@ -149,14 +145,6 @@ public class Indexer {
     private void post(String resource) {
         log("post: " + resource);
         rdfCrawl.post(resource);
-    }
-
-    private void index(String offset, String limit) {
-        int off = Integer.parseInt(offset);
-        int max = Integer.parseInt(limit);
-        log("index offset " + off + " limit " + max);
-        boolean b = rdfCrawl.index(off, max);
-        log("indexed " + rdfCrawl.count + " records."); 
     }
 
     private void index(Config.Index idx) {
@@ -184,23 +172,8 @@ public class Indexer {
         FileUtil.write(filename, getDescription(uri));
     }
 
-    private void dump(String uri) {
-        String rdf = getDescription(uri);
-        System.out.println(rdf);
-    }
-
-    private void dump() {
-        String uri = transporter.getIdentifiers(0,1)[0];
-        String rdf = getDescription(uri); 
-        System.out.println(rdf);
-    }
-
     private void remove(String id) {
         storage.delete(id);
-    }
-
-    private void clean() {
-        storage.destroy();
     }
 
     private void log(String[] msg) {

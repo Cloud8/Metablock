@@ -4,5 +4,8 @@ PREFIX dct: <http://purl.org/dc/terms/>
 # check size of store
 SELECT (COUNT(distinct(?s)) AS ?subject) 
 WHERE { 
-   ?s ?p ?o .
+    ?s ?p ?o .
+    ?s dct:identifier ?o .
+    # ?s dct:references ?x .
+    # ?s dct:fulltext ?y .
 }

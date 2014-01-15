@@ -2,7 +2,6 @@ package org.shanghai.crawl;
 
 import org.shanghai.rdf.RDFTransporter;
 import com.hp.hpl.jena.rdf.model.Model;
-import java.util.logging.Logger;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -40,6 +39,11 @@ public class TDBTransporter implements MetaCrawl.Transporter {
     }
 
     @Override 
+    public String getIdentifier(String resource) {
+        return resource;
+    }
+
+    @Override 
     public String[] getIdentifiers(int off, int limit) {
         return transporter.getIdentifiers(off, limit);
     }
@@ -47,22 +51,6 @@ public class TDBTransporter implements MetaCrawl.Transporter {
     @Override 
     public int crawl(String directory) {
         return Integer.parseInt(transporter.probe());
-    }
-
-    @Override 
-    public boolean canRead(String resource) {
-        return true;
-    }
-
-    private static final Logger logger =
-                         Logger.getLogger(TDBTransporter.class.getName());
-
-    private void log(String msg) {
-        logger.info(msg);
-    }
-
-    private void log(Exception e) {
-        log(e.toString());
     }
 
 }

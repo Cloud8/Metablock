@@ -15,30 +15,34 @@
 
 <xsl:template match="rdf:RDF">
  <add>
-  <!-- <xsl:comment>Shanghai RDF Transformer (2013)</xsl:comment> -->
+  <xsl:comment>Shanghai RDF Transformer (2014)</xsl:comment>
   <xsl:apply-templates select="fabio:*" />
+  <xsl:apply-templates select="dct:BibliographicResource" />
  </add>
 </xsl:template>
 
+<!-- simple paper repository -->
+<xsl:template match="dct:BibliographicResource">
+ <doc>
+    <field name="recordtype">opus</field>
+    <xsl:apply-templates select="dct:*"/>
+    <xsl:apply-templates select="foaf:img" />
+    <field name="allfields">
+        <xsl:value-of select="dct:identifier"/>
+        <xsl:value-of select="' '"/>
+        <xsl:value-of select="dct:fulltext"/>
+    </field>
+ </doc>
+</xsl:template>
+
+<!-- advanced repository -->
 <xsl:template match="fabio:*">
  <doc>
     <field name="recordtype">opus</field>
     <field name="callnumber"><xsl:value-of select="@rdf:about"/></field>
 
-    <!--
-    <field name="building">Online</field>
-    <field name="callnumber-a">
-      <xsl:value-of 
-           select="substring-after(substring-after(@rdf:about,'//'),'/')"/>
-    </field>
-    -->
-
-    <field name="id">
-        <xsl:apply-templates select="dct:identifier[position()=1]"/>
-    </field>
-
+    <xsl:apply-templates select="dct:identifier"/>
     <xsl:apply-templates select="dct:title" />
-
     <xsl:apply-templates select="dct:creator" />
     <xsl:apply-templates select="dct:contributor" />
     <xsl:apply-templates select="dct:publisher" />
@@ -52,31 +56,31 @@
     <xsl:apply-templates select="dct:hasPart" />
     <xsl:apply-templates select="dct:relation" />
     <xsl:apply-templates select="dct:isReferencedBy" />
+    <xsl:apply-templates select="dct:extend" />
+    <xsl:apply-templates select="dct:modified" />
+    <xsl:apply-templates select="dct:date" />
+    <xsl:apply-templates select="dct:format" />
     <xsl:apply-templates select="foaf:img" />
     <field name="allfields">
-          <xsl:apply-templates select="dct:identifier[position()=1]"/>
-          <xsl:value-of select="' '"/>
-          <xsl:value-of select="normalize-space(.)"/>
+        <xsl:value-of select="dct:identifier"/>
+        <xsl:value-of select="' '"/>
+        <xsl:value-of select="normalize-space(.)"/>
     </field>
     <xsl:apply-templates select="." mode="type"/>
-
-    <xsl:apply-templates select="dct:modified" />
-    <!--
-    <xsl:apply-templates select="dct:type" />
-    <xsl:apply-templates select="dct:format" />
-    -->
  </doc>
 </xsl:template>
 
 <xsl:template match="dct:identifier[position()=1]">
- <xsl:choose>
-  <xsl:when test="starts-with(.,'urn:nbn')">
+ <field name="id">
+  <xsl:choose>
+   <xsl:when test="starts-with(.,'urn:nbn')">
         <xsl:value-of select="substring(.,0,string-length(.))" />
-  </xsl:when>
-  <xsl:otherwise>
+   </xsl:when>
+   <xsl:otherwise>
         <xsl:value-of select="." />
-  </xsl:otherwise>
- </xsl:choose>
+   </xsl:otherwise>
+  </xsl:choose>
+ </field>
 </xsl:template>
 
 <!-- TITLE : only one, no multilanguage support -->
@@ -127,11 +131,19 @@
 </xsl:template>
 
 <xsl:template match="dct:creator[position()!=1]">
- <xsl:if test="normalize-space(.)!=''">
-  <field name="author_additional">
-   <xsl:value-of select="foaf:Person/foaf:name"/>
-  </field>
- </xsl:if>
+ <xsl:choose>
+  <xsl:when test="foaf:Person/foaf:familyName">
+      <field name="author_additional">
+         <xsl:value-of select="foaf:Person/foaf:name"/>
+      </field>
+  </xsl:when>
+  <xsl:when test="normalize-space(.)!=''">
+      <field name="author_additional">
+          <xsl:value-of select="normalize-space(.)"/>
+      </field>
+  </xsl:when>
+  <xsl:otherwise></xsl:otherwise>
+ </xsl:choose>
 </xsl:template>
 
 <!-- CONTRIBUTOR -->
@@ -166,6 +178,11 @@
   <field name="building"><xsl:value-of select="foaf:name"/></field>
 </xsl:template>
 
+<!-- PROVENANCE -->
+<xsl:template match="dct:provenance">
+  <field name="collection"><xsl:value-of select="."/></field>
+</xsl:template>
+
 <!-- ISBN -->
 <xsl:template match="dct:source">
  <xsl:if test="normalize-space(.)!=''">
@@ -176,8 +193,10 @@
   <field name="isbn"><xsl:value-of select="."/></field>
 </xsl:template>
 
-
 <!-- TYPE -->
+<xsl:template match="dct:BibliographicResource" mode="type">
+</xsl:template>
+
 <xsl:template match="fabio:*" mode="type">
  <xsl:choose>
   <!--
@@ -262,6 +281,8 @@
      <xsl:when test=".='en'">English</xsl:when>
      <xsl:when test=".='fr'">French</xsl:when>
      <xsl:when test=".='mul'">Multiple</xsl:when>
+     <xsl:when test=".='java'">Java</xsl:when>
+     <xsl:when test=".='php'">PHP</xsl:when>
      <xsl:otherwise>Other</xsl:otherwise> -->
    </xsl:choose>
   </field>
@@ -287,6 +308,10 @@
 <!-- COVER -->
 <xsl:template match="foaf:img[position()=1]">
   <field name="thumbnail"><xsl:value-of select="." /></field>
+</xsl:template>
+
+<xsl:template match="dct:extend">
+  <field name="physical"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- TOPIC : TODO: multiple languages -->
@@ -408,13 +433,13 @@
   <field name="format"><xsl:value-of select="'Volume Holdings'"/></field>
   <field name="hierarchytype"></field>
   <field name="hierarchy_top_id">
-    <xsl:apply-templates select="dct:identifier[position()=1]"/>
+    <xsl:value-of select="dct:identifier[position()=1]"/>
   </field>
   <field name="hierarchy_top_title">
      <xsl:value-of select="dct:title" />
   </field>
   <field name="is_hierarchy_id">
-    <xsl:apply-templates select="dct:identifier[position()=1]"/>
+    <xsl:value-of select="dct:identifier[position()=1]"/>
   </field>
   <field name="is_hierarchy_title">
      <xsl:value-of select="dct:title" />
@@ -446,7 +471,7 @@
     </xsl:when>
     <xsl:otherwise>
      <field name="hierarchy_top_id">
-        <xsl:apply-templates select="dct:identifier[position()=1]"/>
+        <xsl:value-of select="dct:identifier[position()=1]"/>
      </field>
     </xsl:otherwise>
    </xsl:choose>
@@ -464,13 +489,13 @@
   </field>
 
   <field name="hierarchy_parent_id">
-    <xsl:apply-templates select="dct:identifier[position()=1]"/>
+    <xsl:value-of select="dct:identifier[position()=1]"/>
   </field>
   <field name="hierarchy_parent_title">
      <xsl:value-of select="dct:title"/>
   </field>
   <field name="is_hierarchy_id">
-     <xsl:apply-templates select="../../dct:identifier[position()=1]"/>
+     <xsl:value-of select="../../dct:identifier[position()=1]"/>
   </field>
   <field name="is_hierarchy_title">
      <xsl:value-of select="../../dct:title"/>
@@ -499,6 +524,18 @@
   <!--
   <field name="collection"><xsl:value-of select="dct:title"/></field>
   -->
+</xsl:template>
+
+<!-- paper repository -->
+<xsl:template match="dct:references">
+ <field name="contents">
+   <xsl:value-of select="dct:BibliographicResource/dct:bibliographicCitation"/>
+ </field>
+</xsl:template>
+
+<!-- bad verb -->
+<xsl:template match="dct:fulltext">
+  <field name="fulltext"><xsl:value-of select="normalize-space(.)"/></field>
 </xsl:template>
 
 <!-- suppress emptyness -->

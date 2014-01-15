@@ -32,9 +32,9 @@ import com.hp.hpl.jena.rdf.arp.JenaReader;
 
 public class Importer implements MetaCrawl.Transporter {
 
-  /* TODO : this needs rework:
+  /* TODO : rework:
      settings.interval settings.maxRequest
-     also, the MetaCrawl API usage should be clear.
+     -- MetaCrawl API should be clear.
   */
 
   private Config.OAI settings; 
@@ -128,6 +128,11 @@ public class Importer implements MetaCrawl.Transporter {
     }
 
     @Override
+    public String getIdentifier(String id) {
+        return id;
+    }
+
+    @Override
     public String[] getIdentifiers(int off, int limit) {
         String[] result = new String[limit];
         int found=0;
@@ -151,10 +156,10 @@ public class Importer implements MetaCrawl.Transporter {
         return count;
     }
 
-    @Override
-    public boolean canRead(String source) {
-        return true;
-    }
+    //@Override
+    //public boolean canRead(String source) {
+    //    return true;
+    //}
 
     private String getRecord(String identifier) {
         String result = null;

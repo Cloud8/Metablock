@@ -8,11 +8,6 @@ done
 
 hostname="`hostname`"
 case $hostname in
-  macbook*|pcub803)
-    CP=dlib:$CP; for l in $dir/dlib/*.jar; do CP=$CP:$l ; done
-    # java -cp $CP org.shanghai.nlp.Main $*
-    java -cp $CP org.shanghai.main.Main -conf lib/archiv.ttl $*
-    ;;
   *)
     java -cp $CP org.shanghai.main.Main $*
     ;;

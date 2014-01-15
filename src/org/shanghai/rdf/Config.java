@@ -87,8 +87,17 @@ public class Config {
         return this;
     }
 
+    /** little helper to make array shorter */
+    public static String[] shorter(String[] dirs) {
+        String[] result = new String[dirs.length-1];
+        for (int i=0; i<dirs.length-1; i++)
+             result[i] = dirs[i+1];
+        return result;
+    }
+
     /** little helper to get some value out of the model */
     public String get(String name) {
+        //log("get " + name);
         RDFNode node = getNode(name);
         return get(node);
     }

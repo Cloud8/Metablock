@@ -20,9 +20,9 @@ import java.io.File;
    @title RDF Transporter with CRUD functionality
    @date 2013-01-17
 */
-public class RDFTransporter implements RDFCrawl.Transporter {
+public class RDFTransporter implements MetaCrawl.Transporter {
 
-    public interface Storage {
+    public interface Reader {
         public void create(); 
         public void dispose(); 
         public String probe(String query); 
@@ -30,7 +30,7 @@ public class RDFTransporter implements RDFCrawl.Transporter {
         public String[] getIdentifiers(String query, int off, int limit);
     }
 
-    private Storage storage;
+    private Reader reader;
 
     public RDFTransporter(String sparqlService, 
             String probe, String enum_, String dump, String date) {
@@ -67,22 +67,24 @@ public class RDFTransporter implements RDFCrawl.Transporter {
             indexQuery = indexQuery.replace("<date>", "1970-01-01");
         }
         dumpQuery = FileUtil.read(descrQueryFile);
-        storage = new RDFStorage(new Store(sparqlService,dumpQuery));
-        storage.create();
+        reader = new RDFReader(new Store(sparqlService,dumpQuery));
+        reader.create();
+        //log(probeQueryFile + ":" + indexQueryFile);
     }
 
     @Override
     public void dispose() {
-        storage.dispose();
+        reader.dispose();
     }
 
     @Override
     public String probe() {
+        //log("probed " + this.getClass().getName());
         if(probeQuery==null) {
             log("no probe query");
             return null;
         }
-        String result = storage.probe(probeQuery);
+        String result = reader.probe(probeQuery);
         log("probed result: " + result);
         //if(result.equals("0"))
         //   log(probeQuery);
@@ -91,12 +93,12 @@ public class RDFTransporter implements RDFCrawl.Transporter {
 
     @Override
     public Model read(String resource) {
-        return storage.read(resource);
+        return reader.read(resource);
     }
 
     @Override
     public String[] getIdentifiers(int offset, int limit) {
-        return storage.getIdentifiers(indexQuery, offset, limit);
+        return reader.getIdentifiers(indexQuery, offset, limit);
     }
 
     private static final Logger logger =

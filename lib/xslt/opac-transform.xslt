@@ -47,6 +47,8 @@
     <xsl:apply-templates select="pica:f029A" />
    </doc>
    </xsl:when>
+   <!-- KTI Fernleihe -->
+   <xsl:when test="starts-with(pica:f002Y,'Lux')"></xsl:when>
    <xsl:otherwise>
    <doc>
     <field name="recordtype">opac</field>
@@ -74,16 +76,30 @@
 <xsl:template match="pica:f021A">
   <xsl:choose>
     <xsl:when test="pica:Sub">
-    <field name="title">
-        <xsl:value-of select="translate(pica:Sub/pica:a,'@','')"/>
-        <xsl:if test="pica:Sub/pica:d">
-        <xsl:value-of select="' : '"/>
-        <xsl:value-of select="translate(pica:Sub/pica:d,'@','')"/>
-        </xsl:if>
-    </field>
-    <field name="title_sort">
-        <xsl:value-of select="pica:Sub/pica:a"/>
-    </field>
+        <field name="title">
+            <xsl:value-of select="translate(pica:Sub/pica:a,'@','')"/>
+        </field>
+        <field name="title_short">
+            <xsl:value-of select="translate(pica:Sub/pica:a,'@','')"/>
+        </field>
+        <xsl:choose>
+        <xsl:when test="pica:Sub/pica:d">
+        <field name="title_sub">
+            <xsl:value-of select="translate(pica:Sub/pica:d,'@','')"/>
+        </field>
+        <field name="title_full">
+            <xsl:value-of select="concat(translate(pica:Sub/pica:a,'@',''),' : ',pica:Sub/pica:d)"/>
+        </field>
+        </xsl:when>
+        <xsl:otherwise>
+        <field name="title_full">
+            <xsl:value-of select="translate(pica:Sub/pica:a,'@','')"/>
+        </field>
+        </xsl:otherwise>
+        </xsl:choose>
+        <field name="title_sort">
+            <xsl:value-of select="pica:Sub/pica:a"/>
+        </field>
     </xsl:when>
     <xsl:otherwise>
     <!-- title_fullStr title_full_unstemmed copy machine -->
@@ -92,7 +108,10 @@
            <xsl:value-of select="translate(.,'@','')"/></field>
     <field name="title_sort">
            <xsl:value-of select="."/></field>
-    </xsl:otherwise>
+    <field name="title_short">
+           <xsl:value-of select="translate(.,'@','')"/>
+    </field>
+   </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
@@ -170,9 +189,12 @@
   <field name="hierarchy_parent_title">
       <xsl:value-of select="translate(pica:Sub/pica:a,'@','')"/>
   </field>
- <!--
  <xsl:if test="not(../pica:f021A)">
+  <field name="title">
+      <xsl:value-of select="translate(concat(pica:Sub/pica:a,'@',' ',pica:Sub/pica:d),'@','')"/>
+  </field>
  </xsl:if>
+ <!--
  <field name="hierarchy_top_id">
         <xsl:value-of select="../pica:f003Y"/>
  </field>
@@ -226,6 +248,7 @@
   <field name="language">
    <xsl:choose>
      <xsl:when test="$lang='ara'">Arabic</xsl:when>
+     <xsl:when test="$lang='cze'">Czech</xsl:when>
      <xsl:when test="$lang='dan'">Danish</xsl:when>
      <xsl:when test="$lang='eng'">English</xsl:when>
      <xsl:when test="$lang='fre'">French</xsl:when>
@@ -261,6 +284,9 @@
 <xsl:template match="pica:f011Y">
   <xsl:choose>
   <xsl:when test=".='20XX'">
+     <field name="publishDate"><xsl:value-of select="'0000'" /></field>
+  </xsl:when>
+  <xsl:when test="pica:Sub/pica:a='20XX'">
      <field name="publishDate"><xsl:value-of select="'0000'" /></field>
   </xsl:when>
   <xsl:when test="pica:Sub">
@@ -605,7 +631,7 @@
 
 <xsl:template match="pica:f209A">
  <!-- signatur -->
- <xsl:if test="pica:Sub/pica:a">
+ <xsl:if test="pica:Sub/pica:a!=''">
  <field name="dewey-full"><xsl:value-of select="pica:Sub/pica:a"/></field>
  <field name="dewey-hundreds">
          <xsl:value-of select="substring-before(pica:Sub/pica:a,' ')"/>
@@ -693,6 +719,8 @@
   <xsl:when test="starts-with(pica:Sub/pica:a,'sekr')"></xsl:when>
   <xsl:when test="starts-with(pica:Sub/pica:a,'Abt')"></xsl:when>
   <xsl:when test="starts-with(pica:Sub/pica:a,'Carolinenhaus')"></xsl:when>
+  <xsl:when test="starts-with(pica:Sub/pica:a,'Sigel')"></xsl:when>
+  <xsl:when test="normalize-space(pica:Sub/pica:a)=''"></xsl:when>
   <xsl:otherwise>
     <field name="collection"><xsl:value-of select="pica:Sub/pica:a"/></field>
   </xsl:otherwise>

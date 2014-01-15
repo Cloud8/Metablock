@@ -8,7 +8,11 @@ PREFIX  nlp: <http://localhost/view/db/nlp/>
 
 construct {
     <subject> ?p ?o .
+    ?o ?x ?y 
 } where {
     <subject> ?p ?o .
+    optional {
+        ?o ?x ?y 
+    }
 } 
 

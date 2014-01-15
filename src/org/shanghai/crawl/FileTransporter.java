@@ -15,18 +15,15 @@ import com.hp.hpl.jena.rdf.model.Model;
     @author Goetz Hatop 
     @title The File Crawl Class
     @date 2013-02-19
-    @abstract Crawl the local filesytem and call
-              transporter on every file found.
+    @abstract Crawl the local filesytem and call delegate on every file.
 */
-public class FileCrawl implements MetaCrawl.Transporter {
+public class FileTransporter implements MetaCrawl.Transporter {
 
     public interface Delegate {
-        public void create();
+        public Delegate create();
         public void dispose();
-        public void setDirectory(String dir);
         public boolean canRead(File file);
-        public void addScanner(FileTransporter.Scanner scanner);
-        public Model read(String resource);
+        public Model read(String resource, String name);
     }
 
     private int count = 0;
@@ -38,13 +35,12 @@ public class FileCrawl implements MetaCrawl.Transporter {
     private String[] suffixes;
     private List<String> identifiers;
 
-    private Delegate delegate;
+    private List<Delegate> delegates;
 
-    public FileCrawl(String suffix, int depth, int logC) {
+    public FileTransporter(String suffix, int depth, int logC) {
         this.suffix = suffix;
         this.depth = depth;
         this.logC = logC;
-        delegate = new FileTransporter();
         identifiers = new ArrayList<String>();
     }
 
@@ -53,27 +49,41 @@ public class FileCrawl implements MetaCrawl.Transporter {
         if (suffix!=null) {
             suffixes = suffix.split(" ");
         }
-        //log("created " + suffix);
-        //for (String str : suffixes)
-        //     log("[" + str + "]");
-        delegate.create();
+        delegates = new ArrayList<Delegate>();
     }
 
     @Override
     public void dispose() {
-        delegate.dispose();
         identifiers.clear();
-        //log("disposed " + suffix);
+        for(Delegate d: delegates)
+            d.dispose();
     }
 
     @Override
     public String probe() {
-        return FileCrawl.class.getName();
+        return FileTransporter.class.getName();
     }
 
     @Override
     public Model read(String file) {
-		return delegate.read(file);
+        Model mod = null;
+        for(Delegate d: delegates) {
+            //log(d.getClass().getName() + " " + file);
+            if (d.canRead(new File(file))) {
+                mod = d.read(getIdentifier(file), file);
+                break;
+            }
+        }
+		return mod;
+    }
+
+    @Override 
+    public String getIdentifier(String fname) {
+        if (directory==null)
+            return fname;
+        String id = fname.substring(directory.length()+1).replace("/",":");
+        //log("getIdentifier " + id);
+        return id;
     }
 
     @Override 
@@ -85,30 +95,25 @@ public class FileCrawl implements MetaCrawl.Transporter {
     }
 
     @Override
-    public int crawl(String directory) {
+    public int crawl(String resource) {
         identifiers.clear();
-        this.directory = directory;
-	    File f = new File(directory);
+	    File f = new File(resource);
         level = 0;
         if (depth==0)
-            log("crawling " + directory );
+            log("crawling " + resource );
         else
-            log("crawling "+directory+" with depth "+depth+":" + logC);
-        delegate.setDirectory(directory);
+            log("crawling "+resource+" with depth "+depth+":" + logC);
         count=0;
 		crawl(f, depth);
         return count;
     }
 
-    @Override
-    public boolean canRead(String resource) {
-        //log("canRead " + resource);
-		return delegate.canRead(new File(resource));
+    public void setDirectory(String directory) {
+         this.directory = directory;
     }
 
-    //@Override
-    public FileCrawl addScanner(FileTransporter.Scanner s) {
-         delegate.addScanner(s); 
+    public FileTransporter inject(Delegate d) {
+         delegates.add(d);
          return this;
     }
 
@@ -146,17 +151,19 @@ public class FileCrawl implements MetaCrawl.Transporter {
         }
         if (!b)
             return;
-        if (delegate.canRead(f)) {
-            //log("delegate.canRead " + f.getName());
-            identifiers.add(f.getPath());
-            count++;
+        for(Delegate d: delegates) {
+            if (d.canRead(f)) {
+                //log(d.getClass().getName() + " canRead " + f.getName());
+                identifiers.add(f.getPath());
+                count++;
+            }
         }
         if (logC!=0&&count%logC==0)
             log("" + count + ": " + f.getAbsolutePath() +" ["+ level +"]");
     }
 
     private static final Logger logger = 
-                         Logger.getLogger(FileCrawl.class.getName());
+                         Logger.getLogger(FileTransporter.class.getName());
 
     private void log(String msg) {
         logger.info(msg);    
