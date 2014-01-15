@@ -55,6 +55,14 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   The RDF modeling of the records relies on the SPAR Ontologies
   and the Dublin Core Terms vocabulary.
 
+##### Website indexing
+  To index a website, you need to edit lib/shanghai.ttl and
+  set the site name in the 
+  :web :crawl part of the file.
+
+  Then, <code>shanghai -crawl web solr3</code> should index the website
+  to the vufind website core.
+
 ##### About
 
   The Shanghai program is written in Java and controled by a 
