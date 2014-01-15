@@ -53,7 +53,7 @@
        :core  "website" .
 
 ## source, no target 
-:web   :crawl "http://www.uni-marburg.de/bis" ;
+:web   :crawl "http://localhost/" ;
        :cache "/vol/vol01/data/cache" ;
        :robots "4"^^xsd:integer .
 
