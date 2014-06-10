@@ -35,8 +35,6 @@ import com.hp.hpl.jena.rdf.arp.JenaReader;
 public class JenaTDB {
 
     private static String tdbData;
-    private static final Logger logger =
-                         Logger.getLogger(JenaTDB.class.getName());
 
     private Model model;
     private Dataset dataset;
@@ -52,14 +50,6 @@ public class JenaTDB {
     public JenaTDB(String tdbData, String uri) {
         this.tdbData = tdbData;
         this.graph = uri;
-    }
-
-    private void log(String msg) {
-        logger.info(msg);    
-    }
-
-    private void log(Exception e) {
-        log(e.toString());
     }
 
     public void create() {
@@ -79,8 +69,10 @@ public class JenaTDB {
     }
 
     public void dispose() {
-        if (model!=null) 
+        if (model!=null) {
+            model.commit();
             model.close();
+        }
         model=null;
         if (dataset!=null) 
             dataset.close();
@@ -98,12 +90,12 @@ public class JenaTDB {
     public QueryExecution getExecutor(String q) {
         count++;
         try {
-        Query query = QueryFactory.create(q);
-        return QueryExecutionFactory.create(query, model);
+            Query query = QueryFactory.create(q);
+            return QueryExecutionFactory.create(query, model);
         } catch(QueryParseException e) {
-          log(e);
-          log("tragedy " + count + " query [" + q + "]"); 
-          e.printStackTrace();
+            log(e);
+            log("tragedy " + count + " query [" + q + "]"); 
+            e.printStackTrace();
         }
         return null;
     }
@@ -148,9 +140,9 @@ public class JenaTDB {
     }
 
     public boolean save(Model m) {
-        model.begin();
+        //model.begin();
         model.add(m);
-        model.commit();
+        //model.commit();
         return true;
     }
 
@@ -222,4 +214,16 @@ public class JenaTDB {
         return m;
     }
  
+    private static final Logger logger =
+                         Logger.getLogger(JenaTDB.class.getName());
+
+    private void log(String msg) {
+        logger.info(msg);    
+    }
+
+    private void log(Exception e) {
+        //log(e.toString());
+        e.printStackTrace();
+    }
+
 }

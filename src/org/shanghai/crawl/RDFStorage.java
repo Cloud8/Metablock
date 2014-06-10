@@ -31,16 +31,11 @@ public class RDFStorage extends RDFReader implements MetaCrawl.Storage {
     }
 
     @Override
-    public boolean exists(String resource) {
+    public boolean test(String resource) {
         Model test = store.read(resource);
         if (test==null)
             return false;
         return true;
-    }
-
-    @Override
-    public boolean post(String rdf) {
-        return store.write(rdf);
     }
 
     @Override

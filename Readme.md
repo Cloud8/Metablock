@@ -25,48 +25,39 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   RDF data can be queried from a remote sparql service endpoint
   or from a local Jena TDB triple store. 
 
-  See http://journal.code4lib.org/articles/8526
+%% See http://journal.code4lib.org/articles/8526
 
 ##### Sparql Endpoint Test
   Shanghai does support SPARQL endpoint investigation to a certain
   limit.
-  You can formulate a probe-query which is intended as a "Hello World"
-  use case, to just make sure that everything works.
-  If that works, try
+
+  <code>shanghai -probe</code> : get basic information about remote services.
 
   <code>shanghai -test</code> : get some URIs based on enumeration query.
 
   <code>shanghai -dump</code> : dump a specific resource
 
-  <code>shanghai -index 0 1</code> : dump first resource, transform and index.
+  <code>shanghai -index </code> : load, transform and index.
 
-##### RDF crawling && OAI harvesting
+##### Crawling RDF and Lifting XML to RDF
 
-  Shanghai can be used as a filesystem crawler to collect rdf 
-  resource description files and store them into a triple store.
+  Shanghai can be used as collect xml data, lift the data to rdfs
+  and store the rdf data into a triple store. 
 
-  Shanghai uses the xoai library for harvesting bibliographic
-  records into a local Jena triple store. 
   The storage of XML based records into a RDF storage engine
   requires XSLT transformations.
-  Together with shanghai there a currently two transformations
-  defined, from XMetaDissPlus to RDF and from OJS/NLM to RDF.
+  Currently two transformations are defined: 
+  from XMetaDissPlus to RDF and from OJS/NLM to RDF.
 
   The RDF modeling of the records relies on the SPAR Ontologies
   and the Dublin Core Terms vocabulary.
 
-##### Website indexing
-  To index a website, you need to edit lib/shanghai.ttl and
-  set the site name in the 
-  :web :crawl part of the file.
-
-  Then, <code>shanghai -crawl web solr3</code> should index the website
-  to the vufind website core.
+    shanghai -crawl oai
 
 ##### About
 
   The Shanghai program is written in Java and controled by a 
-  knowledge base written down turtle together with some 
+  knowledge base written down in turtle together with some 
   command line flags.
 
   The goal is to have a cronnable tool to drive a Jena/RDF based 
@@ -78,11 +69,8 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   
   Only Java 7 and upwards...
 
-###May be later
+### Collaboration
 
-  - add an OAI server to expose metadata from the local store as RDF/XML
-
-###Collaboration
   We're *open to pull requests*! If you'd like to collaborate, 
   offer feedback, know better english or best of all - better code, 
   feel free to do so. 

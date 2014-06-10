@@ -16,28 +16,26 @@
      xmlns:ddb="http://www.d-nb.de/standards/ddb/" 
      xmlns:dini="http://www.d-nb.de/standards/xmetadissplus/type/" 
      xmlns:gnd="http://d-nb.info/gnd/" 
+     xsi:schemaLocation="http://www.d-nb.de/standards/xmetadissplus/ http://www.d-nb.de/standards/xmetadissplus/xmetadissplus.xsd"
      version="1.0" >
 
-<!-- Deprecated:
-     xmlns:dcmitype="http://purl.org/dc/dcmitype/" 
-     xmlns:dcq="http://purl.org/dc/qualifier/1.0/"
-     xmlns:skos="http://www.w3.org/2008/05/skos#"
-     xmlns:vivo="http://vivoweb.org/ontology/core/"
-     xmlns:bibo="http://purl.org/ontology/bibo/"
-     xmlns:oai="http://www.openarchives.org/OAI/2.0/"
-     xmlns:hdl="http://www.d-nb.de/standards/hdl/" 
-     xmlns:doi="http://www.d-nb.de/standards/doi/" 
-     xmlns:shg="http://localhost/view/"
-     xmlns:pro="http://purl.org/spar/pro/"
- -->
 <!-- /**
       * @license http://www.apache.org/licenses/LICENSE-2.0
       * @author Goetz Hatop <fb.com/goetz.hatop>
       * @title A XSLT Transformer for XMetadissPlus to RDF 
-      * @date 2013-02-26
+      * @date 2014-06-03
       **/ -->
 <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
 <xsl:strip-space elements="*"/>
+
+<xsl:template match="/">
+  <xsl:apply-templates select="*" />
+</xsl:template>
+
+<xsl:template match="metadata">
+  <xsl:apply-templates select="*" />
+</xsl:template>
+
 
 <xsl:template match="xMetaDiss:xMetaDiss">
   <rdf:RDF>
@@ -241,6 +239,10 @@
 
 <xsl:template match="dct:modified">
   <dct:modified><xsl:value-of select="."/></dct:modified>
+</xsl:template>
+
+<xsl:template match="dct:date">
+  <dct:date><xsl:value-of select="."/></dct:date>
 </xsl:template>
 
 <xsl:template match="dc:type[@xsi:type='dcterms:DCMIType']">

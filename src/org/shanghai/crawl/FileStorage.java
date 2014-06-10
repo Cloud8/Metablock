@@ -6,21 +6,29 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.logging.Logger;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.rdf.model.ResIterator;
+import com.hp.hpl.jena.vocabulary.DCTerms;
 
 public class FileStorage implements MetaCrawl.Storage {
 
-    private String directory;
+    private static final String dct = DCTerms.getURI();
+    private String store;
     private int count;
 
-    public FileStorage(String directory) {
-        this.directory = directory;
+    public FileStorage(String store) {
+        this.store = store;
     }
 
     @Override
     public void create() {
         count=0;
+        if (new File(store).exists());
     }
 
     @Override
@@ -28,7 +36,7 @@ public class FileStorage implements MetaCrawl.Storage {
     }
 
     @Override
-    public boolean exists(String resource) {
+    public boolean test(String resource) {
         return (new File(resource).exists());
     }
 
@@ -38,35 +46,43 @@ public class FileStorage implements MetaCrawl.Storage {
     }
 
     @Override
-    public synchronized boolean post(String rdf) {
-        count++;
-        String fname = "/data-"+count+".rdf";
-        int x = rdf.indexOf("rdf:about");
-        int y = rdf.indexOf("\"",x+12);
-        if (x>0 && y>x+12) {
-            String about = rdf.substring(x+11,y);
-            x = about.lastIndexOf("/") + 1;
-            y = about.lastIndexOf(".");
-            y = y>0?y:about.length();
-            about = about.substring(x,y) + ".rdf";
-            //System.out.println("[" + about + "]");
-            x = about.lastIndexOf(":")+1;
-            fname = about.substring(x);
-        }
-        FileUtil.write(directory + "/" + fname, rdf);
-        return true;
-    }
-
-    @Override
-    public boolean write(Model mod) {
+    public boolean write(Model model) {
         StringWriter writer = new StringWriter();
+        Property ident = model.createProperty(dct, "identifier");
+        Resource rc = model.listResourcesWithProperty(ident).nextResource();
+        String id = rc.getProperty(ident).getString();
         boolean b = false;
-        try {
-            mod.write(writer, "RDF/XML-ABBREV");
-            b = post(writer.toString());
-        } finally {
-            return b;
+        if (new File(store).isDirectory()) {
+            model.write(writer, "RDF/XML-ABBREV");
+            FileUtil.write( id + ".rdf", writer.toString());
+            b = true;
+        } else {
+            String[] str = store.split(":");
+            if (str.length==2 && str[0].equals("dct")) {
+                Property prop = model.createProperty(dct, str[1]);
+                String target = model.listResourcesWithProperty(ident)
+                               .nextResource().getProperty(prop).getString();
+                if (target.startsWith("http://")) {
+                    b = true; //silence
+                } else if (new File(target).exists()) {
+                    model.write(writer, "RDF/XML-ABBREV");
+                    target = target.substring(0,target.lastIndexOf("."));
+                    FileUtil.write(target + ".rdf", writer.toString());
+                    b = true; 
+                } else {
+                    target = System.getProperty("user.home") + "/" + target;
+                    if (new File(target).exists()) {
+                        model.write(writer, "RDF/XML-ABBREV");
+                        target = target.substring(0, target.lastIndexOf("."));
+                        FileUtil.write(target + ".rdf", writer.toString());
+                        b = true;
+                    } else {
+                        b = false; //nowhere to write to
+                    }
+                }
+            }
         }
+        return b;
     }
 
     @Override
@@ -77,4 +93,5 @@ public class FileStorage implements MetaCrawl.Storage {
     @Override
     public void destroy() {
     }
+
 }

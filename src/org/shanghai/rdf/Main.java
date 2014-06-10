@@ -100,8 +100,7 @@ public class Main {
     }
 
     public static void help() {
-        String usage = "java org.shanghai.rdf.Main\n"
-                     + "   -config file.ttl (default is lib/shanghai.ttl)\n"
+        String usage = "   -config file.ttl (default is lib/archiv.ttl)\n"
                      + "   -index [index name] [command]\n"
                      + "          -probe test setup\n"
                      + "          -test  [offset] [limit] record identifiers\n"

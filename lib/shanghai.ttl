@@ -4,31 +4,24 @@
 @prefix : <http://localhost/terms/> .
 
 :about dct:title  "Configurator" ;
-       dct:date   "2013-10-19" ;
+       dct:date   "2014-02-02" ;
        dct:description "A Turtle Adventure" .
 
-:crawl :source :web ;
-       :target :solr3 ;
-       :count  "10"^^xsd:integer ;
+:crawl :source :files ;
+       :target :virt ;
+       :count  "90"^^xsd:integer ;
        :test   "data/crawl-test.rdf"^^xsd:string ;
-       :iri    "http://localhost/view/nlp/" ;
-       :nlp    "grobid lang"^^xsd:string ; ## grobid cermine lang
        :create "false"^^xsd:boolean .
 
 :files :depth  "5"^^xsd:integer ;
-       :suffix ".rdf .pdf .java .epub"^^xsd:string ; 
-       # :suffix ".rdf"^^xsd:string ; 
+       :suffix ".rdf"^^xsd:string ; 
        :count  "100"^^xsd:integer ; 
-       :cache  "/var/cache/apache2/cover" ; ## pdf cover images
-       :base   "http://localhost/view/page/" ; ## pdf view base
-       :book   "http://localhost/view/book/" ; ## epub view base
        :store "data" .
 
 :tdb   :store  "/vol/vol01/data/jena.tdb" ;
        :probe  "/sparql/rdf-probe.sparql" ;
        :enum   "/sparql/rdf-index.sparql" ;
        :dump   "/sparql/rdf-about.sparql" .
-       # :date "2014-01-01"
 
 :virt  :store "jdbc:virtuoso://localhost:1111" ;
        :graph "http://archiv.ub.uni-marburg.de" ;
@@ -40,32 +33,15 @@
 
 :solr1 :url   "http://localhost:8080/solr" ;
        :transformer "/xslt/shanghai-transform.xslt" ;
-       :transporter "/xslt/solr2rdf.xslt" ;
        :core  "biblio" .
-
-:solr2 :url   "http://localhost:8080/solr" ;
-       :transformer "/xslt/opac-transform.xslt" ;
-       :core  "biblio" .
-
-:solr3 :url   "http://localhost:8080/solr" ;
-       :transformer "/xslt/analyzer-transform.xslt" ;
-       :transporter "/xslt/solr2rdf.xslt" ;
-       :core  "website" .
-
-## source, no target 
-:web   :crawl "http://localhost/" ;
-       :cache "/vol/vol01/data/cache" ;
-       :robots "4"^^xsd:integer .
 
 ## first part is standard index, or use indexName switch. 
 :index :hasPart :index01 ;
        :hasPart :index02 ;
        .
 
-## Use the sparql service point (or :tdb) for data retrieval,
-## use queries and transformation from the files. 
-## If asked for a -dump, use the given test file as storage.
-## Transformed records goes to :store (a valid solr uri).
+## Use the sparql service point for data retrieval,
+## transformed records goes to :store
 :index01 :sparql "http://localhost:8890/sparql" ;
        :probe  "/sparql/shanghai-probe.sparql" ;
        :enum   "/sparql/shanghai-index.sparql" ;
@@ -75,7 +51,7 @@
        :test   "data/shanghai-about.rdf" ;
        :store  "http://localhost:8080/solr/biblio" .
 
-:index02 :sparql :tdb ;
+:index02 :sparql "http://localhost:8890/sparql" ;
        :probe  "/sparql/rdf-probe.sparql" ;
        :enum   "/sparql/rdf-index.sparql" ;
        :dump   "/sparql/rdf-about.sparql" ;
@@ -83,4 +59,15 @@
        :test   "data/shanghai-about.rdf" ;
        :store  :solr1 .
 
-#--#-#-#-#-#-#-# end of turtle adventure #-#-#-#-#-#-#-#-#-#
+## OAI harvesting 
+:oai   :hasPart :oai01 ;
+       :urnPrefix "urn:nbn:de:hebis:04-" .
+
+## harvest records from this source not older than some <days>.
+## from and until will override day settings.
+:oai01 :harvest "http://archiv.ub.uni-marburg.de/ubfind/OAI/Server" ;
+       :prefix  "xMetaDissPlus" ;
+       :days    "5"^^xsd:integer ;
+       :transformer "/xslt/xmdp2rdf.xslt" .
+
+#--#-#-#-#-#-#-# end of turtle config #-#-#-#-#-#-#-#-#-#

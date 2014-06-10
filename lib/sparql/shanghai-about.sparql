@@ -5,6 +5,7 @@ PREFIX  aiiso: <http://purl.org/vocab/aiiso/schema#>
 PREFIX  frbr: <http://purl.org/vocab/frbr/core#>
 PREFIX  pica: <http://localhost/view/>
 PREFIX  daia: <http://purl.org/ontology/daia/>
+PREFIX  pro: <http://purl.org/spar/pro/>
 # PREFIX  cito: <http://purl.org/spar/cito/>
 
 ## resource dump.
@@ -37,6 +38,9 @@ construct {
         }
   } union {
         <subject> frbr:exemplar ?o .
+        ?o ?x ?y .
+  } union {
+        <subject> pro:editor ?o .
         ?o ?x ?y .
   } 
 } 

@@ -57,8 +57,9 @@ public class RDFTransporter implements MetaCrawl.Transporter {
         size=0;
         probeQuery = FileUtil.read(probeQueryFile);
         indexQuery = FileUtil.read(indexQueryFile);
-        if (indexQuery==null || indexQuery.trim().length()==0) 
-            log("Everything wrong.");
+        if (indexQuery==null || indexQuery.trim().length()==0) {
+            log("Everything is wrong.");
+        }
         if (date!=null) {
             probeQuery = probeQuery.replace("<date>", date);
             indexQuery = indexQuery.replace("<date>", date);

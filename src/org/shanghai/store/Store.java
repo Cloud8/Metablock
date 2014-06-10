@@ -33,35 +33,27 @@ public class Store {
     private String construct;
     private boolean tdb;
 
-    public Store(String sparqlService) {
-        this.sparqlService = sparqlService;
-        if (sparqlService.startsWith("http://")) {
-            tdb = false;
-         } else {
-            tripleStore = new TripleStore(sparqlService);
+    public Store(String srv, String graph) {
+        log(srv);
+        if (graph!=null && graph.startsWith("http://")) {
+            //RDFStorage write only
+            tripleStore = new TripleStore(srv,graph);
             tdb = true;
-         }
-    }
-
-    public Store(String sparqlService, String construct) {
-        this(sparqlService);
-        this.sparqlService = sparqlService;
-        if (sparqlService.startsWith("http://")) {
-            tdb = false;
-            this.construct = construct;
-         } else {//construct may be a graph uri
-            if (construct!=null && construct.startsWith("http://")) {
-                tripleStore = new TripleStore(sparqlService,construct);
-                tdb = true;
+        } else {
+            //RDFTransporter sparql read only
+            this.construct = graph;
+            if (srv.startsWith("http://")) {
+                this.sparqlService = srv;
+                tdb = false;
             } else {
-                tripleStore = new TripleStore(sparqlService);
-                this.construct = construct;
+                //TDB reading support
+                tripleStore = new TripleStore(srv);
                 tdb = true;
             }
-         }
+        }
     }
 
-    /** virtuoso support */
+    /** virtuoso write support */
     public Store(String uri, String graph, String dbuser, String dbpass) {
         this.tripleStore = new TripleStore(uri,graph,dbuser,dbpass);
         tdb = true;
@@ -105,6 +97,7 @@ public class Store {
         return getModel(resource);
     }
 
+    /*
     public boolean update(String rdf) {
         int x = rdf.indexOf("rdf:about");
         if (x>0) {
@@ -113,6 +106,7 @@ public class Store {
         }
         return write(rdf);
     }
+    */
 
     public boolean update(Model mod) {
         boolean b = false;

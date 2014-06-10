@@ -5,15 +5,7 @@ import org.shanghai.util.FileUtil;
 import java.io.IOException;
 import java.util.logging.Logger;
 import com.hp.hpl.jena.rdf.model.Model;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
 import java.io.StringReader;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -37,13 +29,10 @@ public class MetaCrawl {
         public void create();
         public void dispose();
         public boolean delete(String resource);
-        public boolean post(String data);
         public boolean write(Model mod);
         public boolean update(Model mod);
         public void destroy();
     }
-
-    int count;
 
 	private Transporter transporter;
     private Storage storage;
@@ -53,15 +42,14 @@ public class MetaCrawl {
     private String testFile;
     private int chunkSize;
     private int logC = 0;
-
-    private DocumentBuilder builder;
+    private int count;
 
     public MetaCrawl(Transporter r, Storage s, String x, String t, int c) {
         this.transporter = r;
         this.storage = s;
         this.xsltFile = x;
-        this.logC = c;
         this.testFile = t;
+        this.logC = c;
     }
 
     public void create() {
@@ -72,22 +60,18 @@ public class MetaCrawl {
             log(xsltFile + " not found!");
         xmlTransformer = new XMLTransformer(xslt);
         xmlTransformer.create();
-
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        try { builder = factory.newDocumentBuilder();
-        } catch(ParserConfigurationException e) { log(e); }
-
     }
 
     public void dispose() {
         xmlTransformer.dispose();
     }
 
-    public void index() {
-        int i = 0;
+    public int index() {
+        int i=0;
         for (boolean b=true; b; b=index((i-1)*chunkSize, chunkSize)) {
-             i++;
+            i++;
         }
+        return count;
     }
 
     /** no difference ! */
@@ -96,6 +80,7 @@ public class MetaCrawl {
         return indexSlow(offset, limit);
     }
 
+/*
     //reduce write operations
     private boolean indexFast(int offset, int limit) {
         boolean result = true;
@@ -138,8 +123,10 @@ public class MetaCrawl {
             log("problem: solr doc length " +solrDoc.length());
             result=true;//dont stop the show
         }
+        result=storage.write(mod);
         return result;
     }
+*/
 
     private boolean indexSlow(int offset, int limit) {
         boolean result = true;
@@ -152,13 +139,9 @@ public class MetaCrawl {
              if (mod==null) {//if server sends garbage, dont care.
                  continue;
              }
-             String solrDoc = xmlTransformer.transform(mod);
-             if (solrDoc.length() <42) {
-                 continue;
-             }
-             result=storage.post(solrDoc);
+             result=storage.write(mod);
              if(!result) {
-                 log("problem: " + id + " solr doc length " +solrDoc.length());
+                 log("problem: " + id);
                  dump(id);
                  result=true;//dont stop the show
              }
@@ -180,8 +163,7 @@ public class MetaCrawl {
         if (mod==null) {
             log("cant post " + resource);
         } else {
-            String solr = xmlTransformer.transform(mod);
-            storage.post(solr);
+            storage.write(mod);
         }
     }
 

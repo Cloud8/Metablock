@@ -25,23 +25,15 @@ import org.apache.solr.core.CoreContainer;
    @title Solr XML Post Class 
    @date 2013-02-02
 */
-public class SolrPost implements MetaCrawl.Storage {
+public class SolrPost {
 
     protected SolrServer server;
     private String solr;
-    private XMLTransformer transformer;
 
     public SolrPost(String solr) {
        this.solr = solr;
     }
 
-    public SolrPost(String solr, String xsltFile) {
-       this.solr = solr;
-       transformer = new XMLTransformer(FileUtil.read(xsltFile));
-       transformer.create();
-    }
-
-    @Override
     public void create() {
         if (solr.startsWith("http://")) {
             server = new HttpSolrServer(solr);
@@ -55,22 +47,19 @@ public class SolrPost implements MetaCrawl.Storage {
         }
     }
 
-    @Override
     public void dispose() {
-        //if (server==null)
-        //    return;
         log("solr commit");
         try {
           server.commit();
         } catch(SolrServerException e) { log(e); }
           catch(IOException e) { log(e); }
-        if (transformer!=null) {
-            transformer.create();
-            transformer=null;
-        }
+        //if (transformer!=null) {
+        //    transformer.create();
+        //    transformer=null;
+        //}
     }
 
-    public boolean exists(String resource) {
+    public boolean test(String resource) {
         SolrQuery q = new SolrQuery("id:" + resource.replace(":","\\:"));
         q.setRows(0); // don't actually request any data
         boolean b = false;
@@ -83,7 +72,6 @@ public class SolrPost implements MetaCrawl.Storage {
         }
     }
 
-    @Override
     public boolean post(String data) {
        boolean b = false;
        if (data==null || data.length()==0)
@@ -99,10 +87,10 @@ public class SolrPost implements MetaCrawl.Storage {
         }
     }
 
-    @Override
     public boolean delete(String id) {
         boolean b = false;
-        String delete = "id:"+id.replace(":","\\:");
+        String delete = "id:"+id.replace(":","\\:").replace("#","*");
+        log("delete [" + id + "] [" + delete + "]");
         try {
             server.deleteByQuery(delete);
             b=true;
@@ -113,24 +101,11 @@ public class SolrPost implements MetaCrawl.Storage {
         }
     }
 
-    @Override
     public void destroy() {
         try {
           server.deleteByQuery( "*:*" );
         } catch(SolrServerException e) { log(e); }
         catch(IOException e) { log(e); }
-    }
-
-    @Override
-    public synchronized boolean write(Model mod) {
-        String xml = transformer.transform(mod);
-        boolean b = post(xml);
-        return b;
-    }
-
-    @Override
-    public boolean update(Model mod) {
-        return write(mod);
     }
 
     private static final Logger logger =

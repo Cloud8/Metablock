@@ -23,7 +23,7 @@ public class FileTransporter implements MetaCrawl.Transporter {
         public Delegate create();
         public void dispose();
         public boolean canRead(File file);
-        public Model read(String resource, String name);
+        public Model read(String fname);
     }
 
     private int count = 0;
@@ -65,26 +65,26 @@ public class FileTransporter implements MetaCrawl.Transporter {
     }
 
     @Override
-    public Model read(String file) {
+    public Model read(String fname) {
         Model mod = null;
         for(Delegate d: delegates) {
             //log(d.getClass().getName() + " " + file);
-            if (d.canRead(new File(file))) {
-                mod = d.read(getIdentifier(file), file);
+            if (d.canRead(new File(fname))) {
+                //mod = d.read(getIdentifier(fname));
+                mod = d.read(fname);
                 break;
             }
         }
 		return mod;
     }
 
-    @Override 
-    public String getIdentifier(String fname) {
-        if (directory==null)
-            return fname;
-        String id = fname.substring(directory.length()+1).replace("/",":");
-        //log("getIdentifier " + id);
-        return id;
-    }
+    //@Override 
+    //public String getIdentifier(String fname) {
+    //    if (directory==null)
+    //        return fname;
+    //    String id = fname.substring(directory.length()+1);
+    //    return id;
+    //}
 
     @Override 
     public String[] getIdentifiers(int off, int limit) {

@@ -27,7 +27,6 @@ public class MetaCrawl {
         public void dispose();
         public String probe();
         public Model read(String resource);
-        public String getIdentifier(String name);
         public String[] getIdentifiers(int off, int limit);
         public int crawl(String directory);
     }
@@ -36,9 +35,8 @@ public class MetaCrawl {
     public interface Storage {
         public void create();
         public void dispose();
-        public boolean exists(String resource); 
+        public boolean test(String resource); // existance check
         public boolean delete(String resource);
-        public boolean post(String rdf);
         public boolean write(Model mod);
         public boolean update(Model mod); 
         public void destroy();
@@ -48,7 +46,7 @@ public class MetaCrawl {
     public interface Analyzer {
         public Analyzer create();
         public void dispose();
-        public Model analyze(String resource, Model model);
+        public Model analyze(Model model);
     }
 
     protected Transporter transporter;
@@ -58,10 +56,9 @@ public class MetaCrawl {
     private String testFile;
     private int logC;
     private int count = 0;
-    private boolean create;//no update, just write
+    private boolean create;// (no update, just write)
     private boolean test = false;
     private boolean analyze = false;
-    private boolean sync;
     private long start,end;
 
     public MetaCrawl(Transporter t, Storage s, 
@@ -88,7 +85,6 @@ public class MetaCrawl {
     public MetaCrawl(Transporter t,String testFile) {
         this.transporter = t;
         this.testFile = testFile;
-        log("test case");
         test=true;
     } 
 
@@ -117,8 +113,6 @@ public class MetaCrawl {
     }
 
     public void dump() {
-        //String rc = transporter.getIdentifiers(0,1)[0];
-        //log("dump " + rc);
         dump(transporter.getIdentifiers(0,1)[0]);
     }
 
@@ -132,16 +126,19 @@ public class MetaCrawl {
         return transporter.probe();
     }
 
-    public void test() {
-        test(".");
-    }
-
     public void test(String resource) {
         int count=transporter.crawl(resource);
         for (String id : transporter.getIdentifiers(0,7))
              if (id!=null)
                  log("test " + resource + " : " + id);
-        log("found " + count + " items in " + resource); 
+        log("found " + count + " items in [" + resource + "]"); 
+    }
+
+    public void test(String from, String until) {
+        int x = Integer.parseInt(from);
+        int y = Integer.parseInt(until);
+        String[] ids = transporter.getIdentifiers(x,y);
+        log("found " + ids.length  + " items "); 
     }
 
     public int crawl(String source) {
@@ -151,13 +148,7 @@ public class MetaCrawl {
         end = System.currentTimeMillis();
         log("crawl " + source + " " + found + " items in " 
                      + (end - start)/1000 + " sec.");
-        //found = crawl();
         return found;
-    }
-
-    public int sync() {
-        sync=true;
-        return crawl();
     }
 
     public int crawl() {
@@ -185,10 +176,12 @@ public class MetaCrawl {
         return 0;
     }
 
-    protected Model analyze(String resource, Model model) {
+    protected Model analyze(Model model) {
+        if (model==null)
+            return model;
         if (analyze) {
             for (Analyzer a : analyzers)
-                model = a.analyze(resource, model);
+                model = a.analyze(model);
         }
         return model;
     }
@@ -212,11 +205,11 @@ public class MetaCrawl {
                  return false;
              if (logC!=0&&count%logC==0)
                  log(id + " crawl " + count);
-             if (sync&&storage.exists(transporter.getIdentifier(id))) {
-                 continue;
-             } 
+             //if (sync&&storage.exists(transporter.getIdentifier(id))) {
+             //    continue;
+             //} 
              Model mod = transporter.read(id);
-             mod = analyze(id,mod);
+             mod = analyze(mod);
              if(test&&count==0) dump(id,mod);
              if (mod==null) { //garbage, dont care.
                  log("failed " + id);
@@ -268,11 +261,11 @@ public class MetaCrawl {
         } catch(Exception e) {
            model.write(System.out,"TTL");
         } finally {
-           dump(id,writer.toString());
+           dumpOut(id,writer.toString());
         }
     }
 
-    private void dump(String id, String data) {
+    private void dumpOut(String id, String data) {
         if (testFile==null) {
             System.out.println(data);
         } else {
@@ -281,14 +274,26 @@ public class MetaCrawl {
         }
     }
 
+    public void dump(String id, String fn) {
+        Model mod = transporter.read(id);
+        StringWriter writer = new StringWriter();
+        try {
+           mod.write(writer, "RDF/XML-ABBREV");
+        } catch(Exception e) {
+           mod.write(System.out,"TTL");
+        } finally {
+            FileUtil.write(fn, writer.toString());
+        }
+    }
+
     public void destroy() {
         if(test) {
-           // log("destroy " + test);
+           log("destroy test " + test);
            return;
         } else {
            log("destroy storage");
+           storage.destroy();
         }
-        storage.destroy();
     }
 
     public boolean delete(String resource) {
@@ -298,21 +303,19 @@ public class MetaCrawl {
 
     public boolean update(String resource) {
         boolean b = false;
-        //if (transporter.canRead(resource)) {
-            Model mod = transporter.read(resource);
-            mod = analyze(resource,mod);
-            if (test) {
-                dump(resource,mod);
-            } 
-            else b = storage.update(mod); 
-        //} 
+        Model mod = transporter.read(resource);
+        mod = analyze(mod);
+        if (test) {
+            dump(resource,mod);
+        } 
+        else b = storage.update(mod); 
         return b;
     }
 
     private static final Logger logger =
                          Logger.getLogger(MetaCrawl.class.getName());
 
-    protected void log(String msg) {
+    public static void log(String msg) {
         logger.info(msg);
     }
 

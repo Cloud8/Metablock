@@ -5,7 +5,7 @@ import com.hp.hpl.jena.query.QueryExecution;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
+   @author Goetz Hatop
    @title General Triple Store Interface
    @date 2013-09-19
 */
@@ -13,13 +13,14 @@ public class TripleStore {
 
     private Virtuoso virt;
     private JenaTDB  jtdb;
+    private FourStore fstore;
     private int  store;
     private String graph;
 
-    public TripleStore() {
-        virt = new Virtuoso();
-        store = 1;
-    }
+    //public TripleStore() {
+    //    virt = new Virtuoso();
+    //    store = 1;
+    //}
 
     public TripleStore(String uri) {
         if (uri.startsWith("jdbc:virtuoso")) {
@@ -35,9 +36,14 @@ public class TripleStore {
         if (uri.startsWith("jdbc:virtuoso")) {
             virt = new Virtuoso(uri, graph);
             store = 1;
-        } else {
+        } else if (uri.startsWith("http://")) {
+            fstore = new FourStore(uri, graph);
+            store = 3;
+        } else if (uri.startsWith("/")) {
             jtdb = new JenaTDB(uri, graph);
             store = 2;
+        } else {
+            store = 0;
         }
         this.graph = graph;
     }
@@ -46,6 +52,9 @@ public class TripleStore {
         if (uri.startsWith("jdbc:virtuoso")) {
             virt = new Virtuoso(uri, graph, dbuser, dbpass);
             store = 1;
+        } else if (uri.startsWith("http://")) {
+            fstore = new FourStore(uri, graph);
+            store = 3;
         } else {
             jtdb = new JenaTDB(uri, graph);
             store = 2;
@@ -58,6 +67,8 @@ public class TripleStore {
             virt.create();
         } else if (store==2) {
             jtdb.create();
+        } else if (store==3) {
+            fstore.create();
         }
     }
 
@@ -66,6 +77,8 @@ public class TripleStore {
             virt.dispose();
         else if (store==2)
             jtdb.dispose();
+        else if (store==3)
+            fstore.dispose();
     }
 
     public void clean() {
@@ -74,6 +87,8 @@ public class TripleStore {
                     break;
             case 2: jtdb.clean();
                     break;
+            case 3: fstore.clean();
+                    break;
         }
     }
 
@@ -81,6 +96,7 @@ public class TripleStore {
         switch(store) {
             case 1: return virt.getExecutor(q);
             case 2: return jtdb.getExecutor(q);
+            case 3: return fstore.getExecutor(q);
         }
         return null;
     }
@@ -91,6 +107,8 @@ public class TripleStore {
             case 1: b=virt.delete(about);
                     break;
             case 2: b=jtdb.delete(about);
+                    break;
+            case 3: b=fstore.delete(about);
                     break;
         }
         return b;
@@ -107,6 +125,8 @@ public class TripleStore {
                     break;
             case 2: b=jtdb.remove(m, path);
                     break;
+            case 3: b=fstore.remove(m, path);
+                    break;
         }
         return b;
     }
@@ -118,6 +138,8 @@ public class TripleStore {
                     break;
             case 2: b=jtdb.save(m);
                     break;
+            case 3: b=fstore.save(m);
+                    break;
         }
         return b;
     }
@@ -128,6 +150,8 @@ public class TripleStore {
             case 1: b=virt.update(m);
                     break;
             case 2: b=jtdb.update(m);
+                    break;
+            case 3: b=fstore.update(m);
                     break;
         }
         return b;

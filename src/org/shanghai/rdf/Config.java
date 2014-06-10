@@ -264,7 +264,7 @@ public class Config {
     public Index getIndex(String name) {
         for (Index idx : getList("index")) {
             if (name.equals(idx.name)) {
-                log(idx.name);
+                //log(idx.name);
                 return idx;
             }
         }
@@ -364,20 +364,21 @@ public class Config {
         public String prefix;
         public String from;
         public String until;
-        public String rawtest;
-        public String rdftest;
-        public String republish;
+        //public String rawtest;
+        //public String rdftest;
+        //public String republish;
+        public String archive; // GH201405 : will replace republish
         public String urnPrefix;
-        public String docbase;
+        //public String docbase;
         public String days;
-        public String interval;
-        public String maxRequest;
+        //public String interval;
+        //public String maxRequest;
         public void show() {
            log("OAI: " + prefix 
              + "   : " + days + ": " + transformer + "\n"
              + "   : " + harvest + "\n" 
-             + "   : " + rawtest + ": " + rdftest + "\n"
-             + "   : " + "republish to " + republish + "\n"
+             //+ "   : " + rawtest + ": " + rdftest + "\n"
+             + "   : " + "republish to " + archive + "\n"
              + "   : from " + from + " until " + until); 
         }
         void calcule() {
@@ -391,6 +392,9 @@ public class Config {
                 until = getNow();
             } else {
                 until = until.substring(0, until.indexOf("^^"));
+            }
+            if (urnPrefix==null) {
+                urnPrefix = get("oai.urnPrefix");
             }
         }
     }

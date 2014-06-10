@@ -48,7 +48,7 @@ public class TrivialScanner implements FileTransporter.Delegate {
         }
     }
 
-    public Model read(String id, String file) {
+    public Model read(String file) {
         try {
             InputStream in = new FileInputStream(new File(file));
             Model m = ModelFactory.createDefaultModel();

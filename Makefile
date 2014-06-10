@@ -15,7 +15,6 @@ lib/%.class: src/%.java
 	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
 default: lib/shanghai.jar
-	@echo "All compiled: make clean, make test"
 
 compile: $(CLASS) 
 
@@ -23,7 +22,7 @@ lib/shanghai.jar: $(CLASS) lib/shanghai.ttl
 	jar cf $@ -C lib org
 
 test: 
-	java -cp lib:lib/* org.shanghai.main.Main
+	java -cp lib:lib/* org.shanghai.rdf.Main
 
 check:
 	@echo CPATH: $(CPATH)
@@ -32,4 +31,5 @@ check:
 clean:
 	@rm -f $(CLASS)
 	@rm -rf lib/org
+	@rm -f lib/shanghai.jar
 

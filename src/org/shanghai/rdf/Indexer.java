@@ -67,10 +67,10 @@ public class Indexer {
         if (store.startsWith("solr")) {
             String solr = config.get(store+".url")
                         + "/" + config.get(store+".core");
-            storage = new SolrPost(solr);
             xsltFile = config.get(store+".transformer");
+            storage = new SolrStorage(solr, xsltFile);
         } else { // support http:// signature
-            storage = new SolrPost(store);
+            storage = new SolrStorage(store, xsltFile);
         }
         storage.create();
 
@@ -99,14 +99,27 @@ public class Indexer {
     public void dump() {
         String uri = transporter.getIdentifiers(0,1)[0];
         createStorage();
-        String rdf = getDescription(uri); 
+        String rdf = rdfCrawl.read(uri); 
         System.out.println(rdf);
     }
 
     /** resource dump */
     public void dump(String uri) {
-        String rdf = getDescription(uri);
+        createStorage();
+        String rdf = rdfCrawl.read(uri);
         System.out.println(rdf);
+    }
+
+    public void dump(String uri, String filename) {
+        createStorage();
+        String rdf = rdfCrawl.read(uri);
+        FileUtil.write(filename, rdf);
+    }
+
+    public void post(String resource) {
+        log("post: " + resource);
+        createStorage();
+        rdfCrawl.post(resource);
     }
 
     /** index source to target */
@@ -115,18 +128,25 @@ public class Indexer {
         index(idx);
     }
 
+    public void index(String from, String to) {
+        createStorage();
+        int off = Integer.parseInt(from);
+        int limit = Integer.parseInt(to);
+        rdfCrawl.index(off, limit);
+    }
+
     public void clean() {
         createStorage();
         storage.destroy();
     }
 
-    public void index(String cmd, String arg1, String arg2) {
-        if (cmd.endsWith("-dump")) {
-            dump(arg1,arg2);
-        } else if (cmd.equals("-test")) {
-			test(arg1,arg2);
-        }
-    }
+    //public void index(String cmd, String arg1, String arg2) {
+    //    if (cmd.endsWith("-dump")) {
+    //        dump(arg1,arg2);
+    //    } else if (cmd.equals("-test")) {
+	//		test(arg1,arg2);
+    //    }
+    //}
 
     private void test(String offset, String limit) {
         int x = Integer.parseInt(offset);
@@ -142,11 +162,6 @@ public class Indexer {
         }
     }
 
-    private void post(String resource) {
-        log("post: " + resource);
-        rdfCrawl.post(resource);
-    }
-
     private void index(Config.Index idx) {
         if (idx==null) {
             log("invalid.");
@@ -154,25 +169,18 @@ public class Indexer {
         }
         log("index routine " + idx.name + " starts.");
         long start = System.currentTimeMillis();
-        rdfCrawl.index();
+        int count = rdfCrawl.index();
         long end = System.currentTimeMillis();
         double rs = ((end - start)/1000);
         if ( rs>0.0 ) //prevent div by zero
-             rs = rdfCrawl.count / rs ;
-        log("indexed " + rdfCrawl.count + " records in " 
+             rs = count / rs ;
+        log("indexed " + count + " records in " 
                        + ((end - start)/1000) + " sec [" + rs +" rec/s]");
     }
 
-    private String getDescription(String uri) {
-        log(uri);
-        return rdfCrawl.read(uri); 
-    }
-
-    private void dump(String uri, String filename) {
-        FileUtil.write(filename, getDescription(uri));
-    }
-
-    private void remove(String id) {
+    public void remove(String id) {
+        log("remove ["+ id + "]");
+        createStorage();
         storage.delete(id);
     }
 

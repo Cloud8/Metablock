@@ -9,7 +9,7 @@ done
 hostname="`hostname`"
 case $hostname in
   *)
-    java -cp $CP org.shanghai.main.Main $*
+    java -cp $CP org.shanghai.crawl.Main $*
     ;;
 esac
 

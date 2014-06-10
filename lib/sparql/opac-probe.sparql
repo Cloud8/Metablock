@@ -1,9 +1,0 @@
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX dct: <http://purl.org/dc/terms/>
-PREFIX pica: <http://www.ub.uni-marburg.de/webcat/card/ppn/>
-
-# check size of store
-SELECT (COUNT(distinct(?s)) AS ?subject) 
-WHERE { 
-   ?s pica:f003Y ?o .
-}
