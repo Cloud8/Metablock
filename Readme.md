@@ -41,8 +41,8 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
 
 ##### Crawling RDF and Lifting XML to RDF
 
-  Shanghai can be used as collect xml data, lift the data to rdfs
-  and store the rdf data into a triple store. 
+  Shanghai can be used to collect xml data, lift the data to rdf
+  and store everything into a triple store. 
 
   The storage of XML based records into a RDF storage engine
   requires XSLT transformations.
