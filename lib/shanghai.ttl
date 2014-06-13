@@ -26,10 +26,7 @@
 :virt  :store "jdbc:virtuoso://localhost:1111" ;
        :graph "http://archiv.ub.uni-marburg.de" ;
        :dbuser "xxxxx" ;
-       :dbpass "zzzzz" ;
-       :probe  "/sparql/rdf-probe.sparql" ;
-       :enum   "/sparql/rdf-index.sparql" ;
-       :dump   "/sparql/rdf-about.sparql" .
+       :dbpass "zzzzz" .
 
 :solr1 :url   "http://localhost:8080/solr" ;
        :transformer "/xslt/shanghai-transform.xslt" ;
@@ -61,13 +58,13 @@
 
 ## OAI harvesting 
 :oai   :hasPart :oai01 ;
-       :urnPrefix "urn:nbn:de:hebis:04-" .
+       :urnPrefix "urn:nbn:xxx:yyy-" .
 
 ## harvest records from this source not older than some <days>.
 ## from and until will override day settings.
 :oai01 :harvest "http://archiv.ub.uni-marburg.de/ubfind/OAI/Server" ;
-       :prefix  "xMetaDissPlus" ;
+       :prefix  "rdf" ;
        :days    "5"^^xsd:integer ;
-       :transformer "/xslt/xmdp2rdf.xslt" .
+       :transformer "/xslt/rdf2rdf.xslt" .
 
 #--#-#-#-#-#-#-# end of turtle config #-#-#-#-#-#-#-#-#-#

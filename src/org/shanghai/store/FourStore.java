@@ -19,6 +19,9 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.io.StringWriter;
+
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -43,11 +46,11 @@ public class FourStore {
     private URL updateURL;
 
     public FourStore() {
-        this("http://localhost:9000", "http://localhost/default");
+        this("http://localhost:9000", "archiv");
     }
 
     public FourStore(String server) {
-        this(server, "http://localhost/default");
+        this(server, "archiv");
     }
 
     public FourStore(String server, String graph) {
@@ -92,7 +95,8 @@ public class FourStore {
         return null;
     }
 
-    public boolean write(String rdf) {
+    private boolean write(String rdf) {
+        log("write to " + dataURL + graph);
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(dataURL
                 + graph).openConnection();
@@ -100,7 +104,10 @@ public class FourStore {
             connection.setDoOutput(true);
             connection.setDoInput(true);
             connection.setRequestMethod("PUT");
-            connection.setRequestProperty("Content-Type","application/rdf+xml");
+        //  -- fails ??
+        //  connection.setRequestProperty("Content-Type","application/rdf+xml");
+            connection.setRequestProperty("Content-Type",
+                                          "application/rdf+xml-abbrev");
 
             DataOutputStream ps = new DataOutputStream(connection.getOutputStream());
             ps.writeBytes(rdf);
@@ -108,6 +115,7 @@ public class FourStore {
             ps.close();
 
             String response = readResponse(connection);
+            log("response: " + response);
             return true;
         } catch (MalformedURLException e) {
             log(e);
@@ -115,6 +123,7 @@ public class FourStore {
             log(e);
         } catch (IOException e) {
             log(e);
+            e.printStackTrace();
         }
         return false;
     }
@@ -190,21 +199,21 @@ public class FourStore {
     }
 
     public boolean remove(Model m, String graph) {
-    /*
-        virtmodel.remove(m);
-        return true;
-    */
         return false;
     }
 
-    public boolean save(Model m) {
-    /*
-        boolean b=true;
-        String response = store.add(m);
-        log(response);
-        return b;
-    */
-        return false;
+    public boolean save(Model model) {
+        StringWriter writer = new StringWriter();
+        try {
+           //model.write(writer, "RDF/XML-ABBREV");
+           // base null means write only absolute URI's.
+           //model.write(writer, "RDF/XML", null); 
+           model.write(writer, "RDF/XML-ABBREV", null); 
+           //model.write(writer); 
+        } catch(Exception e) {
+           log(e);
+        }
+        return write(writer.toString());
     }
 
     /**
@@ -282,8 +291,15 @@ public class FourStore {
 
     private String readResponse(HttpURLConnection connection)
               throws MalformedURLException, ProtocolException, IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection
-                .getInputStream()));
+        InputStream is = null;
+        //if (connection.getResponseCode() >= 400) {
+        //    is = connection.getErrorStream();
+        //} else {
+            is = connection.getInputStream();
+        //}
+        BufferedReader in = new BufferedReader(
+                //new InputStreamReader(connection.getInputStream()));
+                new InputStreamReader(is));
 
         StringBuilder responseBuilder = new StringBuilder();
         String str;

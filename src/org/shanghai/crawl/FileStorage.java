@@ -54,7 +54,7 @@ public class FileStorage implements MetaCrawl.Storage {
         boolean b = false;
         if (new File(store).isDirectory()) {
             model.write(writer, "RDF/XML-ABBREV");
-            FileUtil.write( id + ".rdf", writer.toString());
+            FileUtil.write( store + "/" + id + ".rdf", writer.toString());
             b = true;
         } else {
             String[] str = store.split(":");

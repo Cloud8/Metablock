@@ -2,6 +2,7 @@ package org.shanghai.crawl;
 
 import org.shanghai.rdf.Config;
 import org.shanghai.rdf.Indexer;
+import org.shanghai.oai.URN;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -14,6 +15,7 @@ public class Main {
     protected Config config;
     protected Crawl crawl;
     protected static String configFile = "shanghai.ttl";
+    protected Main engine;
 
     public void dispose() {
 	    if (crawl!=null)
@@ -44,7 +46,7 @@ public class Main {
         return 0;
     }
 
-    public static void main(String[] args) {
+    public void make(String[] args) {
         if (args.length==0) {
             org.shanghai.rdf.Main.help();
             return;
@@ -120,7 +122,6 @@ public class Main {
             if (args.length==1) {
                 help();
             } else if (args.length==2 && args[1].startsWith("-")) {
-                Main engine = new Main();
                 engine.create();
                 if (args[1].equals("-probe")) {
                     engine.crawl.probe();
@@ -135,7 +136,6 @@ public class Main {
                 }
                 engine.dispose();
             } else if (args.length==3 && args[1].startsWith("-")) {
-                Main engine = new Main();
                 engine.create();
                 if (args[1].equals("-dump")) {
                     engine.crawl.dump(args[2]);
@@ -148,7 +148,6 @@ public class Main {
                 }
                 engine.dispose();
             } else if (args.length==4 && args[1].startsWith("-")) {
-                Main engine = new Main();
                 engine.create();
                 if (args[1].equals("-dump")) {
                     engine.crawl.dump(args[2], args[3]);
@@ -159,11 +158,16 @@ public class Main {
                 }
                 engine.dispose();
             } else {
-                Main engine = new Main();
                 engine.create();
                 engine.crawl.crawl(args);
                 engine.dispose();
             }
         }
+    }
+
+    public static void main(String[] args) {
+        Main main = new Main();
+        main.engine = main;
+        main.make(args);
     }
 }

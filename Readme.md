@@ -20,12 +20,11 @@ Shanghai
 Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   Although the sparql queries and xslt transformations 
   delivered together with shanghai are rather general, 
-  the concrete modelling of bibliographic resources may vary
-  and require modifications.  
+  the modelling of bibliographic resources may vary and require modifications.  
   RDF data can be queried from a remote sparql service endpoint
   or from a local Jena TDB triple store. 
 
-%% See http://journal.code4lib.org/articles/8526
+%% <!-- See http://journal.code4lib.org/articles/8526 -->
 
 ##### Sparql Endpoint Test
   Shanghai does support SPARQL endpoint investigation to a certain
@@ -52,7 +51,7 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   The RDF modeling of the records relies on the SPAR Ontologies
   and the Dublin Core Terms vocabulary.
 
-    shanghai -crawl oai
+    shanghai -crawl oai : load oai data as defined by configuration file
 
 ##### About
 
@@ -63,17 +62,11 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   The goal is to have a cronnable tool to drive a Jena/RDF based 
   bibliographic metadata hub with VuFind as a discovery frontend.
 
-  Shanghai is under development and not feature complete.
-
-### Compile
-  
-  Only Java 7 and upwards...
 
 ### Collaboration
 
   We're *open to pull requests*! If you'd like to collaborate, 
   offer feedback, know better english or best of all - better code, 
-  feel free to do so. 
-  Please use the issues section on this github repository.
+  feel free to make use of the issues section on this github repository.
 
 ____________________________________________________________________________

@@ -5,8 +5,7 @@ import org.shanghai.crawl.SolrStorage;
 import org.shanghai.crawl.MetaCrawl;
 import org.shanghai.crawl.RDFStorage;
 import org.shanghai.crawl.FileTransporter;
-import org.shanghai.crawl.OAITransporter;
-//import org.shanghai.data.NLMAnalyzer;
+import org.shanghai.oai.OAITransporter;
 
 import java.io.File;
 import java.util.logging.Logger;
@@ -72,7 +71,6 @@ public class Crawl {
     }
 
     public void createTransporter(String crawl) {
-        log("createTransporter " + crawl);
         if ("files".equals(crawl)) {
             String suffix = config.get("files.suffix");
             int depth = config.getInt("files.depth");
@@ -80,7 +78,9 @@ public class Crawl {
             fc = new FileTransporter(suffix,depth,logC);
             fc.create(); 
             transporter = fc.inject(new TrivialScanner().create());
-        } else {
+            log("createTransporter " + crawl);
+        } else if (crawl.equals("tdb") || crawl.equals("virt") 
+                || crawl.equals("4store")) {
             String store = config.get(crawl+".store");
             if (store==null) {
                 store = config.get(crawl+".sparql");
@@ -93,7 +93,13 @@ public class Crawl {
             transporter.create();
             if (enum_==null) {
                 log("createTransporter failed");
+            } else {
+                log("createTransporter " + crawl);
             }
+        } else if ("oai".equals(crawl)) {
+            Config.OAI settings = config.getOAIList().get(0);
+            transporter = new OAITransporter(settings);
+            transporter.create();
         }
     }
 
@@ -110,7 +116,7 @@ public class Crawl {
             String dbpass = config.get(store+".dbpass");
             storage = new RDFStorage(virt,graph,dbuser,dbpass);
             storage.create();
-        } else if (store.startsWith("4store")) {
+        } else if (store.startsWith("four")) {
             String four = config.get(store+".store");
             String graph = config.get(store+".graph");
             storage = new RDFStorage(four,graph);
@@ -128,6 +134,9 @@ public class Crawl {
             storage = new FileStorage(directory);
             storage.create();
             log("createStorage [" + store + "]");
+        } else if ("empty".equals(store)) {
+            storage = new EmptyStorage();
+            storage.create();
         } else {
             log("No storage! [" + store + "]");
         }
@@ -235,11 +244,6 @@ public class Crawl {
 				transporter = new OAITransporter(settings);
                 transporter.create();
                 createCrawler();
-                //if (settings.prefix.equals("nlm")) {
-                //    String store = settings.archive==null
-                //               ?config.get("files.store"):settings.archive;
-                //  crawler.inject(new NLMAnalyzer(settings.urnPrefix, store));
-                //}
                 crawl();
                 transporter.dispose();
             }

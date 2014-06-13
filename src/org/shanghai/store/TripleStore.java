@@ -17,15 +17,13 @@ public class TripleStore {
     private int  store;
     private String graph;
 
-    //public TripleStore() {
-    //    virt = new Virtuoso();
-    //    store = 1;
-    //}
-
     public TripleStore(String uri) {
         if (uri.startsWith("jdbc:virtuoso")) {
             virt = new Virtuoso(uri);
             store = 1;
+        } else if (uri.startsWith("http://")) {
+            fstore = new FourStore(uri);
+            store = 3;
         } else {
             jtdb = new JenaTDB(uri);
             store = 2;

@@ -33,15 +33,16 @@ public class Store {
     private String construct;
     private boolean tdb;
 
-    public Store(String srv, String graph) {
-        log(srv);
-        if (graph!=null && graph.startsWith("http://")) {
+    public Store(String srv, String construct) {
+        log("server " + srv);
+        if (construct!=null && construct.startsWith("http://")) {
             //RDFStorage write only
+            String graph = construct;
             tripleStore = new TripleStore(srv,graph);
             tdb = true;
         } else {
             //RDFTransporter sparql read only
-            this.construct = graph;
+            this.construct = construct;
             if (srv.startsWith("http://")) {
                 this.sparqlService = srv;
                 tdb = false;
