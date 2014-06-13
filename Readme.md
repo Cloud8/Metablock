@@ -24,7 +24,6 @@ Step 1. and 2. needs a SPARQL query, step 3 works with XSLT. <br/>
   RDF data can be queried from a remote sparql service endpoint
   or from a local Jena TDB triple store. 
 
-%% <!-- See http://journal.code4lib.org/articles/8526 -->
 
 ##### Sparql Endpoint Test
   Shanghai does support SPARQL endpoint investigation to a certain
