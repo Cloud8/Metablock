@@ -5,6 +5,7 @@ import org.shanghai.util.FileUtil;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.common.SolrException;
 import org.apache.solr.client.solrj.request.DirectXmlRequest;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.common.SolrInputDocument;
@@ -53,10 +54,6 @@ public class SolrPost {
           server.commit();
         } catch(SolrServerException e) { log(e); }
           catch(IOException e) { log(e); }
-        //if (transformer!=null) {
-        //    transformer.create();
-        //    transformer=null;
-        //}
     }
 
     public boolean test(String resource) {
@@ -82,6 +79,7 @@ public class SolrPost {
          b=true;
         } catch(SolrServerException e) {log(e); }
           catch(IOException e) { log(e); }
+          catch(SolrException e) { log(e); }
         finally {
           return b;
         }

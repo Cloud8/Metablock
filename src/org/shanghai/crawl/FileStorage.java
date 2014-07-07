@@ -92,6 +92,7 @@ public class FileStorage implements MetaCrawl.Storage {
 
     @Override
     public void destroy() {
+        //System.out.println("No.");
     }
 
 }

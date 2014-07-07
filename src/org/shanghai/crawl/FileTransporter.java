@@ -99,10 +99,10 @@ public class FileTransporter implements MetaCrawl.Transporter {
         identifiers.clear();
 	    File f = new File(resource);
         level = 0;
-        if (depth==0)
-            log("crawling " + resource );
-        else
-            log("crawling "+resource+" with depth "+depth+":" + logC);
+        //if (depth==0)
+        //    log("crawling " + resource );
+        //else
+        //    log("crawling "+resource+" with depth "+depth+":" + logC);
         count=0;
 		crawl(f, depth);
         return count;

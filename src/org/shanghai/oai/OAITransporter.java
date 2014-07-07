@@ -55,8 +55,9 @@ public class OAITransporter implements MetaCrawl.Transporter {
     private String from;
     private String until;
 
-    public OAITransporter(Config.OAI settings) {
+    public OAITransporter(Config.OAI settings, boolean archive) {
         this.settings = settings;
+        this.archive = archive;
     }
 
     @Override
@@ -76,9 +77,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 transformer = new XMLTransformer( xslt );
                 transformer.create();
             }
-        }
-        if (settings.archive!=null) {
-            archive = true;
         }
         if (settings.prefix.equals("nlm")) {
             analyzer = new NLMAnalyzer(settings.urnPrefix, settings.archive);
@@ -260,13 +258,16 @@ public class OAITransporter implements MetaCrawl.Transporter {
         log("transformer " + settings.transformer); 
         log("from: "  + from);
         log("until: " + until);
-        String test = getIdentifiers(0,1)[0];
-        if (test!=null) {
-            Model model = read(test);
-            if (model!=null) {
-                model.write(System.out);
-            }
+        for (String s: getIdentifiers(0,7)) {
+            log(s);
         }
+        //String test = getIdentifiers(0,1)[0];
+        //if (test!=null) {
+        //    Model model = read(test);
+        //    if (model!=null) {
+        //        model.write(System.out);
+        //    }
+        //}
     }
 
     public void show() {

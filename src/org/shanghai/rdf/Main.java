@@ -11,11 +11,10 @@ import java.util.logging.Logger;
 public class Main {
  
     protected Config config;
-    private String configFile;
+    private static String configFile = "lib/shanghai.ttl";
     private Indexer indexer;
 
     private Main() {
-        configFile = "lib/shanghai.ttl";
     }
     
     public Main(String s) {
@@ -100,7 +99,7 @@ public class Main {
     }
 
     public static void help() {
-        String usage = "   -config file.ttl (default is lib/archiv.ttl)\n"
+        String usage = "   -config file.ttl (default is " + configFile + ")\n"
                      + "   -index [index name] [command]\n"
                      + "          -probe test setup\n"
                      + "          -test  [offset] [limit] record identifiers\n"

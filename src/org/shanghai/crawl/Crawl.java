@@ -61,10 +61,11 @@ public class Crawl {
         } else {
             int logC = config.getInt("crawl.count");
             boolean create = config.getBoolean("crawl.create");
-            if (storage==null) 
+            if (storage==null) {
                 createStorage(target);
-            if (storage==null) 
+            } if (storage==null) {
                 log("Bad storage : will break.");
+            }
             crawler = new MetaCrawl(transporter,storage,testFile,logC,create);
             crawler.create();
         }
@@ -78,7 +79,7 @@ public class Crawl {
             fc = new FileTransporter(suffix,depth,logC);
             fc.create(); 
             transporter = fc.inject(new TrivialScanner().create());
-            log("createTransporter " + crawl);
+            log("createTransporter [" + crawl + "]");
         } else if (crawl.equals("tdb") || crawl.equals("virt") 
                 || crawl.equals("4store")) {
             String store = config.get(crawl+".store");
@@ -94,11 +95,11 @@ public class Crawl {
             if (enum_==null) {
                 log("createTransporter failed");
             } else {
-                log("createTransporter " + crawl);
+                log("createTransporter [" + crawl + "]");
             }
         } else if ("oai".equals(crawl)) {
             Config.OAI settings = config.getOAIList().get(0);
-            transporter = new OAITransporter(settings);
+            transporter = new OAITransporter(settings, false);
             transporter.create();
         }
     }
@@ -130,7 +131,7 @@ public class Crawl {
             storage = new SolrStorage(solr,transformer);
             storage.create();
         } else if (store.startsWith("files")) {
-            String directory = config.get(store+".store");
+            String directory = config.get("files.store");
             storage = new FileStorage(directory);
             storage.create();
             log("createStorage [" + store + "]");
@@ -238,13 +239,23 @@ public class Crawl {
 
     protected void crawl(String source, String target) {
         if ("oai".equals(source)) {
-            createStorage(target);
+            if (!target.startsWith("-")) {
+                createStorage(target);
+            } else if (target.equals("files")) {
+                createStorage("empty");
+            }
             for (int i=0; i<config.getOAIList().size(); i++) {
 			    Config.OAI settings = config.getOAIList().get(i);
-				transporter = new OAITransporter(settings);
+				transporter = new OAITransporter(settings, target=="files");
                 transporter.create();
-                createCrawler();
-                crawl();
+                if ("-probe".equals(target)) {
+                    System.out.println(transporter.probe());
+                } else if ("-test".equals(target)) {
+                    ((OAITransporter)transporter).test();
+                } else {
+                    createCrawler();
+                    crawl();
+                }
                 transporter.dispose();
             }
         }

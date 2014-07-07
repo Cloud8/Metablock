@@ -24,7 +24,7 @@ public class Test {
 
     public void create() {
         config = new Config(configFile).create();
-        transporter = new OAITransporter(config.getOAIList().get(0));
+        transporter = new OAITransporter(config.getOAIList().get(0), false);
         transporter.create();
     }
 

@@ -133,6 +133,33 @@ public class FileUtil {
           catch(IOException e) { e.printStackTrace(); }
     }   
 
+    public static String base(String name) {
+        int slash = name.lastIndexOf('/');
+        return (slash == -1) ? name : name.substring(0, slash);
+        //String extension = (dot == -1) ? "" : name.substring(dot+1);
+    }
+
+    public static String removeExtension(String s) {
+
+        String separator = System.getProperty("file.separator");
+        String filename;
+
+        // Remove the path upto the filename.
+        int lastSeparatorIndex = s.lastIndexOf(separator);
+        if (lastSeparatorIndex == -1) {
+            filename = s;
+        } else {
+            filename = s.substring(lastSeparatorIndex + 1);
+        }
+
+        // Remove the extension.
+        int extensionIndex = filename.lastIndexOf(".");
+        if (extensionIndex == -1)
+            return filename;
+
+        return filename.substring(0, extensionIndex);
+    }
+
     private static String read(Object who, String what) {
         InputStream is = FileUtil.class.getResourceAsStream(what);
         if (is==null) {
