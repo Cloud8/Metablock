@@ -32,8 +32,12 @@ public class TrivialScanner implements FileTransporter.Delegate {
     public void setDirectory(String dir) {}
 
     public boolean canRead(File file) {
-        if (file.getName().endsWith(".rdf")) 
+        if (file.getName().endsWith(".rdf")) {
             return true;
+        }
+        if (file.getName().endsWith(".abd")) {
+            return true;
+        }
         return false;
     }
 

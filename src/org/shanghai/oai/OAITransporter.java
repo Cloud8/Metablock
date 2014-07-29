@@ -81,6 +81,9 @@ public class OAITransporter implements MetaCrawl.Transporter {
         if (settings.prefix.equals("nlm")) {
             analyzer = new NLMAnalyzer(settings.urnPrefix, settings.archive);
             analyzer.create();
+            if (archive) {
+                log("archive to " + settings.archive);
+            }
         }
     }
 
@@ -169,6 +172,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
 
     @Override
     public Model read(String identifier) {
+        //log("read " + identifier);
         String raw = getRecord(identifier);
         if (raw==null) {
             log("empty result : " + identifier);
@@ -176,6 +180,11 @@ public class OAITransporter implements MetaCrawl.Transporter {
         }
         String xml = getMetadata(raw);
         if (xml==null) {
+            log("zero data : " + identifier);
+            if (archive && count==0) {
+                archive("raw-"+identifier, raw);
+                count++;
+            }
             return null;
         }
         if (archive) { // write xml pdf index.html
@@ -192,7 +201,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
             model = XMLTransformer.asModel(xml);
         }
         if (analyzer!=null) {
-            model = analyzer.analyze(model);
+            analyzer.analyze(model);
         }
         return model;
     }
@@ -220,13 +229,17 @@ public class OAITransporter implements MetaCrawl.Transporter {
         } catch(SAXException e) { log(e); }
           catch(ParserConfigurationException e) { log(e); }
           catch(IOException e) { log(e); }
-        if (doc==null)
+        if (doc==null) {
+            log("zero document");
             return null;
+        }
         doc.getDocumentElement().normalize();
 
         Node metadata = doc.getElementsByTagName("metadata").item(0);
-        if (metadata==null)
+        if (metadata==null) {
+            log("zero metadata");
             return null;
+        }
         metadata.normalize();
         NodeList childs = metadata.getChildNodes();
         Element head = null;
@@ -247,7 +260,9 @@ public class OAITransporter implements MetaCrawl.Transporter {
         if ("nlm".equals(settings.prefix)) {
             analyzer.archive(xml);
         } else if (path!=null && new File(path).isDirectory()) {
-            FileUtil.write(path + "/" + identifier + ".xml", xml);
+            String outf = path + "/" + identifier.replaceAll("/",":") + ".xml";
+            log("archive to " + outf);
+            FileUtil.write(outf, xml);
         }
         return path;
     }
@@ -261,13 +276,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
         for (String s: getIdentifiers(0,7)) {
             log(s);
         }
-        //String test = getIdentifiers(0,1)[0];
-        //if (test!=null) {
-        //    Model model = read(test);
-        //    if (model!=null) {
-        //        model.write(System.out);
-        //    }
-        //}
     }
 
     public void show() {
@@ -299,6 +307,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION,"no");
             transformer.setOutputProperty(OutputKeys.METHOD, "xml");
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
             transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
             transformer.transform(new DOMSource(doc), new StreamResult(sw));
             return sw.toString();

@@ -59,28 +59,25 @@
     <xsl:apply-templates select="nlm:article-categories"/>
     <xsl:apply-templates select="nlm:kwd-group" />
     <xsl:apply-templates select="nlm:permissions" />
-    <dct:abstract>
-      <xsl:value-of select="substring(string(../../nlm:body),0,1999)" />
-    </dct:abstract>
+    <xsl:apply-templates select="../../nlm:body" />
 
+    <!-- republished document: -->
     <dct:relation>
-      <xsl:choose>
-      <xsl:when test="../nlm:journal-meta/nlm:journal-id='0002'">
-        <!-- republished document: -->
-        <xsl:value-of select="concat($docbase,'/',nlm:article-id,'.pdf')"/> 
-      </xsl:when>
-      <xsl:otherwise>
-        <!-- original OJS version: -->
-        <xsl:variable name="doc">
-        <xsl:value-of 
-           select="nlm:self-uri[@content-type='application/pdf']/@xlink:href"/>
-        </xsl:variable>
-        <xsl:value-of select="concat(substring-before($doc,'view'),'viewFile',substring-after($doc,'view'))"/>
-      </xsl:otherwise>
-      </xsl:choose>
+      <xsl:value-of select="concat($docbase,'/',nlm:article-id,'.pdf')"/> 
     </dct:relation>
 
-    <foaf:img><xsl:value-of select="concat($docbase,'/cover.png')"/></foaf:img>
+    <!-- original OJS : -->
+    <xsl:variable name="doc">
+    <xsl:value-of 
+         select="nlm:self-uri[@content-type='application/pdf']/@xlink:href"/>
+    </xsl:variable>
+    <dct:alternative>
+      <xsl:value-of select="concat(substring-before($doc,'view'),'download',substring-after($doc,'view'))"/>
+    </dct:alternative>
+
+    <foaf:img>
+     <xsl:value-of select="concat($docbase,'/',nlm:article-id,'.png')"/>
+    </foaf:img>
     <xsl:apply-templates select="nlm:article-id" />
     <xsl:apply-templates select="nlm:issue-id" />
     <xsl:apply-templates select="nlm:volume" />
@@ -140,6 +137,14 @@
   <xsl:apply-templates select="nlm:copyright-statement"/>
 </xsl:template>
 
+<xsl:template match="nlm:body">
+ <xsl:if test="string-length(.)>5">
+  <dct:abstract>
+    <xsl:value-of select="substring(string(.),0,1999)" />
+  </dct:abstract>
+ </xsl:if>
+</xsl:template>
+
 <!-- http://creativecommons.org/licenses/by/3.0/ -->
 <xsl:template match="nlm:permissions/nlm:copyright-statement">
   <dct:licence>
@@ -164,6 +169,11 @@
       <xsl:choose>
       <xsl:when test="../nlm:article-meta/nlm:issue-title">
         <dct:title>
+          <xsl:value-of select="concat(nlm:journal-title,'; Vol ',
+              ../nlm:article-meta/nlm:volume, ' (',
+              ../nlm:article-meta/nlm:pub-date[@pub-type='collection']/nlm:year
+              ,'): ')"/>
+          
           <xsl:value-of select="../nlm:article-meta/nlm:issue-title"/>
         </dct:title>
       </xsl:when>
@@ -181,11 +191,17 @@
 
    <xsl:choose>
      <xsl:when test="nlm:journal-id='0002'">
-       <dct:publisher>
+      <dct:publisher>
          <aiiso:Faculty rdf:about="http://www.uni-marburg.de/fb09">
          <foaf:name>Fachbereich  Germanistik und Kunstwissenschaften</foaf:name>
          </aiiso:Faculty>
-       </dct:publisher>
+      </dct:publisher>
+      <!-- NLM data has print-issn 1431-5262. This is the e-issn: -->
+      <prism:issn><xsl:value-of select="'2196-4270'"/></prism:issn>
+      <!-- ZDB-Idn MEDREZ : -->
+      <fabio:hasIdentifier>
+          <xsl:value-of select="'1465812-4'"/>
+      </fabio:hasIdentifier>
        <dct:publisher>
           <aiiso:Institute rdf:about="http://www.uni-marburg.de/fb09/medienwissenschaft">
           <foaf:name>Medienwissenschaft</foaf:name>
@@ -198,6 +214,12 @@
         <foaf:name>Center for Near and Middle Eastern Studies (CNMS)</foaf:name>
        </aiiso:Center>
       </dct:publisher>
+      <!-- <prism:issn>2196-629X</prism:issn> -->
+      <xsl:apply-templates select="nlm:issn"/>
+      <!-- ZDB-Idn META : -->
+      <fabio:hasIdentifier>
+          <xsl:value-of select="'2714728-9'"/>
+      </fabio:hasIdentifier>
      </xsl:when>
    </xsl:choose>
 
@@ -235,12 +257,12 @@
 </xsl:template>
 
 <xsl:template match="nlm:pub-date[@pub-type='collection']/nlm:year">
-  <dct:date><xsl:value-of select="."/></dct:date>
+  <dct:created><xsl:value-of select="."/></dct:created>
 </xsl:template>
 
 <xsl:template match="nlm:pub-date[@pub-type='epub']">
   <dct:modified><xsl:value-of select="nlm:year"/>-<xsl:value-of select="nlm:month"/>-<xsl:value-of select="nlm:day"/></dct:modified>
-  <dct:issued><xsl:value-of select="nlm:year"/>-<xsl:value-of select="nlm:month"/>-<xsl:value-of select="nlm:day"/></dct:issued>
+  <dct:issued><xsl:value-of select="../nlm:pub-date[@pub-type='collection']/nlm:year"/>-<xsl:value-of select="nlm:month"/>-<xsl:value-of select="nlm:day"/></dct:issued>
 </xsl:template>
 
 <xsl:template match="nlm:kwd-group">

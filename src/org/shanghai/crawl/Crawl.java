@@ -80,27 +80,33 @@ public class Crawl {
             fc.create(); 
             transporter = fc.inject(new TrivialScanner().create());
             log("createTransporter [" + crawl + "]");
-        } else if (crawl.equals("tdb") || crawl.equals("virt") 
-                || crawl.equals("4store")) {
-            String store = config.get(crawl+".store");
-            if (store==null) {
-                store = config.get(crawl+".sparql");
-            }
+        } else if ("oai".equals(crawl)) {
+            Config.OAI settings = config.getOAIList().get(0);
+            boolean archive = settings.archive!=null;
+            transporter = new OAITransporter(settings, archive);
+            transporter.create();
+        } else //if (crawl.equals("tdb") || crawl.equals("virt") 
+               // || crawl.equals("4store")) 
+            {
+            //String store = config.get(crawl+".store");
+            //if (store==null) {
+            //    store = config.get(crawl+".sparql");
+            //}
+            String store = config.get(crawl+".sparql");
             String probe = config.get(crawl+".probe");
+            if (probe==null) {
+                log("no probe ? " + crawl+".probe");
+            }
             String enum_ = config.get(crawl+".enum");
             String dump  = config.get(crawl+".dump");
             String date  = config.get(crawl+".date");
-            transporter  = new RDFTransporter(store, probe, enum_, dump, date);
-            transporter.create();
-            if (enum_==null) {
+            if (store==null) {
                 log("createTransporter failed");
             } else {
                 log("createTransporter [" + crawl + "]");
+                transporter  = new RDFTransporter(store, probe, enum_, dump, date);
+                transporter.create();
             }
-        } else if ("oai".equals(crawl)) {
-            Config.OAI settings = config.getOAIList().get(0);
-            transporter = new OAITransporter(settings, false);
-            transporter.create();
         }
     }
 
@@ -117,6 +123,7 @@ public class Crawl {
             String dbpass = config.get(store+".dbpass");
             storage = new RDFStorage(virt,graph,dbuser,dbpass);
             storage.create();
+            log("createStorage [" + store + "]");
         } else if (store.startsWith("four")) {
             String four = config.get(store+".store");
             String graph = config.get(store+".graph");
@@ -209,9 +216,9 @@ public class Crawl {
     }
 
     public void crawl(String[] directories) {
-        //for (String dir: directories) System.out.print(dir + " ");
-        //System.out.println("[" + directories.length + "]");
-        //if (directories.length<2) return;
+        //for (String s : directories) System.out.print(s + " ");
+        //System.out.println(directories.length);
+
         count=0;
         int dirCount=0;
         long start = System.currentTimeMillis();
@@ -226,6 +233,9 @@ public class Crawl {
                 if (dir.startsWith("-")) {
                     continue;
                 }
+                if (dir.startsWith(":")) {
+                    target = dir.substring(1);
+                }
                 dirCount++;
                 createCrawler();
                 crawl(dir);
@@ -237,21 +247,44 @@ public class Crawl {
                        + ((double)Math.round(end - start)/1000) + " sec");
     }
 
+    public void crawl() {
+        //if (crawler==null) //GH201402: wtf.
+        //    createCrawler();
+        crawler.crawl();
+    }
+
+    private boolean checkTarget(String target) {
+        File f = new File(target);
+        if (f.isDirectory() && f.canWrite()) {
+            return true;
+        }
+        return false;
+    }
+
     protected void crawl(String source, String target) {
         if ("oai".equals(source)) {
-            if (!target.startsWith("-")) {
-                createStorage(target);
-            } else if (target.equals("files")) {
+            boolean archive = checkTarget(target);
+            if (archive) {
                 createStorage("empty");
+            } else if (!target.startsWith("-")) {
+                createStorage(target);
             }
             for (int i=0; i<config.getOAIList().size(); i++) {
 			    Config.OAI settings = config.getOAIList().get(i);
-				transporter = new OAITransporter(settings, target=="files");
+                if (!archive) {
+                    archive = settings.archive!=null;
+                } else {
+                    settings.archive = target;
+                    log("archive to " + settings.archive + " directory.");
+                }
+                transporter = new OAITransporter(settings, archive);
                 transporter.create();
                 if ("-probe".equals(target)) {
                     System.out.println(transporter.probe());
                 } else if ("-test".equals(target)) {
                     ((OAITransporter)transporter).test();
+                } else if ("-dump".equals(target)) {
+                    dump();
                 } else {
                     createCrawler();
                     crawl();
@@ -276,12 +309,6 @@ public class Crawl {
         }
         crawl(); // copy transporter to storage
         log("crawled " + dir + " " + count);
-    }
-
-    protected void crawl() {
-        if (crawler==null) //GH201402: wtf.
-            createCrawler();
-        crawler.crawl();
     }
 
     private static final Logger logger =

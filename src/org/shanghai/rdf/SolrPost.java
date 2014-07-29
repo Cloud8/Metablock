@@ -77,9 +77,9 @@ public class SolrPost {
          DirectXmlRequest up = new DirectXmlRequest( "/update", data );
          server.request( up ); 
          b=true;
-        } catch(SolrServerException e) {log(e); }
+        } catch(SolrServerException e) {log(e);/*log(data.substring(0,256));*/}
           catch(IOException e) { log(e); }
-          catch(SolrException e) { log(e); }
+          catch(SolrException e) { log(e);/*log(data.substring(0,256));*/}
         finally {
           return b;
         }

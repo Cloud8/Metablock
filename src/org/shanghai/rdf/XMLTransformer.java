@@ -1,7 +1,5 @@
 package org.shanghai.rdf;
 
-import org.shanghai.util.FileUtil;
-
 import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -97,10 +95,10 @@ public class XMLTransformer {
         if (xslt==null)
             log("bad xslt");
         this.xslt = xslt;
+        stringWriter = new StringWriter();
     }
 
     public void create() {
-        stringWriter = new StringWriter();
         //factory = TransformerFactory.newInstance();
         //factory = ((SAXTransformerFactory) factory);
         factory = ((SAXTransformerFactory) TransformerFactory.newInstance());
@@ -184,6 +182,7 @@ public class XMLTransformer {
             StringReader reader = new StringReader(xmlString);
 		    StringWriter writer = new StringWriter();
             Transformer transformer = templates.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             SAXSource src = new SAXSource(new InputSource(reader));
             //TransformerHandler th = factory.newTransformerHandler(templates);
             //XMLReader xr = XMLReaderFactory.createXMLReader();
@@ -217,6 +216,7 @@ public class XMLTransformer {
         model.setNsPrefix("pro", "http://purl.org/spar/pro/");
         model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
         model.setNsPrefix("dct", "http://purl.org/dc/terms/");
+        model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.0/");
         stringWriter.getBuffer().setLength(0);
         try {
            //does use ontological information:
@@ -265,6 +265,21 @@ public class XMLTransformer {
         } //catch(javax.xml.parsers.ParserConfigurationException e) { log(e); }
           catch(javax.xml.transform.TransformerException e) { log(e); }
         return text;
+    }
+
+    private Document asDocument(String xml) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            InputSource is = new InputSource(new StringReader(xml));
+            return db.parse(is);
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (SAXException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Document asDocument(Model model) {

@@ -55,8 +55,9 @@ public class FileTransporter implements MetaCrawl.Transporter {
     @Override
     public void dispose() {
         identifiers.clear();
-        for(Delegate d: delegates)
+        for(Delegate d: delegates) {
             d.dispose();
+        }
     }
 
     @Override
@@ -68,7 +69,7 @@ public class FileTransporter implements MetaCrawl.Transporter {
     public Model read(String fname) {
         Model mod = null;
         for(Delegate d: delegates) {
-            //log(d.getClass().getName() + " " + file);
+            //log(d.getClass().getName() + " reads " + fname);
             if (d.canRead(new File(fname))) {
                 //mod = d.read(getIdentifier(fname));
                 mod = d.read(fname);
@@ -156,10 +157,14 @@ public class FileTransporter implements MetaCrawl.Transporter {
                 //log(d.getClass().getName() + " canRead " + f.getName());
                 identifiers.add(f.getPath());
                 count++;
+            } else {
+                b = false;
             }
         }
-        if (logC!=0&&count%logC==0)
-            log("" + count + ": " + f.getAbsolutePath() +" ["+ level +"]");
+        if (b&&logC!=0&&count%logC==0) {
+            //log(count + ": " + f.getAbsolutePath() +" ["+ level +"]");
+            log(count + ": " + f.getPath() +" ["+ level +"]");
+        }
     }
 
     private static final Logger logger = 

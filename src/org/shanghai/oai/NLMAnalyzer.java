@@ -3,6 +3,7 @@ package org.shanghai.oai;
 import org.shanghai.crawl.MetaCrawl.Analyzer;
 import org.shanghai.oai.URN;
 import org.shanghai.util.FileUtil;
+import org.shanghai.util.Language;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -19,7 +20,6 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.ResIterator;
-//import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
 import java.io.File;
@@ -43,51 +43,63 @@ public class NLMAnalyzer implements Analyzer {
     private static final String aiiso = "http://purl.org/vocab/aiiso/schema#";
     private DocumentBuilderFactory docfactory;
 
-    private String prefix;
     private String store;
     private URN urn;
+    private Language language;
 
     public NLMAnalyzer(String prefix, String store) {
-        this.store = store;
         urn = new URN(prefix);
+        this.store = store;
     }
 
     @Override
     public Analyzer create() {
         docfactory = DocumentBuilderFactory.newInstance();
         docfactory.setNamespaceAware(true);
+        language = new Language();
+        language.create();
         return this;
     }
 
     @Override
     public void dispose() {
+        language.dispose();
     }
 
     @Override
-    public Model analyze(Model model) {
+    public void analyze(Model model, Resource rc) {
         Property title = model.createProperty(dct, "title");
         Property identifier = model.createProperty(dct, "identifier");
-        ResIterator ri = model.listResourcesWithProperty(title);
-        while( ri.hasNext() ) {
-            Resource rc = ri.nextResource();
-            if ( rc.hasProperty(identifier) ) {
-                String id = rc.getProperty(identifier).getString();
-                if (id==null || id.length()==0) {
-                    rc.removeAll(identifier);
-			        id = urn.getUrn(rc.getURI());
-			        rc.addProperty(identifier, id);
-                }
-                //log("analyzing " + rc.getURI() + "[" + id + "]");
-            } else {
-			    String id = urn.getUrn(rc.getURI());
+        if (rc.hasProperty(identifier) ) {
+            String id = rc.getProperty(identifier).getString();
+            if (id==null || id.length()==0) {
+                rc.removeAll(identifier);
+			    id = urn.getUrn(rc.getURI());
 			    rc.addProperty(identifier, id);
-                //log(rc.getURI() + " " + id);
             }
-        } 
+            //log("analyzing " + rc.getURI() + "[" + id + "]");
+        } else {
+			String id = urn.getUrn(rc.getURI());
+            if (id==null) {
+                log("URN failed : " + rc.getURI() + " " + id);
+            }
+			rc.addProperty(identifier, id);
+        }
+        language.analyze(model, rc);
+         
         if (store!=null) {
             writeNLM(model);
         }
-        return model;
+    }
+
+    @Override
+    public void analyze(Model model) {
+        Property title = model.createProperty(dct, "title");
+        ResIterator ri = model.listResourcesWithProperty(title);
+        while( ri.hasNext() ) {
+            Resource rc = ri.nextResource();
+            analyze(model, rc);
+        }
     }
 
     public String archive(String xml) {
@@ -110,19 +122,24 @@ public class NLMAnalyzer implements Analyzer {
         if (nlm.url!=null) {
             FileUtil.copy(nlm.url, path + "/index.html");
             String from = nlm.url.replace("view", "viewFile"); // OJS
+            //log("read [" + from + "]");
             FileUtil.copy(from, path + "/" + nlm.article + ".pdf");
         }
         if (nlm.article!=null) {
-            FileUtil.write(path + "/" + nlm.article + ".xml", xml);
+            FileUtil.write(path + "/" + nlm.article + ".nlm", xml);
+            log("wrote " + path + "/" + nlm.article + ".nlm");
+        } else {
+            //log(nlm.toString());
+            log("failed " + path + "/" + nlm.article + ".nlm");
         }
-        //log(nlm.toString());
         return path;
     }
 
+    /** write model files to file system */
     private boolean writeNLM(Model model) {
         Property title = model.createProperty(dct, "title");
         Property identifier = model.createProperty(dct, "identifier");
-        Property date = model.createProperty(dct, "date");
+        Property created = model.createProperty(dct, "created");
         Property issue = model.createProperty(prism, "issueIdentifier");
         Property number = model.createProperty(prism, "number");
 
@@ -134,9 +151,12 @@ public class NLMAnalyzer implements Analyzer {
             if ( rc.hasProperty(identifier) ) {
                 String path = store;
                 String id = rc.getProperty(identifier).getString();
-                if (rc.hasProperty(date)) {
-                    path += "/" + rc.getProperty(date).getString();
-                    //log("date " + rc.getProperty(date).getString());
+                if (rc.hasProperty(created)) {
+                    if (path.endsWith(rc.getProperty(created).getString())) {
+                        //log("created " + rc.getProperty(created).getString());
+                    } else {
+                        path += "/" + rc.getProperty(created).getString();
+                    }
                 } else {
                     String about = path + "/about.rdf";
                     if (!new File(about).exists()) {
@@ -157,7 +177,8 @@ public class NLMAnalyzer implements Analyzer {
                 }
                 if (rc.hasProperty(number)) {
                     path += "/" + rc.getProperty(number).getString();
-                    path += "/" + rc.getProperty(number).getString() + ".rdf";
+                    //path += "/" + rc.getProperty(number).getString() + ".rdf";
+                    path += "/about.rdf";
                     //log("number " + rc.getProperty(number).getString());
                 } else {
                     //write issue description
@@ -237,8 +258,16 @@ public class NLMAnalyzer implements Analyzer {
             nodes = doc.getElementsByTagName("article-id");
             article = nodes.getLength()==0?null:nodes.item(0).getTextContent();
             if (article!=null) {
-                url = ((Element)doc.getElementsByTagName("self-uri").item(0))
-                                   .getAttribute("xlink:href");
+                nodes = doc.getElementsByTagName("self-uri");
+                for (int j = 0; j < nodes.getLength(); j++) {
+                    Element el = (Element)nodes.item(j);
+                    if (el.hasAttribute("content-type")) {
+                        String str = el.getAttribute("content-type");
+                        if ( str.equals("application/pdf")) {
+                             url = el.getAttribute("xlink:href");
+                        }
+                    }
+                }
             }
         }
 

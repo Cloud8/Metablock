@@ -1,3 +1,4 @@
+PREFIX  rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX  dct:   <http://purl.org/dc/terms/>
 PREFIX  foaf:  <http://xmlns.com/foaf/0.1/>
 PREFIX  fabio: <http://purl.org/spar/fabio/>
@@ -6,42 +7,27 @@ PREFIX  frbr: <http://purl.org/vocab/frbr/core#>
 PREFIX  pica: <http://localhost/view/>
 PREFIX  daia: <http://purl.org/ontology/daia/>
 PREFIX  pro: <http://purl.org/spar/pro/>
+PREFIX  prism: <http://prismstandard.org/namespaces/basic/2.0/>
 # PREFIX  cito: <http://purl.org/spar/cito/>
 
-## resource dump.
+## three levels of hierarchy
 construct {
-    <subject> ?p ?o .
-    ?o ?x ?y . 
+    <subject> ?b ?c .
+    ?c ?d ?e .
 } where {
   { 
-        <subject> ?p ?o .
-  } union {
-        <subject> dct:creator ?o .
-        ?o ?x ?y .
-  } union {
-        <subject> dct:subject ?o .
-        ?o ?x ?y .
-  } union {
-        <subject> dct:publisher ?o .
-        ?o ?x ?y .
-  } union {
-        <subject> dct:isPartOf ?o .
-        optional {
-           ?o ?x ?y .
-           { ?o dct:title ?y . } union { ?o dct:identifier ?y . }
-        }
-  } union {
-        <subject> dct:hasPart ?o .
-        optional {
-           ?o ?x ?y .
-           { ?o dct:title ?y . } union { ?o dct:identifier ?y . }
-        }
-  } union {
-        <subject> frbr:exemplar ?o .
-        ?o ?x ?y .
-  } union {
-        <subject> pro:editor ?o .
-        ?o ?x ?y .
+      <subject> ?b ?c .
   } 
+  union 
+  {
+      <subject> ?b ?c .
+      values ?b { dct:publisher dct:subject dct:creator pro:editor dct:references frbr:exemplar }
+      ?c ?d ?e .
+  } 
+  union {
+      <subject> dct:isPartOf+ ?c .
+      ?c ?d ?e .
+      values ?d { dct:title dct:identifier dct:publisher rdf:type }
+  }
 } 
 

@@ -122,15 +122,13 @@
       <xsl:apply-templates select="dct:dateAccepted" />
       <xsl:apply-templates select="dct:issued" />
       <xsl:apply-templates select="dct:modified" />
+      <xsl:apply-templates select="dct:created" />
       <xsl:apply-templates select="dc:identifier" />
       <xsl:apply-templates select="dc:language" />
       <xsl:apply-templates select="dct:isPartOf" />
       <xsl:apply-templates select="dc:rights" />
       <xsl:apply-templates select="dc:type" />
       <xsl:apply-templates select="ddb:transfer" />
-      <foaf:img>
-        <xsl:value-of select="concat(ddb:identifier,'/cover.png')"/>
-      </foaf:img>
 </xsl:template>
 
 <xsl:template match="dc:title">
@@ -241,8 +239,8 @@
   <dct:modified><xsl:value-of select="."/></dct:modified>
 </xsl:template>
 
-<xsl:template match="dct:date">
-  <dct:date><xsl:value-of select="."/></dct:date>
+<xsl:template match="dct:created">
+  <dct:created><xsl:value-of select="."/></dct:created>
 </xsl:template>
 
 <xsl:template match="dc:type[@xsi:type='dcterms:DCMIType']">

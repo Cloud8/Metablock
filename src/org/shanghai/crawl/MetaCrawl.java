@@ -46,7 +46,8 @@ public class MetaCrawl {
     public interface Analyzer {
         public Analyzer create();
         public void dispose();
-        public Model analyze(Model model);
+        public void analyze(Model model);
+        public void analyze(Model model, Resource rc);
     }
 
     protected Transporter transporter;
@@ -95,16 +96,19 @@ public class MetaCrawl {
 
     public void inject(Analyzer a) {
         log("injected " + a.getClass().getName());
-        if (!analyze)
+        if (!analyze) {
             analyzers = new ArrayList<Analyzer>();
+        }
         analyze = true;
         analyzers.add(a);
     }
 
     public void dispose() {
-        if (analyze)
-            for (Analyzer a : analyzers)
+        if (analyze) {
+            for (Analyzer a : analyzers) {
                  a.dispose();
+            }
+        }
     }
 
     public void create() {
@@ -152,8 +156,14 @@ public class MetaCrawl {
     }
 
     public int crawl() {
-        if (start==0L)
+        //if (1==1) {
+        //    log(transporter.getClass().getName());
+        //    log(storage.getClass().getName());
+        //    return 0;
+        //}
+        if (start==0L) {
             start = System.currentTimeMillis();
+        }
         int chunkSize = 200;
         crawl(chunkSize);
         end = System.currentTimeMillis();
@@ -176,12 +186,16 @@ public class MetaCrawl {
         return 0;
     }
 
-    protected Model analyze(Model model) {
-        if (model==null)
+    protected Model analyze(Model model, String resource) {
+        if (model==null) {
             return model;
+        }
         if (analyze) {
-            for (Analyzer a : analyzers)
-                model = a.analyze(model);
+            for (Analyzer a : analyzers) {
+                 //Resource rc = model.getResource(resource);
+                 //a.analyze(model, rc);
+                 a.analyze(model);
+            }
         }
         return model;
     }
@@ -209,7 +223,7 @@ public class MetaCrawl {
              //    continue;
              //} 
              Model mod = transporter.read(id);
-             mod = analyze(mod);
+             mod = analyze(mod, id);
              if(test&&count==0) dump(id,mod);
              if (mod==null) { //garbage, dont care.
                  log("failed " + id);
@@ -304,7 +318,7 @@ public class MetaCrawl {
     public boolean update(String resource) {
         boolean b = false;
         Model mod = transporter.read(resource);
-        mod = analyze(mod);
+        mod = analyze(mod, resource);
         if (test) {
             dump(resource,mod);
         } 

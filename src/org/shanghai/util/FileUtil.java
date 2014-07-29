@@ -21,12 +21,18 @@ import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.BufferedOutputStream;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.nio.channels.FileChannel;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.ByteBuffer;
+import java.nio.file.FileSystem;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import java.util.List;
 import java.util.Properties;
@@ -104,6 +110,18 @@ public class FileUtil {
         } finally {
             return sb.toString();
         }
+    }
+
+    public static List<String> readAllLines(String fname) {
+        Path path = Paths.get(fname);
+        Charset utf8 = StandardCharsets.UTF_8;
+        try {
+            List<String> result = Files.readAllLines(path, utf8); 
+	    	return result;
+        } catch(IOException e) {
+            log(e.getMessage());
+        }
+        return null;
     }
 
     public static void write(String path, String text) {
