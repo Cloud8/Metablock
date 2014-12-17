@@ -14,8 +14,7 @@ public class Main {
 
     protected Config config;
     protected Crawl crawl;
-    protected static String configFile = "shanghai.ttl";
-    protected Main engine;
+    protected static String configFile = "seaview.ttl";
 
     public void dispose() {
 	    if (crawl!=null)
@@ -33,6 +32,7 @@ public class Main {
     }
 
     protected static int help() {
+        org.shanghai.rdf.Main.help();
         String usage = "\n" 
                + "   -crawl [directories|oai] to storage\n"
                + "          -probe check setup\n"
@@ -47,6 +47,8 @@ public class Main {
     }
 
     public void make(String[] args) {
+        //for (String s : args) System.out.print(s + " ");
+        //System.out.println(args.length);
         if (args.length==0) {
             org.shanghai.rdf.Main.help();
             return;
@@ -85,6 +87,8 @@ public class Main {
                     indexer.clean();
                 } else if (args[1].equals("-destroy")) {
                     indexer.clean();
+                } else if (args[1].equals("-help")) {
+                    org.shanghai.rdf.Main.help();
                 }
             } else if (args.length==3) {
                 if (args[1].equals("-test")) {
@@ -118,56 +122,66 @@ public class Main {
             return;
         }
 
+        if (args[0].startsWith("-show")) {
+            Config config = new Config(configFile).create();
+            config.test();
+        }
+
         if (args[0].startsWith("-crawl")) {
             if (args.length==1) {
-                help();
+                this.create();
+                this.crawl.crawl();
+                this.dispose();
             } else if (args.length==2 && args[1].startsWith("-")) {
-                engine.create();
+                this.create();
                 if (args[1].equals("-probe")) {
-                    engine.crawl.probe();
+                    this.crawl.probe();
                 } else if (args[1].equals("-test")) {
-                    engine.crawl.test(".");
+                    this.crawl.test("");
                 } else if (args[1].equals("-dump")) {
-                    engine.crawl.dump();
+                    this.crawl.dump();
                 } else if (args[1].equals("-clean")) {
-                    engine.crawl.clean();
+                    this.crawl.clean();
                 } else if (args[1].equals("-destroy")) {
-                    engine.crawl.clean();
+                    this.crawl.clean();
+                } else if (args[1].equals("-help")) {
+                    help();
                 }
-                engine.dispose();
+                this.dispose();
             } else if (args.length==3 && args[1].startsWith("-")) {
-                engine.create();
+                this.create();
                 if (args[1].equals("-dump")) {
-                    engine.crawl.dump(args[2]);
+                    this.crawl.dump(args[2]);
                 } else if (args[1].equals("-test")) {
-                    engine.crawl.test(args[2]);
+                    this.crawl.test(args[2]);
                 } else if (args[1].equals("-post")) {
-                    engine.crawl.post(args[2]);
+                    this.crawl.post(args[2]);
                 } else if (args[1].equals("-del")) {
-                    engine.crawl.delete(args[2]);
-                }
-                engine.dispose();
-            } else if (args.length==4 && args[1].startsWith("-")) {
-                engine.create();
-                if (args[1].equals("-dump")) {
-                    engine.crawl.dump(args[2], args[3]);
-                } else if (args[1].equals("-test")) {
-                    engine.crawl.test(args[2], args[3]);
+                    this.crawl.delete(args[2]);
                 } else {
-                    engine.crawl.crawl(args);
+                    this.crawl.crawl(args);
                 }
-                engine.dispose();
+                this.dispose();
+            } else if (args.length==4 && args[1].startsWith("-")) {
+                this.create();
+                if (args[1].equals("-dump")) {
+                    this.crawl.dump(args[2], args[3]);
+                } else if (args[1].equals("-test")) {
+                    this.crawl.test(args[2], args[3]);
+                } else {
+                    this.crawl.crawl(args);
+                }
+                this.dispose();
             } else {
-                engine.create();
-                engine.crawl.crawl(args);
-                engine.dispose();
+                this.create();
+                this.crawl.crawl(args);
+                this.dispose();
             }
         }
     }
 
     public static void main(String[] args) {
         Main main = new Main();
-        main.engine = main;
         main.make(args);
     }
 }

@@ -60,15 +60,15 @@ public class SolrStorage implements MetaCrawl.Storage {
     //} 
 
     @Override
-    public synchronized boolean write(Model mod) {
+    public synchronized boolean write(Model mod, String resource) {
         String xml = transformer.transform(mod);
         return solrPost.post(xml);
     } 
 
     @Override
-    public boolean update(Model mod) {
-        return write(mod);
-    } 
+    public boolean update(String id, String field, String value) {
+        return solrPost.update(id, field, value);
+    }
 
     @Override
     public void destroy() {

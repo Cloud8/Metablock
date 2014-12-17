@@ -11,7 +11,7 @@ import java.util.logging.Logger;
 public class Main {
  
     protected Config config;
-    private static String configFile = "lib/shanghai.ttl";
+    private static String configFile = "lib/seaview.ttl";
     private Indexer indexer;
 
     private Main() {
@@ -107,7 +107,7 @@ public class Main {
                      + "          -post  [resource] to index\n"
                      + "          -del   [resource] remove record from index\n"
                      + "          -destroy : destroy index\n"
-                     + "           [offset limit] limited build\n"
+                     //+ "           [offset limit] limited build\n"
                      + "";
         System.out.print(usage);
     }
@@ -129,7 +129,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        String configFile = "lib/shanghai.ttl";
+        String configFile = "lib/seaview.ttl";
         if (args.length>1 && args[0].startsWith("-conf")) {
             if (1<args.length) {
                 configFile = args[1];

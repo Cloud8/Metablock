@@ -8,26 +8,26 @@ PREFIX  pica: <http://localhost/view/>
 PREFIX  daia: <http://purl.org/ontology/daia/>
 PREFIX  pro: <http://purl.org/spar/pro/>
 PREFIX  prism: <http://prismstandard.org/namespaces/basic/2.0/>
-# PREFIX  cito: <http://purl.org/spar/cito/>
+PREFIX  cito: <http://purl.org/spar/cito/>
 
 ## three levels of hierarchy
 construct {
     <subject> ?b ?c .
     ?c ?d ?e .
+    ?e ?f ?g .
 } where {
   { 
-      <subject> ?b ?c .
-  } 
-  union 
-  {
-      <subject> ?b ?c .
-      values ?b { dct:publisher dct:subject dct:creator pro:editor dct:references frbr:exemplar }
-      ?c ?d ?e .
-  } 
+    <subject> ?b ?c .
+   } 
   union {
-      <subject> dct:isPartOf+ ?c .
-      ?c ?d ?e .
-      values ?d { dct:title dct:identifier dct:publisher rdf:type }
-  }
+    <subject> ?b ?c .
+     values ?b { dct:publisher dct:subject dct:creator pro:editor 
+                 dct:references dct:isPartOf dct:XhasPart frbr:exemplar }
+     ?c ?d ?e .
+    optional {
+      ?e ?f ?g
+    }
+  } 
+  FILTER (?b NOT IN (dct:fulltext))
 } 
 

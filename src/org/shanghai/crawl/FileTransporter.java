@@ -99,6 +99,15 @@ public class FileTransporter implements MetaCrawl.Transporter {
     public int crawl(String resource) {
         identifiers.clear();
 	    File f = new File(resource);
+        if (!f.exists()) {
+            String home = System.getProperty("user.home");
+            f = new File(home + "/" + resource);
+            if (f.exists()) {
+                setDirectory(home);
+            } else {
+                return 0;
+            } 
+        }
         level = 0;
         //if (depth==0)
         //    log("crawling " + resource );

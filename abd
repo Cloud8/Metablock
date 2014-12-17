@@ -1,0 +1,15 @@
+#!/bin/sh
+
+dir=`dirname $0`
+
+CP=$dir/lib; for l in $dir/lib/*.jar; do
+  CP=$CP:$l
+done
+
+hostname="`hostname`"
+case $hostname in
+  *)
+    java -cp $CP org.seaview.nlp.Main $*
+    ;;
+esac
+

@@ -193,15 +193,6 @@ public class URN {
         */
     }
   
-    /***
-    public static void main(String... args) {
-        URN myself = new URN("urn:nbn:de:hebis:04");
-        myself.create();
-        myself.test();
-        myself.dispose();
-    }
-    **/
-
     private void log(String msg) {
         System.out.println(msg);
     }

@@ -31,6 +31,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.dom.DOMSource;
 
+import java.util.Date;
 import java.util.logging.Logger;
 
 public class NLMAnalyzer implements Analyzer {
@@ -41,11 +42,19 @@ public class NLMAnalyzer implements Analyzer {
     private static final String fabio = "http://purl.org/spar/fabio/";
     private static final String foaf = "http://xmlns.com/foaf/0.1/";
     private static final String aiiso = "http://purl.org/vocab/aiiso/schema#";
+    private static final String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
     private DocumentBuilderFactory docfactory;
 
     private String store;
     private URN urn;
     private Language language;
+
+    Property title;
+    Property identifier;
+    Property created;
+    Property issue;
+    Property number;
+    Property type;
 
     public NLMAnalyzer(String prefix, String store) {
         urn = new URN(prefix);
@@ -67,9 +76,38 @@ public class NLMAnalyzer implements Analyzer {
     }
 
     @Override
-    public void analyze(Model model, Resource rc) {
-        Property title = model.createProperty(dct, "title");
-        Property identifier = model.createProperty(dct, "identifier");
+    public Resource analyze(Model model, String id) {
+        Resource rc = null;
+        title = model.createProperty(dct, "title");
+        identifier = model.createProperty(dct, "identifier");
+        created = model.createProperty(dct, "created");
+        issue = model.createProperty(prism, "issueIdentifier");
+        number = model.createProperty(prism, "number");
+        type = model.createProperty(rdf, "type");
+
+        ResIterator ri = model.listResourcesWithProperty(type);
+        while( ri.hasNext() ) {
+            Resource object = ri.nextResource();
+            String name = object.getPropertyResourceValue(type).getLocalName();
+            if (name.equals("JournalArticle")) {
+                rc = object;
+                //log(name + " " + rc.getURI());
+			    makeIdentifier(object);
+                language.analyze(model, rc);
+            } else if (name.equals("JournalIssue")) {
+			    makeIdentifier(object);
+                Model sub = getPartOf(object);
+				writeNLM(sub, object, store);
+            } else if (name.equals("Journal")) {
+			    makeIdentifier(object);
+            }
+        }
+        //log("analyze " + rc.getURI());
+		writeNLM(model, rc, store);
+        return rc;
+    }
+
+    public void makeIdentifier(Resource rc) {
         if (rc.hasProperty(identifier) ) {
             String id = rc.getProperty(identifier).getString();
             if (id==null || id.length()==0) {
@@ -83,22 +121,8 @@ public class NLMAnalyzer implements Analyzer {
             if (id==null) {
                 log("URN failed : " + rc.getURI() + " " + id);
             }
+            //log("makeIdentifier " + rc.getURI() + "[" + id + "]");
 			rc.addProperty(identifier, id);
-        }
-        language.analyze(model, rc);
-         
-        if (store!=null) {
-            writeNLM(model);
-        }
-    }
-
-    @Override
-    public void analyze(Model model) {
-        Property title = model.createProperty(dct, "title");
-        ResIterator ri = model.listResourcesWithProperty(title);
-        while( ri.hasNext() ) {
-            Resource rc = ri.nextResource();
-            analyze(model, rc);
         }
     }
 
@@ -136,73 +160,54 @@ public class NLMAnalyzer implements Analyzer {
     }
 
     /** write model files to file system */
-    private boolean writeNLM(Model model) {
-        Property title = model.createProperty(dct, "title");
-        Property identifier = model.createProperty(dct, "identifier");
-        Property created = model.createProperty(dct, "created");
-        Property issue = model.createProperty(prism, "issueIdentifier");
-        Property number = model.createProperty(prism, "number");
-
-        ResIterator ri = model.listResourcesWithProperty(identifier);
-        Statement stmt;
-        StringWriter writer;
-        while( ri.hasNext() ) {
-            Resource rc = ri.nextResource();
-            if ( rc.hasProperty(identifier) ) {
-                String path = store;
-                String id = rc.getProperty(identifier).getString();
-                if (rc.hasProperty(created)) {
-                    if (path.endsWith(rc.getProperty(created).getString())) {
-                        //log("created " + rc.getProperty(created).getString());
+    private boolean writeNLM(Model model, Resource rc, String store) {
+	    if (store==null) {
+		    return false;
+		}
+        if ( rc.hasProperty(identifier) ) {
+            String name = rc.getPropertyResourceValue(type).getLocalName();
+            String path = store;
+            String id = rc.getProperty(identifier).getString();
+            if (rc.hasProperty(created)) {
+                if (path.endsWith(rc.getProperty(created).getString())) {
+                    //log("created " + rc.getProperty(created).getString());
+                } else {
+                    path += "/" + rc.getProperty(created).getString();
+                }
+            }
+            if (rc.hasProperty(issue)) {
+                path += "/" + rc.getProperty(issue).getString();
+                //log("issue " + rc.getProperty(issue).getString());
+                if (!new File(path).exists()) {
+                    new File(path).mkdirs();
+                }
+            }
+            if (rc.hasProperty(number)) {
+                path += "/" + rc.getProperty(number).getString();
+                //log("number " + rc.getProperty(number).getString());
+            } 
+            path += "/about.rdf";
+            boolean doWrite = true;
+            if (name.equals("JournalIssue")) {
+                File check = new File(path);
+                if (check.exists()) {
+                    int days = (int)((System.currentTimeMillis() 
+                                 - check.lastModified())/(1000*60*60*24));
+				    if (days > 2) {
+                        log("wrote " + name + " : " + path + " " + days);
                     } else {
-                        path += "/" + rc.getProperty(created).getString();
-                    }
-                } else {
-                    String about = path + "/about.rdf";
-                    if (!new File(about).exists()) {
-                        log("Journal " + about + " "
-                                       + rc.getProperty(title).getString());
-                        Model sub = getPartOf(rc);
-                        writer = new StringWriter();
-                        sub.write(writer, "RDF/XML-ABBREV");
-                        FileUtil.write(about, writer.toString());
+                        doWrite = false;
                     }
                 }
-                if (rc.hasProperty(issue)) {
-                    path += "/" + rc.getProperty(issue).getString();
-                    //log("issue " + rc.getProperty(issue).getString());
-                    if (!new File(path).exists()) {
-                        new File(path).mkdirs();
-                    }
-                }
-                if (rc.hasProperty(number)) {
-                    path += "/" + rc.getProperty(number).getString();
-                    //path += "/" + rc.getProperty(number).getString() + ".rdf";
-                    path += "/about.rdf";
-                    //log("number " + rc.getProperty(number).getString());
-                } else {
-                    //write issue description
-                    String about = path + "/about.rdf";
-                    //log("about " + about);
-                    if (!new File(about).exists()) {
-                        Model sub = getPartOf(rc);
-                        writer = new StringWriter();
-                        sub.write(writer, "RDF/XML-ABBREV");
-                        FileUtil.write(about, writer.toString());
-                    }
-                }
-                //if (path.equals(store)) {
-                //    path = path + "/" + id + ".rdf";
-                //}
-                //log("write " + path);
-                writer = new StringWriter();
+            }
+            if (doWrite) {
+                //log("wrote " + name + " : " + path );
+                StringWriter writer = new StringWriter();
                 model.write(writer, "RDF/XML-ABBREV");
                 FileUtil.write(path, writer.toString());
-            } else {
-                log("complicated [" + rc.getURI() + "]");
-                //String id = urn.getUrn(rc.getURI());
-                //rc.addProperty(identifier, id);
             }
+        } else {
+            log("complicated [" + rc.getURI() + "]");
         }
         return true;
     }
@@ -214,6 +219,7 @@ public class NLMAnalyzer implements Analyzer {
         model.setNsPrefix("foaf", foaf);
         model.setNsPrefix("aiiso", aiiso);
         model.setNsPrefix("prism", prism);
+        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
         StmtIterator si = rc.listProperties();
         while( si.hasNext() ) {
             Statement stmt = si.nextStatement();

@@ -34,10 +34,10 @@ public class Store {
     private boolean tdb;
 
     public Store(String srv, String construct) {
-        log("server " + srv);
         if (construct!=null && construct.startsWith("http://")) {
             //RDFStorage write only
             String graph = construct;
+            log("Store " + srv + " " + graph);
             tripleStore = new TripleStore(srv,graph);
             tdb = true;
         } else {
@@ -54,6 +54,12 @@ public class Store {
         }
     }
 
+    /** four store support */
+    public Store(String uri, String kb, String name) {
+        this.tripleStore = new TripleStore(uri, kb, name);
+        tdb = true;
+    }
+
     /** virtuoso write support */
     public Store(String uri, String graph, String dbuser, String dbpass) {
         this.tripleStore = new TripleStore(uri,graph,dbuser,dbpass);
@@ -68,8 +74,9 @@ public class Store {
     }
 
     public synchronized void dispose() {
-        if (tdb)
+        if (tdb) {
             tdb=false;
+        }
         if (tripleStore!=null) {
             tripleStore.dispose();
             tripleStore=null;
@@ -77,8 +84,9 @@ public class Store {
     }
 
     public boolean write(String rdf) {
-        if (!tdb)
+        if (!tdb) {
             return false;
+        }
         StringReader in = new StringReader(rdf);
         Model mod = ModelFactory.createDefaultModel();
         RDFReader reader = new JenaReader(); 
@@ -89,25 +97,15 @@ public class Store {
 
     public boolean write(Model mod) {
         boolean b = false;
-        if (tdb)
+        if (tdb) {
             b = tripleStore.write(mod);
+        }
         return b;
     }
 
     public Model read(String resource) {
         return getModel(resource);
     }
-
-    /*
-    public boolean update(String rdf) {
-        int x = rdf.indexOf("rdf:about");
-        if (x>0) {
-            String about = rdf.substring(x+11,rdf.indexOf("\"",x+12));
-            delete(about);
-        }
-        return write(rdf);
-    }
-    */
 
     public boolean update(Model mod) {
         boolean b = false;
@@ -117,6 +115,7 @@ public class Store {
     }
 
     public boolean delete(String about) {
+        //log("delete " + about);
         if (tdb)
             return tripleStore.delete(about);
         return false;
@@ -161,7 +160,9 @@ public class Store {
         QueryExecution qexec = getExecutor(query);
         try {
             model = qexec.execConstruct();
-         } catch(Exception e) { log(query); log(e); }
+            model.setNsPrefix("fabio", "http://purl.org/spar/fabio/");
+            model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
+         } catch(Exception e) { log("[" + query + "]"); log(e); }
             finally {
             if (model!=null)
                qexec.close();
@@ -180,15 +181,16 @@ public class Store {
     }
 
     public QueryExecution getExecutor(String query) {
-        if (tdb)
+        if (tdb) {
             return tripleStore.getExecutor(query);
+        }
         try {
           Query q = QueryFactory.create(query);
           QueryExecution qexec = 
               QueryExecutionFactory.sparqlService(sparqlService, q);
           return qexec;
         } catch(QueryParseException e) {
-          log(query);
+          log("[" + query + "]");
           log(e);
         }
         return null;

@@ -53,8 +53,9 @@ public class JenaTDB {
     }
 
     public void create() {
-        if (tdbData==null) 
+        if (tdbData==null) {
             log("something is terribly wrong: no valid tdb source.");
+        }
         if (model==null) {
             location = new Location (tdbData);
             dataset = TDBFactory.createDataset(location) ;
@@ -68,19 +69,26 @@ public class JenaTDB {
         }
     }
 
-    public void dispose() {
+    public synchronized void dispose() {
+        //synchronized(this) {
+        if (count==0) {
+            return;
+        }
+        log("closing " + tdbData + " [" + count + "]");
         if (model!=null) {
             model.commit();
             model.close();
         }
         model=null;
-        if (dataset!=null) 
+        if (dataset!=null) {
             dataset.close();
+        }
         dataset=null;
-        log("closed " + tdbData);
+        //}
     }
 
     public void clean() {
+        log("cleaning");
         model.begin();
         String action = "DELETE WHERE { ?s ?p ?o . }";
         UpdateAction.parseExecute(action, model);
@@ -88,6 +96,7 @@ public class JenaTDB {
     }
 
     public QueryExecution getExecutor(String q) {
+        //if (count==0) log(q);
         count++;
         try {
             Query query = QueryFactory.create(q);
@@ -140,9 +149,10 @@ public class JenaTDB {
     }
 
     public boolean save(Model m) {
-        //model.begin();
+        count++;
+        model.begin();
         model.add(m);
-        //model.commit();
+        model.commit();
         return true;
     }
 
@@ -168,52 +178,6 @@ public class JenaTDB {
     }
     **/
 
-    //public boolean add(Model m) {
-    //    model.begin();
-    //    model.add(m);
-    //    model.commit();
-    //    return true;
-    //}
-
-    /** too expensive */
-    private String getSubject(Model m) {
-        int count = 0;
-        Resource subject = null;
-        ResIterator iter = m.listSubjects();
-        try {
-            while (iter.hasNext()) {
-                Resource s = iter.nextResource();
-                if ( s.isAnon() )
-                     continue;
-                if ( subject==null ) {
-                    subject = s;
-                } else if (s.equals(subject)) {
-                    count++;
-                } else if (!s.equals(subject)) {
-                    count--;
-                    if (count<0) {
-                        count=0;
-                        subject=s;
-                    }
-                }
-            }
-        } finally {
-            if ( iter != null ) iter.close();
-            if (subject==null)
-                return null;
-            return subject.toString();
-        }
-    }
-
-    Model newModel() {
-        Model m;
-        if (graph==null)
-            m = ModelFactory.createDefaultModel();
-        else
-            m = ModelFactory.createModelForGraph(model.getGraph());
-        return m;
-    }
- 
     private static final Logger logger =
                          Logger.getLogger(JenaTDB.class.getName());
 

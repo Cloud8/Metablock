@@ -29,8 +29,8 @@ public class MetaCrawl {
         public void create();
         public void dispose();
         public boolean delete(String resource);
-        public boolean write(Model mod);
-        public boolean update(Model mod);
+        public boolean write(Model mod, String resource);
+        public boolean update(String id, String field, String value);
         public void destroy();
     }
 
@@ -80,8 +80,7 @@ public class MetaCrawl {
         return indexSlow(offset, limit);
     }
 
-/*
-    //reduce write operations
+/* //reduce write operations
     private boolean indexFast(int offset, int limit) {
         boolean result = true;
         String[] identifiers = transporter.getIdentifiers(offset,limit);
@@ -139,7 +138,7 @@ public class MetaCrawl {
              if (mod==null) {//if server sends garbage, dont care.
                  continue;
              }
-             result=storage.write(mod);
+             result=storage.write(mod, id);
              if(!result) {
                  log("problem: " + id);
                  dump(id);
@@ -163,7 +162,7 @@ public class MetaCrawl {
         if (mod==null) {
             log("cant post " + resource);
         } else {
-            storage.write(mod);
+            storage.write(mod, resource);
         }
     }
 

@@ -364,20 +364,15 @@ public class Config {
         public String prefix;
         public String from;
         public String until;
-        //public String rawtest;
-        //public String rdftest;
-        //public String republish;
-        public String archive; // GH201405 : will replace republish
+        public String set;
+        public String archive; 
         public String urnPrefix;
-        //public String docbase;
         public String days;
-        //public String interval;
-        //public String maxRequest;
         public void show() {
            log("OAI: " + prefix 
              + "   : " + days + ": " + transformer + "\n"
              + "   : " + harvest + "\n" 
-             //+ "   : " + rawtest + ": " + rdftest + "\n"
+             + "   : " + set + "\n"
              + "   : " + "republish to " + archive + "\n"
              + "   : from " + from + " until " + until); 
         }
@@ -491,7 +486,7 @@ public class Config {
     }
 
     public static void main(String... args) {
-        Config c = new Config("shanghai.ttl");
+        Config c = new Config("seaview.ttl");
         c.create();
         int argc = 0;
         if (args.length>argc && args[argc].equals("-show")) {

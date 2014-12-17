@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.ArrayList;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResIterator;
+import com.hp.hpl.jena.vocabulary.DCTerms;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -35,10 +37,10 @@ public class MetaCrawl {
     public interface Storage {
         public void create();
         public void dispose();
-        public boolean test(String resource); // existance check
+        public boolean test(String resource);
         public boolean delete(String resource);
-        public boolean write(Model mod);
-        public boolean update(Model mod); 
+        public boolean write(Model mod, String resource);
+        public boolean update(String id, String field, String value); 
         public void destroy();
     }
 
@@ -46,8 +48,7 @@ public class MetaCrawl {
     public interface Analyzer {
         public Analyzer create();
         public void dispose();
-        public void analyze(Model model);
-        public void analyze(Model model, Resource rc);
+        public Resource analyze(Model model, String id);
     }
 
     protected Transporter transporter;
@@ -145,7 +146,7 @@ public class MetaCrawl {
         log("found " + ids.length  + " items "); 
     }
 
-    public int crawl(String source) {
+    public int index(String source) {
         start = System.currentTimeMillis();
         log("index " + source);
         int found = transporter.crawl(source);
@@ -155,12 +156,39 @@ public class MetaCrawl {
         return found;
     }
 
+    /** crawl this resource */
+    public int crawl(String id) {
+        boolean b = true;
+        Model mod = transporter.read(id);
+        Resource rc = analyze(mod, id);
+        if(test&&count==0) dump(id,mod);
+        if (mod==null) { //garbage, dont care.
+            log("failed " + id);
+            return 0;
+        }
+        if(test) ; // log(id);
+        else {
+            if (!create) {
+                if (rc!=null)
+                    storage.delete(rc.getURI());
+            }
+            if (storage==null) {
+                //log("zero storage " + id);
+                b=true;
+            } else {
+			    b=storage.write(mod, id);
+            }
+        }
+        if(b) count++; //count storage success
+        else {
+            log("storage problem: " + id);
+            dump(id,mod);
+            b=true;//dont stop the show
+        }
+        return count;
+    }
+
     public int crawl() {
-        //if (1==1) {
-        //    log(transporter.getClass().getName());
-        //    log(storage.getClass().getName());
-        //    return 0;
-        //}
         if (start==0L) {
             start = System.currentTimeMillis();
         }
@@ -186,22 +214,9 @@ public class MetaCrawl {
         return 0;
     }
 
-    protected Model analyze(Model model, String resource) {
-        if (model==null) {
-            return model;
-        }
-        if (analyze) {
-            for (Analyzer a : analyzers) {
-                 //Resource rc = model.getResource(resource);
-                 //a.analyze(model, rc);
-                 a.analyze(model);
-            }
-        }
-        return model;
-    }
-
     private int crawl(int chunkSize) {
         int i = 0;
+        //log("crawl chunkSize " + chunkSize);
         for (boolean b=true; b; b=crawl((i-1)*chunkSize, chunkSize)) {
              i++;
         }
@@ -209,8 +224,8 @@ public class MetaCrawl {
     }
 
     private boolean crawl(int offset, int limit) {
-        //log("crawl " + offset);
-        boolean b = true;
+        int x = 0;
+        //log("crawl off " + offset);
         String[] identifiers = transporter.getIdentifiers(offset,limit);
         if (identifiers==null)
             return false;
@@ -219,27 +234,9 @@ public class MetaCrawl {
                  return false;
              if (logC!=0&&count%logC==0)
                  log(id + " crawl " + count);
-             //if (sync&&storage.exists(transporter.getIdentifier(id))) {
-             //    continue;
-             //} 
-             Model mod = transporter.read(id);
-             mod = analyze(mod, id);
-             if(test&&count==0) dump(id,mod);
-             if (mod==null) { //garbage, dont care.
-                 log("failed " + id);
-                 continue;
-             }
-             if(test) ; // log(id);
-             else if (create) b=storage.write(mod);
-                 else b=storage.update(mod);
-             if(b) count++; //count storage success
-             else {
-                 log("storage problem: " + id);
-                 dump(id,mod);
-                 b=true;//dont stop the show
-             }
+             x += crawl(id);
         }
-        return b;
+        return (x>0); 
     }
 
     public void post(String resource) {
@@ -248,8 +245,8 @@ public class MetaCrawl {
             return;
         }
         Model mod = transporter.read(resource);
-        if (create) storage.write(mod);
-        else storage.update(mod);
+        if (!create) storage.delete(resource);
+        storage.write(mod, resource);
     }
 
     private void dump(Model model) {
@@ -315,15 +312,17 @@ public class MetaCrawl {
         return storage.delete(resource);
     }
 
-    public boolean update(String resource) {
-        boolean b = false;
-        Model mod = transporter.read(resource);
-        mod = analyze(mod, resource);
-        if (test) {
-            dump(resource,mod);
-        } 
-        else b = storage.update(mod); 
-        return b;
+    protected Resource analyze(Model model, String id) {
+        Resource rc = null;
+        if (model==null) {
+            return rc;
+        }
+        if (analyze) {
+            for (Analyzer a : analyzers) {
+                 rc = a.analyze(model, id);
+            }
+        }
+        return rc;
     }
 
     private static final Logger logger =
@@ -338,4 +337,7 @@ public class MetaCrawl {
         e.printStackTrace(System.out);
     }
 
+    private void log(Model model) {
+        model.write(System.out, "RDF/XML");
+    }
 }

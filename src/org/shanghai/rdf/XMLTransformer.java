@@ -92,8 +92,8 @@ public class XMLTransformer {
     private XMLReader xr;
 
     public XMLTransformer(String xslt) {
-        if (xslt==null)
-            log("bad xslt");
+        //if (xslt==null)
+        //    log("bad xslt");
         this.xslt = xslt;
         stringWriter = new StringWriter();
     }
@@ -160,22 +160,6 @@ public class XMLTransformer {
         }
     }
 
-    /****
-    private String XXtransform( Document doc ) {
-	    String result = null;
-	    try {
-          Transformer transformer = templates.newTransformer();
-		  StringWriter writer = new StringWriter();
-		  transformer.transform( new DOMSource(doc), 
-			                     new StreamResult(writer));
-          result = writer.toString();
-        } catch(TransformerException e) { log(e); }
-          finally {
-              return result;
-        }
-    }
-    ***/
-
     public String transform(String xmlString) {
 	    String result = null;
 	    try {
@@ -184,22 +168,12 @@ public class XMLTransformer {
             Transformer transformer = templates.newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             SAXSource src = new SAXSource(new InputSource(reader));
-            //TransformerHandler th = factory.newTransformerHandler(templates);
-            //XMLReader xr = XMLReaderFactory.createXMLReader();
-            //xr.setContentHandler(th);
-            //xr.setErrorHandler(myErrorHandler);
             src.setXMLReader(xr);
 		    transformer.transform( src, // new StreamSource(reader), 
 			                       new StreamResult(writer));
             result = writer.toString();
-        //} catch(SAXNotRecognizedException e) { 
-        //    log(e); 
-        //} catch(SAXNotSupportedException e) { 
-        //    log(e); 
         } catch(TransformerException e) { 
             log(e); 
-        //} catch(Throwable t) { 
-        //     t.printStackTrace();
         } finally {
             return result;
         }
@@ -349,10 +323,10 @@ public class XMLTransformer {
             throw(e);
         }
         private void show(String type,TransformerException e) {
-            log(type + ":: " + e.getMessage());
+            log(type + "## " + e.getMessage());
             if(e.getLocationAsString() != null)
                 log(e.getLocationAsString());
-            //e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
@@ -369,10 +343,11 @@ public class XMLTransformer {
         public void fatalError(SAXParseException e)
                 throws SAXParseException {
             show("Fatal Error",e);
+            e.printStackTrace(System.out);
             throw(e);
         }
         private void show(String type,SAXParseException e) {
-            log(type + ":: " + e.getMessage());
+            log(type + ":: [" + e.getMessage() + "]");
         }
     }
 
@@ -393,7 +368,7 @@ public class XMLTransformer {
 
     private static void log(Exception e) {
         logger.log(Level.SEVERE, e.toString());
-        //e.printStackTrace(System.out);
+        e.printStackTrace(System.out);
     }
 
 }

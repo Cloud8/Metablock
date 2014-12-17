@@ -10,9 +10,11 @@ import java.io.IOException;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QuerySolution;
 import com.hp.hpl.jena.query.ResultSet;
+import com.hp.hpl.jena.vocabulary.DCTerms;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -24,6 +26,10 @@ public class RDFStorage extends RDFReader implements MetaCrawl.Storage {
 
     public RDFStorage(String store, String graph) {
         super(new Store(store, graph));
+    }
+
+    public RDFStorage(String store, String kbd, String name) {
+        super(new Store(store, kbd, name));
     }
 
     public RDFStorage(String store, String graph, String u, String p) {
@@ -39,13 +45,16 @@ public class RDFStorage extends RDFReader implements MetaCrawl.Storage {
     }
 
     @Override
-    public boolean write(Model mod) {
+    public boolean write(Model mod, String id) {
         return store.write(mod);
     }
 
     @Override
-    public boolean update(Model mod) {
-        return store.update(mod);
+    public boolean update(String id, String field, String value) {
+        Model model = store.read(id);
+        Resource rc = model.getResource(id);
+        rc.addProperty(model.createProperty(DCTerms.getURI(), field), value);
+        return store.write(model);
     }
 
     @Override

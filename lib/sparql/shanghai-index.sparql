@@ -12,12 +12,12 @@ where {
     ?subject ?p ?o .
     ?subject dct:identifier ?o .
     FILTER (!isBlank(?subject)) .
-    ## FILTER (regex(?dct:issued,'^2014-06') .
+    ## FILTER (regex(?dct:issued,'^2014-07') .
     ## FILTER (?date > "<date>") .
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/es')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ed')
-    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ep/0003')
-    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/diss/z2014')
+    FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ep/0003')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/diss')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/eb')
   # }
 }

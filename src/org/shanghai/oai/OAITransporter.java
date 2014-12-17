@@ -41,6 +41,9 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 
+/*
+ see https://github.com/openpreserve/OAIHarvester2/blob/master/src/main/java/ORG/oclc/oai/harvester2/verb/HarvesterVerb.java
+ */
 public class OAITransporter implements MetaCrawl.Transporter {
 
     private Config.OAI settings; 
@@ -66,7 +69,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
         docfactory.setNamespaceAware(true);
         factory = TransformerFactory.newInstance();
 
-        from = settings.from   + "T00:00:01Z";
+        from = settings.from   + "T00:00:00Z";
         until = settings.until + "T23:59:59Z";
 
         if (settings.transformer!=null) {
@@ -85,6 +88,8 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 log("archive to " + settings.archive);
             }
         }
+        log("harvest " + settings.harvest + " : " + from + " : " + until 
+            + " : " + settings.prefix + " # " + settings.set);
     }
 
     @Override
@@ -123,13 +128,26 @@ public class OAITransporter implements MetaCrawl.Transporter {
         int skip=0;
         try {
             DocumentBuilder db = docfactory.newDocumentBuilder();
-            //log(settings.harvest + " : " + from + " : " + settings.prefix);
             ListIdentifiers listIdentifiers = new ListIdentifiers(
-                        settings.harvest, from, until, null, settings.prefix);
+                settings.harvest, from, until, settings.set, settings.prefix);
+            //log("request " + listIdentifiers.getRequestURL());
+            //listIdentifiers.harvest(req);
+            //log("response " + listIdentifiers.toString());
+
+            if (listIdentifiers.getDocument()==null) {
+                log("no Identifiers");
+                return null;
+            }
+          //log("response [" + listIdentifiers.getDocument().toString() + "]");
+            //if (listIdentifiers.getDocument().getTextContent()==null) {
+            //    log("empty response, no Identifiers");
+            //    return null;
+            //}
+
             while (listIdentifiers != null && found<limit) {
                 String response = new String(listIdentifiers.toString()
                                              .getBytes("UTF-8"));
-                //log(response);
+                //log("response [" + response + "]");
                 String resumption = listIdentifiers.getResumptionToken();
                 if (resumption == null || resumption.length() == 0) {
                     listIdentifiers = null;
@@ -142,23 +160,32 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 Document doc = db.parse(is);
                 doc.getDocumentElement().normalize();
                 NodeList nodes = doc.getElementsByTagName("identifier");
-                for (int i=0; i<=nodes.getLength(); i++) {
+                log("found " + nodes.getLength() + " identifiers " + limit);
+                for (int i=0; i<nodes.getLength(); i++) {
                     if (skip<off) {
                         skip++;
                     } else {
-                        result[found++] = nodes.item(i).getTextContent();
-                        if (found>limit) 
+                        String id = nodes.item(i).getTextContent();
+                        //log("found " + found + " " + id);
+                        if (found>=limit) {
                             break;
+                        } else {
+                            result[found++] = id;
+                        }
                     }
                 }
                 //log(doc);
             }
             count += found;
-        } catch (IOException e) { log(e); }
+        } catch (Exception e) { log(e); e.printStackTrace(); }
         finally {
             if (found<limit) {
                 String[] result2 = new String[found];
-                System.arraycopy(result,0,result2,0,found-1);
+                if (found>0) {
+                    System.arraycopy(result,0,result2,0,found);
+                } else {
+                    //log("nothing found.");
+                }
                 return result2;
             }
             return result;
@@ -167,7 +194,8 @@ public class OAITransporter implements MetaCrawl.Transporter {
 
     @Override 
     public int crawl(String source) {
-        return getIdentifiers(0,99).length;
+        //return getIdentifiers(0,99).length;
+        return 0;
     }
 
     @Override
@@ -200,9 +228,9 @@ public class OAITransporter implements MetaCrawl.Transporter {
             rdf = xml;
             model = XMLTransformer.asModel(xml);
         }
-        if (analyzer!=null) {
-            analyzer.analyze(model);
-        }
+        //if (analyzer!=null) {
+        //    analyzer.analyze(model, identifier);
+        //}
         return model;
     }
 
@@ -273,7 +301,10 @@ public class OAITransporter implements MetaCrawl.Transporter {
         log("transformer " + settings.transformer); 
         log("from: "  + from);
         log("until: " + until);
-        for (String s: getIdentifiers(0,7)) {
+        String[] ids = getIdentifiers(0,7);
+        log("found " + ids.length + " identifiers");
+        
+        for (String s: ids) {
             log(s);
         }
     }

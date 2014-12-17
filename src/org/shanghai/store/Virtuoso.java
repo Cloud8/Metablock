@@ -140,13 +140,6 @@ public class Virtuoso {
     public boolean save(Model m) {
         boolean b=true;
         virtmodel.add(m);
-        //StmtIterator sti = m.listStatements();
-        //boolean b=false;
-        //while(sti.hasNext()) {
-        //    Statement st = sti.nextStatement();
-        //    virtmodel.add(st);
-        //    b=true;
-        //}
         return b;
     }
 

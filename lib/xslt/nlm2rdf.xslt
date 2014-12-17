@@ -8,6 +8,7 @@
      xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:xlink="http://www.w3.org/1999/xlink"
+     xmlns:skos="http://www.w3.org/2004/02/skos/core#"
      xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/"
      version="1.0" >
 
@@ -59,6 +60,7 @@
     <xsl:apply-templates select="nlm:article-categories"/>
     <xsl:apply-templates select="nlm:kwd-group" />
     <xsl:apply-templates select="nlm:permissions" />
+    <xsl:apply-templates select="nlm:abstract" />
     <xsl:apply-templates select="../../nlm:body" />
 
     <!-- republished document: -->
@@ -71,9 +73,12 @@
     <xsl:value-of 
          select="nlm:self-uri[@content-type='application/pdf']/@xlink:href"/>
     </xsl:variable>
+  
+    <xsl:if test="../nlm:journal-meta/nlm:journal-id='0003'">
     <dct:alternative>
       <xsl:value-of select="concat(substring-before($doc,'view'),'download',substring-after($doc,'view'))"/>
     </dct:alternative>
+    </xsl:if>
 
     <foaf:img>
      <xsl:value-of select="concat($docbase,'/',nlm:article-id,'.png')"/>
@@ -83,6 +88,22 @@
     <xsl:apply-templates select="nlm:volume" />
 
     <xsl:apply-templates select="../nlm:journal-meta" />
+    <xsl:choose>
+      <xsl:when test="../nlm:journal-meta/nlm:journal-id='0002'">
+      <dct:subject>
+         <skos:Concept rdf:about="http://dewey.info/class/302">
+           <skos:prefLabel xml:lang="en">Social Interaction</skos:prefLabel>
+         </skos:Concept>
+      </dct:subject>
+      </xsl:when>
+      <xsl:when test="../nlm:journal-meta/nlm:journal-id='0003'">
+      <dct:subject>
+         <skos:Concept rdf:about="http://dewey.info/class/956">
+           <skos:prefLabel xml:lang="en">General history of Asia; Middle East</skos:prefLabel>
+         </skos:Concept>
+      </dct:subject>
+     </xsl:when>
+    </xsl:choose>
  </fabio:JournalArticle>
 </xsl:template>
 
@@ -104,7 +125,7 @@
 
 <xsl:template match="nlm:contrib-group/nlm:contrib[@contrib-type='author']">
    <dct:creator>
-    <foaf:Person rdf:about="http://archiv.ub.uni-marburg.de/au/{translate(concat(nlm:name/nlm:given-names,'_',nlm:name/nlm:surname),' ,[].','_')}">
+    <foaf:Person rdf:about="http://archiv.ub.uni-marburg.de/aut/{translate(concat(nlm:name/nlm:given-names,'_',nlm:name/nlm:surname),' ,[].','_')}">
       <xsl:apply-templates select="nlm:name"/>
     </foaf:Person>
    </dct:creator>
@@ -137,12 +158,12 @@
   <xsl:apply-templates select="nlm:copyright-statement"/>
 </xsl:template>
 
+<xsl:template match="nlm:abstract">
+  <dct:abstract><xsl:value-of select="." /></dct:abstract>
+</xsl:template>
+
 <xsl:template match="nlm:body">
- <xsl:if test="string-length(.)>5">
-  <dct:abstract>
-    <xsl:value-of select="substring(string(.),0,1999)" />
-  </dct:abstract>
- </xsl:if>
+  <dct:fulltext><xsl:value-of select="." /></dct:fulltext>
 </xsl:template>
 
 <!-- http://creativecommons.org/licenses/by/3.0/ -->
@@ -202,24 +223,42 @@
       <fabio:hasIdentifier>
           <xsl:value-of select="'1465812-4'"/>
       </fabio:hasIdentifier>
-       <dct:publisher>
+      <dct:publisher>
           <aiiso:Institute rdf:about="http://www.uni-marburg.de/fb09/medienwissenschaft">
           <foaf:name>Medienwissenschaft</foaf:name>
          </aiiso:Institute>
-       </dct:publisher>
+      </dct:publisher>
+      <dct:language>de</dct:language>
+      <dct:subject>
+         <skos:Concept rdf:about="http://dewey.info/class/302">
+           <skos:prefLabel xml:lang="en">Social Interaction</skos:prefLabel>
+         </skos:Concept>
+      </dct:subject>
      </xsl:when>
+
      <xsl:when test="nlm:journal-id='0003'">
       <dct:publisher>
        <aiiso:Center rdf:about="http://www.uni-marburg.de/cnms">
         <foaf:name>Center for Near and Middle Eastern Studies (CNMS)</foaf:name>
        </aiiso:Center>
       </dct:publisher>
+      <dct:language>en</dct:language>
       <!-- <prism:issn>2196-629X</prism:issn> -->
       <xsl:apply-templates select="nlm:issn"/>
       <!-- ZDB-Idn META : -->
       <fabio:hasIdentifier>
           <xsl:value-of select="'2714728-9'"/>
       </fabio:hasIdentifier>
+      <dct:subject>
+         <skos:Concept rdf:about="http://dewey.info/class/956">
+           <skos:prefLabel xml:lang="en">General history of Asia; Middle East</skos:prefLabel>
+         </skos:Concept>
+      </dct:subject>
+      <dct:alternative>
+        <xsl:value-of select="concat('http://meta-journal.net/issue/view/',
+                                      ../nlm:article-meta/nlm:issue-id)"/>
+      </dct:alternative>
+
      </xsl:when>
    </xsl:choose>
 

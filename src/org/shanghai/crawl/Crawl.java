@@ -28,6 +28,7 @@ public class Crawl {
     protected String testFile;
     protected String source;
     protected String target;
+    protected String engine;
 
     public Crawl(Config config) {
         this.config = config;
@@ -49,6 +50,12 @@ public class Crawl {
         testFile = config.get("crawl.test");
         source = config.get("crawl.source");
         target = config.get("crawl.target");
+    }
+
+    public void create(String src, String trg, String eng) {
+        source = src;
+        target = trg;
+        engine = eng;
     }
 
     public void createCrawler() {
@@ -85,14 +92,12 @@ public class Crawl {
             boolean archive = settings.archive!=null;
             transporter = new OAITransporter(settings, archive);
             transporter.create();
-        } else //if (crawl.equals("tdb") || crawl.equals("virt") 
-               // || crawl.equals("4store")) 
-            {
-            //String store = config.get(crawl+".store");
-            //if (store==null) {
-            //    store = config.get(crawl+".sparql");
-            //}
+        } else {
             String store = config.get(crawl+".sparql");
+            if (store!=null && store.equals("tdb")) {
+                store = config.get("tdb.store");
+                log("tdb store " + store);
+            }
             String probe = config.get(crawl+".probe");
             if (probe==null) {
                 log("no probe ? " + crawl+".probe");
@@ -125,9 +130,10 @@ public class Crawl {
             storage.create();
             log("createStorage [" + store + "]");
         } else if (store.startsWith("four")) {
+            log("createStorage [" + store + "]");
             String four = config.get(store+".store");
             String graph = config.get(store+".graph");
-            storage = new RDFStorage(four,graph);
+            storage = new RDFStorage(four, graph, store);
             storage.create();
         } else if (store.startsWith("solr")) {
             String solr=config.get(store+".url")+"/"+config.get(store+".core");
@@ -216,9 +222,6 @@ public class Crawl {
     }
 
     public void crawl(String[] directories) {
-        //for (String s : directories) System.out.print(s + " ");
-        //System.out.println(directories.length);
-
         count=0;
         int dirCount=0;
         long start = System.currentTimeMillis();
@@ -229,15 +232,12 @@ public class Crawl {
             }
             crawl(source, target);
         } else {
+            createCrawler();
             for (String dir: directories) {
                 if (dir.startsWith("-")) {
                     continue;
                 }
-                if (dir.startsWith(":")) {
-                    target = dir.substring(1);
-                }
                 dirCount++;
-                createCrawler();
                 crawl(dir);
             }
         }
@@ -248,8 +248,9 @@ public class Crawl {
     }
 
     public void crawl() {
-        //if (crawler==null) //GH201402: wtf.
-        //    createCrawler();
+        if (crawler==null) { //GH201402: wtf.
+            createCrawler();
+        }
         crawler.crawl();
     }
 
@@ -294,21 +295,36 @@ public class Crawl {
         }
     }
 
-    private void crawl(String dir) {
-        File file = new File(dir);
+    private void crawlFiles(String resource) {
+        File file = new File(resource);
         if (file.exists()) {
-            count += crawler.crawl(dir);
+            if (file.isDirectory()) {
+                log("crawl dir: " + resource);
+                count += crawler.index(resource);
+            } else {
+                count += crawler.crawl(resource);
+            }
         } else {
+            log("crawl home: " + resource);
             String home = System.getProperty("user.home");
-            if (new File(home + "/" + dir).exists()) {
+            if (new File(home + "/" + resource).exists()) {
                 if (fc!=null)
                     fc.setDirectory(home);
                 else log("fc was zero");
-                count += crawler.crawl(home + "/" + dir);
+                count += crawler.index(home + "/" + resource);
             } 
         }
         crawl(); // copy transporter to storage
-        log("crawled " + dir + " " + count);
+        log("crawled " + resource + " " + count);
+    }
+
+    private void crawl(String resource) {
+        if (source.equals("files")) {
+            //log("crawl files: " + resource);
+            crawlFiles(resource);
+        } else {
+            int b = crawler.crawl(resource);
+        }
     }
 
     private static final Logger logger =

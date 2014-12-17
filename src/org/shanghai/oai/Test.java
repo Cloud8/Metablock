@@ -19,7 +19,7 @@ import com.hp.hpl.jena.rdf.model.Model;
 public class Test {
 
     private Config config;
-    private String configFile = "shanghai.ttl";
+    private String configFile = "seaview.ttl";
     private OAITransporter transporter;
 
     public void create() {

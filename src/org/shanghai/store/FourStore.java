@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.io.UnsupportedEncodingException;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -44,6 +45,8 @@ public class FourStore {
     private URL dataURL;
     private URL sparqlURL;
     private URL updateURL;
+
+    private int count;
 
     public FourStore() {
         this("http://localhost:9000", "archiv");
@@ -63,6 +66,7 @@ public class FourStore {
     }
 
     public void create() {
+        //log("create " + this.baseURL + " :: " + this.graph);
         try {
             statusURL = new URL(baseURL + "/status");
             sizeURL = new URL(statusURL + "/size/");
@@ -72,9 +76,11 @@ public class FourStore {
         } catch (MalformedURLException e) {
             log(e);
         }
+        count = 0;
     }
 
     public void dispose() {
+        log("dispose count " + count);
     }
 
     public String probe() {
@@ -96,27 +102,32 @@ public class FourStore {
     }
 
     private boolean write(String rdf) {
-        log("write to " + dataURL + graph);
+        //log("write to " + dataURL + " " + graph);
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(dataURL
-                + graph).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) 
+                              dataURL.openConnection();
+                              //updateURL.openConnection();
+                              //new URL(dataURL + graph).openConnection();
 
             connection.setDoOutput(true);
             connection.setDoInput(true);
-            connection.setRequestMethod("PUT");
-        //  -- fails ??
-        //  connection.setRequestProperty("Content-Type","application/rdf+xml");
-            connection.setRequestProperty("Content-Type",
-                                          "application/rdf+xml-abbrev");
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", 
+                                          "application/x-www-form-urlencoded");
 
             DataOutputStream ps = new DataOutputStream(connection.getOutputStream());
-            ps.writeBytes(rdf);
+            String data = ""
+                           + "graph=" + URLEncoder.encode(graph, "UTF-8") 
+                        // + "mime-type=application/rdf+xml"
+                           + "&data=" + URLEncoder.encode(rdf, "UTF-8");
+            ps.writeBytes(data);
             ps.flush();
             ps.close();
 
             String response = readResponse(connection);
-            log("response: " + response);
-            return true;
+            if (response.equals("OK")) {
+                return true;
+            }
         } catch (MalformedURLException e) {
             log(e);
         } catch (ProtocolException e) {
@@ -129,72 +140,29 @@ public class FourStore {
     }
 
     public void clean() {
-        //try {
-            log("4store clean : not implemented");
-            //store.delete(graph);
-        //} catch (MalformedURLException e) {
-        //    log(e);
-        //} catch (ProtocolException e) {
-        //    log(e);
-        //} catch (IOException e) {
-        //    log(e);
-        //}
+        delete(graph);
     }
-
-    public QueryExecution getExecutor(String query) {
-        try {
-          Query q = QueryFactory.create(query);
-          QueryExecution qexec = 
-              QueryExecutionFactory.sparqlService(baseURL.toString(), q);
-          return qexec;
-        } catch(QueryParseException e) {
-          log(query);
-          log(e);
-        }
-        return null;
-    }
-
-    /**
-    private boolean execute(String action) {
-        boolean b = false;
-        try {
-            vur.exec();
-            b = true;
-        } catch(UpdateException e) {
-            log("execute failed [" + action + "]");
-            log(e);
-        } finally {
-            return b;
-        }
-    }
-    **/
 
     public boolean delete(String about) {
-    /**
-        String cmd;
-        if (graph==null) 
-            cmd = "DELETE WHERE { <" + about + "> ?p ?o. }"; 
-        else
-            cmd = "DELETE FROM <" + graph +"> "+" { <" + about + "> ?p ?o }"
-                  + " WHERE { <" + about + "> ?p ?o }";
-        //log("delete [" + cmd + "]");
-        return execute(cmd);
-    **/
+        log("delete " + about);
+        try {
+	        URL deleteURL = new URL(dataURL + URLEncoder.encode(graph, "UTF-8"));
+            HttpURLConnection connection = (HttpURLConnection) deleteURL.openConnection();
+
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setRequestMethod("DELETE");
+            String result = readResponse(connection);
+            return result.equals("OK");
+        } catch (UnsupportedEncodingException e) { log(e); }
+          catch (MalformedURLException e) { log(e); }
+          catch (ProtocolException e) { log(e); }
+          catch (IOException e) { log(e); }
         return false;
     }
 
     public boolean update(Model m) {
-    /*
-        StmtIterator si = m.listStatements();
-        boolean b=false;
-        while(si.hasNext()) {
-           Statement st = si.nextStatement();
-           virtmodel.removeAll(st.getSubject(),st.getPredicate(),null);
-           b=true;
-        }
-        virtmodel.add(m);
-        return b;
-    */
+        log("update not implemented");
         return false;
     }
 
@@ -203,17 +171,32 @@ public class FourStore {
     }
 
     public boolean save(Model model) {
+        //log("save ");
+        count++;
         StringWriter writer = new StringWriter();
         try {
            //model.write(writer, "RDF/XML-ABBREV");
            // base null means write only absolute URI's.
-           //model.write(writer, "RDF/XML", null); 
-           model.write(writer, "RDF/XML-ABBREV", null); 
+           model.write(writer, "RDF/XML", null); 
            //model.write(writer); 
         } catch(Exception e) {
            log(e);
         }
-        return write(writer.toString());
+        String rdf = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                     + writer.toString();
+        return write(rdf);
+    }
+
+    public QueryExecution getExecutor(String q) {
+        try {
+            Query query = QueryFactory.create(q);
+            return QueryExecutionFactory.create(query);
+        } catch(QueryParseException e) {
+            log(e);
+            //log("tragedy " + count + " query [" + q + "]");
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -222,6 +205,7 @@ public class FourStore {
      * @author Dan
      *
      */
+/****
     private static enum OutputFormat {
         TAB_SEPARATED("text/tab-separated-values"),
         JSON("application/sparql-results+json"),
@@ -237,6 +221,7 @@ public class FourStore {
             return mimeType;
         };
     };
+****/
 
     /**
      * Queries the repository
@@ -248,11 +233,13 @@ public class FourStore {
      * @throws ProtocolException
      * @throws IOException
      */
+/*******
     private String query(String sparql) throws MalformedURLException,
             ProtocolException, IOException {
             //Integer.MIN_VALUE means no soft-limit specified
         return query(sparql, OutputFormat.SPARQL_XML, Integer.MIN_VALUE);
     }
+**********/
 
     /**
      * Queries the repository and returns the result in the requested format
@@ -265,6 +252,7 @@ public class FourStore {
      * @throws ProtocolException
      * @throws IOException
      */
+/************
     private String query(String sparql, OutputFormat format, int softLimit)
             throws MalformedURLException, ProtocolException, IOException {
         HttpURLConnection connection = (HttpURLConnection) sparqlURL
@@ -288,18 +276,21 @@ public class FourStore {
 
         return readResponse(connection);
     }
+**************/
 
     private String readResponse(HttpURLConnection connection)
               throws MalformedURLException, ProtocolException, IOException {
         InputStream is = null;
-        //if (connection.getResponseCode() >= 400) {
-        //    is = connection.getErrorStream();
-        //} else {
+        boolean b = false;
+        if (connection.getResponseCode() >= 400) {
+            is = connection.getErrorStream();
+            log("error " + connection.getResponseCode());
+            b = true;
+        } else {
             is = connection.getInputStream();
-        //}
-        BufferedReader in = new BufferedReader(
-                //new InputStreamReader(connection.getInputStream()));
-                new InputStreamReader(is));
+        }
+        //new InputStreamReader(connection.getInputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(is));
 
         StringBuilder responseBuilder = new StringBuilder();
         String str;
@@ -307,10 +298,12 @@ public class FourStore {
             responseBuilder.append(str + System.getProperty("line.separator"));
         }
         in.close();
-        return responseBuilder.toString();
+        if (b) log( responseBuilder.toString() );
+        return "OK";
     }
 
     private String readResponse(URL u) throws IOException {
+        log("read response from " + u);
         BufferedReader in = new BufferedReader(new InputStreamReader(u
                 .openStream()));
         String response;
@@ -329,6 +322,38 @@ public class FourStore {
 
     private void log(Exception e) {
         log(e.toString());
+    }
+
+    public static void main(String[] args) {
+        FourStore main = new FourStore();
+        main.create();
+        //main.probe();
+
+        String rdf = "<?xml version=\"1.0\"?>"
+        + "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\""
+        + " xmlns:si=\"http://www.w3schools.com/rdf/\">"
+        + "<rdf:Description rdf:about=\"http://www.w3schools.com\">"
+        + " <si:title>How to operate with a blown mind</si:title>"
+        + " <si:author>Lo Fidelity Allstars</si:author>"
+        + " </rdf:Description>"
+        + "</rdf:RDF>";
+        //main.write(rdf);
+
+        String rdf2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+        + "<rdf:RDF xmlns:dct=\"http://purl.org/dc/terms/\""
+        + " xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\""
+        + " xmlns:aiiso=\"http://purl.org/vocab/aiiso/schema#\""
+        + " xmlns:skos=\"http://www.w3.org/2004/02/skos/core#\""
+        + " xmlns:fabio=\"http://purl.org/spar/fabio/\""
+        + " xmlns:foaf=\"http://xmlns.com/foaf/0.1/\" > "
+        + " <rdf:Description rdf:about=\"http://localhost/pdfa.pdf\">"
+        + " <dct:subject>Geographie</dct:subject>"
+        + " <dct:creator>Träger-Chatterjee, Christine</dct:creator>"
+        + " <dct:title>Analysis of Atmospheric Precursor of Extreme Summers in Central Europe</dct:title>"
+        + " <rdf:type rdf:resource=\"http://purl.org/spar/fabio/DoctoralThesis\"/>"
+        + " </rdf:Description>"
+        + " </rdf:RDF>";
+        main.write(rdf2);
     }
 
 }

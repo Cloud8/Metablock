@@ -14,15 +14,15 @@ lib/%.class: src/%.java
 	@echo $<
 	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
-default: lib/shanghai.jar
+default: lib/seaview.jar
 
 compile: $(CLASS) 
 
-lib/shanghai.jar: $(CLASS) lib/shanghai.ttl
-	jar cf $@ -C lib org
+lib/seaview.jar: $(CLASS) lib/seaview.ttl
+	jar cf $@ -C lib org 
 
 test: 
-	java -cp lib:lib/* org.shanghai.rdf.Main
+	@java -cp lib:lib/* org.shanghai.rdf.Main
 
 check:
 	@echo CPATH: $(CPATH)

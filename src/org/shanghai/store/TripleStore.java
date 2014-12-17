@@ -31,6 +31,7 @@ public class TripleStore {
     }
 
     public TripleStore(String uri, String graph) {
+        //System.out.print("TripleStore " + uri);
         if (uri.startsWith("jdbc:virtuoso")) {
             virt = new Virtuoso(uri, graph);
             store = 1;
@@ -44,6 +45,13 @@ public class TripleStore {
             store = 0;
         }
         this.graph = graph;
+    }
+
+    public TripleStore(String uri, String base, String name) {
+        if ("four".equals(name)) {
+            fstore = new FourStore(uri, base);
+            store = 3;
+        }
     }
 
     public TripleStore(String uri, String graph, String dbuser, String dbpass) {
@@ -130,6 +138,7 @@ public class TripleStore {
     }
 
     public boolean write(Model m) {
+        //System.out.print("." + store);
         boolean b = false;
         switch(store) {
             case 1: b=virt.save(m);

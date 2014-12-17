@@ -9,10 +9,14 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.client.solrj.request.DirectXmlRequest;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.client.solrj.util.ClientUtils;
 
 import com.hp.hpl.jena.rdf.model.Model;
 
 import java.util.logging.Logger;
+import java.util.Map;
+import java.util.HashMap;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -70,13 +74,14 @@ public class SolrPost {
     }
 
     public boolean post(String data) {
+       //log("post " + data);
        boolean b = false;
        if (data==null || data.length()==0)
            return b;
        try {
-         DirectXmlRequest up = new DirectXmlRequest( "/update", data );
-         server.request( up ); 
-         b=true;
+           DirectXmlRequest up = new DirectXmlRequest( "/update", data );
+           server.request( up ); 
+           b=true;
         } catch(SolrServerException e) {log(e);/*log(data.substring(0,256));*/}
           catch(IOException e) { log(e); }
           catch(SolrException e) { log(e);/*log(data.substring(0,256));*/}
@@ -88,7 +93,7 @@ public class SolrPost {
     public boolean delete(String id) {
         boolean b = false;
         String delete = "id:"+id.replace(":","\\:").replace("#","*");
-        log("delete [" + id + "] [" + delete + "]");
+        //log("delete [" + id + "] [" + delete + "]");
         try {
             server.deleteByQuery(delete);
             b=true;
@@ -97,6 +102,24 @@ public class SolrPost {
         finally {
           return b;
         }
+    }
+
+    public boolean update(String id, String field, String value) {
+        //log("update " + id + " " + field + " " + value);
+        boolean b = false;
+        SolrInputDocument doc = new SolrInputDocument();
+        doc.addField("id", id);
+        Map<String, String> oper = new HashMap<String, String>();
+        oper.put("set", value);
+        doc.addField(field, oper);
+        b = true;
+        try {
+            server.add(doc);
+        } catch(SolrServerException e) { log(e); }
+          catch(IOException e) { log(e); }
+         finally {
+            return b;
+         }
     }
 
     public void destroy() {
