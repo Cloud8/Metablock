@@ -3,6 +3,10 @@
 Seaview
 ========
 
+##### Crawling : from OAI to RDF to RDF
+
+  Before publishing RDF data, data sources should be crawled
+
 ##### Indexing : from RDF to solr
 
   To build a solr index from a SPARQL service endpoint,
@@ -20,6 +24,7 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   are rather general, but modelling of bibliographic resources may vary and 
   require modifications.  
 
+%% <!-- See http://journal.code4lib.org/articles/8526 -->
 
   All configurations are done in lib/seaview.ttl
 
