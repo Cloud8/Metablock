@@ -43,6 +43,10 @@ public final class PrefixModel {
         model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
         model.setNsPrefix("void", "http://rdfs.org/ns/void#");
         model.setNsPrefix("c4o", "http://purl.org/spar/c4o/");
+        //econstor
+        model.setNsPrefix("swc", "http://data.semanticweb.org/ns/swc/ontology#");
+        model.setNsPrefix("swrc", "http://swrc.ontoware.org/ontology#");
+        model.setNsPrefix("sioc", "http://rdfs.org/sioc/ns#");
         //model.withDefaultMappings(PrefixMapping.Standard);
         return model;
     }

@@ -54,9 +54,12 @@ public class VoidTransporter implements MetaCrawl.Transporter {
 
     @Override
     public synchronized Model read(String resource) {
-        //log("read " + resource);
         Model model = PrefixModel.retrieve(resource);
-        getParts(model);
+        if (model==null) {
+            log("zero " + resource);
+        } else {
+            getParts(model);
+        }
         return model;
     }
 
@@ -81,13 +84,15 @@ public class VoidTransporter implements MetaCrawl.Transporter {
             log("crawl " + resource + " zero size " + parts.size());
             return 0;
         }
-        hasPart = model.createProperty(dct, "hasPart");
         getParts(model);
         log("index " + resource + " size " + parts.size());
         return parts.size();
     }
 
     private void getParts(Model model) {
+        if (hasPart==null) {
+            hasPart = model.createProperty(dct, "hasPart");
+        }
         NodeIterator ni = model.listObjectsOfProperty(hasPart);
         while(ni.hasNext()) {
             RDFNode node = ni.next();

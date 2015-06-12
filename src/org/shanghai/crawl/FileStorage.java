@@ -46,7 +46,6 @@ public class FileStorage implements MetaCrawl.Storage {
 
     @Override
     public boolean delete(String resource) {
-        //log("unwilling to perform : delete " + resource);
         return false;
     }
 
@@ -115,7 +114,7 @@ public class FileStorage implements MetaCrawl.Storage {
             //log("FileUtil.write( " + path + ")");
             b = true;
         } else {
-          log("Unwilling to perform.");
+            log("Unwilling to perform.");
         }
         return b;
     }

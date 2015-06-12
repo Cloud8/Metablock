@@ -1,11 +1,7 @@
 
 
-Seaview
+Autobib
 ========
-
-##### Crawling : from OAI to RDF to RDF
-
-  Before publishing RDF data, data sources should be crawled
 
 ##### Indexing : from RDF to solr
 

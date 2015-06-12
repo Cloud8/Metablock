@@ -79,7 +79,7 @@
        :store  "http://localhost:8080/solr/biblio" .
 
 ## OAI harvesting 
-:oai   :hasPart :oai00 ;
+:oai   #:hasPart :oai00 ;
        :hasPart :oai01 ;
        :urnPrefix "urn:nbn:de:test:00-" .
 
