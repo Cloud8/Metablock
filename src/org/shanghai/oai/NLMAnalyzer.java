@@ -4,6 +4,7 @@ import org.shanghai.crawl.MetaCrawl.Analyzer;
 import org.shanghai.oai.URN;
 import org.shanghai.util.FileUtil;
 import org.shanghai.util.Language;
+import org.shanghai.util.PrefixModel;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -29,16 +30,15 @@ import java.io.IOException;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.dom.DOMSource;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.logging.Logger;
 
 public class NLMAnalyzer implements Analyzer {
 
     private static final String dct = DCTerms.getURI();
-    private static final String prism = 
-                         "http://prismstandard.org/namespaces/basic/2.0/";
     private static final String fabio = "http://purl.org/spar/fabio/";
     private static final String foaf = "http://xmlns.com/foaf/0.1/";
     private static final String aiiso = "http://purl.org/vocab/aiiso/schema#";
@@ -48,13 +48,18 @@ public class NLMAnalyzer implements Analyzer {
     private String store;
     private URN urn;
     private Language language;
+    private int count;
+    private HashMap<String,String> hash;
 
     Property title;
-    Property identifier;
-    Property created;
-    Property issue;
-    Property number;
-    Property type;
+    Property identifier; // dct
+    Property created;    // dct
+    Property modified;   // dct
+    Property issueId;    // fabio:hasIssueIdentifier -- issue identifier
+    //Property number;     // fabio:hasSequenceIdentifier -- issue sequence
+    //Property volume;     // fabio:hasVolumeIdentifier -- the issue volume
+    Property article;  // fabio:hasElectronicArticleIdentifier
+    Property type;       // rdf
 
     public NLMAnalyzer(String prefix, String store) {
         urn = new URN(prefix);
@@ -67,44 +72,98 @@ public class NLMAnalyzer implements Analyzer {
         docfactory.setNamespaceAware(true);
         language = new Language();
         language.create();
+        count = 0;
+        hash = new HashMap<String,String>();
         return this;
     }
 
     @Override
     public void dispose() {
         language.dispose();
+        hash.clear();
+    }
+
+    private void createProperties(Model model) {
+        title = model.createProperty(dct, "title");
+        identifier = model.createProperty(dct, "identifier");
+        created = model.createProperty(dct, "created");
+        modified = model.createProperty(dct, "modified");
+        issueId = model.createProperty(fabio, "hasIssueIdentifier");
+        //number = model.createProperty(fabio, "hasSequenceIdentifier");
+        //volume = model.createProperty(fabio, "hasVolumeIdentifier");
+        type = model.createProperty(rdf, "type");
+        article = model.createProperty(fabio, "hasElectronicArticleIdentifier");
+        //log("analyze " + id);
     }
 
     @Override
     public Resource analyze(Model model, String id) {
         Resource rc = null;
-        title = model.createProperty(dct, "title");
-        identifier = model.createProperty(dct, "identifier");
-        created = model.createProperty(dct, "created");
-        issue = model.createProperty(prism, "issueIdentifier");
-        number = model.createProperty(prism, "number");
-        type = model.createProperty(rdf, "type");
-
+        Resource rci = null;
+        createProperties(model);
         ResIterator ri = model.listResourcesWithProperty(type);
         while( ri.hasNext() ) {
             Resource object = ri.nextResource();
             String name = object.getPropertyResourceValue(type).getLocalName();
             if (name.equals("JournalArticle")) {
                 rc = object;
-                //log(name + " " + rc.getURI());
-			    makeIdentifier(object);
-                language.analyze(model, rc);
+		        makeIdentifier(rc);
+                language.analyze(model, rc, id);
             } else if (name.equals("JournalIssue")) {
-			    makeIdentifier(object);
-                Model sub = getPartOf(object);
-				writeNLM(sub, object, store);
+                rci = object;
+		        makeIdentifier(rci);
             } else if (name.equals("Journal")) {
-			    makeIdentifier(object);
+		        makeIdentifier(object);
             }
         }
-        //log("analyze " + rc.getURI());
-		writeNLM(model, rc, store);
+        Model sub = getPartOf(rci);
+        boolean b = false;
+        if (store==null) { // no writes from here
+            // log("analyze " + id + " " + rc.getURI());
+        } else if (store.equals("files")) { // help file parent ??
+            if (!hash.containsKey(rci.getURI())) {
+                b = writeParent(sub, rci, id);
+                hash.put(rci.getURI(), rci.getURI());
+            }
+        } else { 
+	        b = writeModel(model, rc, store); // write articel
+            if (b && !hash.containsKey(rci.getURI())) {
+                b = writeModel(sub, rci, store); // write issue
+                hash.put(rci.getURI(), rci.getURI());
+            }
+            count++;
+        }
+        //if (b) log(" issue " + id);
         return rc;
+    }
+
+    @Override
+    public boolean test() {
+        log("test: " + this.getClass().getName());
+        return true;
+    }
+
+    @Override
+    public Resource test(Model model, String id) {
+        log("test # " + id + " " + store);
+        createProperties(model);
+        Resource rc = null;
+        ResIterator ri = model.listResourcesWithProperty(type);
+        while( ri.hasNext() ) {
+            rc = ri.nextResource();
+            String name = rc.getPropertyResourceValue(type).getLocalName();
+            if (name.equals("JournalArticle")) {
+			    makeIdentifier(rc);
+                language.analyze(model, rc, id);
+                break;
+            }
+        }
+        return rc;
+    }
+
+    @Override
+    public void dump(Model model, String id, String fname) {
+        log("dump not implemented");
     }
 
     public void makeIdentifier(Resource rc) {
@@ -126,41 +185,48 @@ public class NLMAnalyzer implements Analyzer {
         }
     }
 
-    public String archive(String xml) {
-        String path = store;
-        if (path==null || ! new File(path).isDirectory()) {
-            return null;
-        }
-
-        NLM nlm = new NLM(xml);
-        if (nlm.year!=null)
-            path += "/" + nlm.year;
-        if (nlm.issue!=null) // volume is another option
-            path += "/" + nlm.issue;
-        if (nlm.article!=null)
-            path += "/" + nlm.article;
+    private boolean checkTime(String path) {
+        boolean write = false;
         File check = new File(path);
-        if (!check.exists())
-            if (!new File(path).mkdirs())
-                return path;
-        if (nlm.url!=null) {
-            FileUtil.copy(nlm.url, path + "/index.html");
-            String from = nlm.url.replace("view", "viewFile"); // OJS
-            //log("read [" + from + "]");
-            FileUtil.copy(from, path + "/" + nlm.article + ".pdf");
-        }
-        if (nlm.article!=null) {
-            FileUtil.write(path + "/" + nlm.article + ".nlm", xml);
-            log("wrote " + path + "/" + nlm.article + ".nlm");
+        if (check.exists()) {
+            //int days = (int)((System.currentTimeMillis() 
+            //           - check.lastModified())/(1000*60*60*24));
+            int modified = (int)((System.currentTimeMillis() 
+                         - check.lastModified())/(1000*60));
+			if (modified > 2) {
+                write = true;
+                // log("write " + path + " " + modified);
+           }
         } else {
-            //log(nlm.toString());
-            log("failed " + path + "/" + nlm.article + ".nlm");
+           write = true;
         }
-        return path;
+        return write;
+    }
+
+    /** write issue resource description */
+    private boolean writeParent(Model model, Resource rc, String resource) {
+        if ( (new File(resource)).exists() ) { // archive issue
+            String path = null;
+            if (resource.lastIndexOf("/")>0) {
+                path = resource.substring(0, resource.lastIndexOf("/"));
+                path = path.substring(0, path.lastIndexOf("/")) + "/about.rdf";
+            } else {
+                return false;
+            }
+            if (checkTime(path)) {
+                log("write " + path);
+                StringWriter writer = new StringWriter();
+                model.write(writer, "RDF/XML-ABBREV");
+                FileUtil.write(path, writer.toString());
+                return true;
+            }
+        }
+        return false;
     }
 
     /** write model files to file system */
-    private boolean writeNLM(Model model, Resource rc, String store) {
+    private boolean writeModel(Model model, Resource rc, String store) {
+        boolean write = false;
 	    if (store==null) {
 		    return false;
 		}
@@ -169,57 +235,42 @@ public class NLMAnalyzer implements Analyzer {
             String path = store;
             String id = rc.getProperty(identifier).getString();
             if (rc.hasProperty(created)) {
-                if (path.endsWith(rc.getProperty(created).getString())) {
-                    //log("created " + rc.getProperty(created).getString());
-                } else {
-                    path += "/" + rc.getProperty(created).getString();
-                }
+                path += "/" + rc.getProperty(created).getString();
             }
-            if (rc.hasProperty(issue)) {
-                path += "/" + rc.getProperty(issue).getString();
-                //log("issue " + rc.getProperty(issue).getString());
+            if (rc.hasProperty(issueId)) {
+                path += "/" + rc.getProperty(issueId).getString();
+                //log("issue " + rc.getProperty(issueId).getString());
                 if (!new File(path).exists()) {
                     new File(path).mkdirs();
                 }
             }
-            if (rc.hasProperty(number)) {
-                path += "/" + rc.getProperty(number).getString();
-                //log("number " + rc.getProperty(number).getString());
+            if (rc.hasProperty(article)) {
+                path += "/" + rc.getProperty(article).getString();
+                //log("number " + rc.getProperty(article).getString());
             } 
-            path += "/about.rdf";
-            boolean doWrite = true;
+            //log("writeModel to " + path);
             if (name.equals("JournalIssue")) {
-                File check = new File(path);
-                if (check.exists()) {
-                    int days = (int)((System.currentTimeMillis() 
-                                 - check.lastModified())/(1000*60*60*24));
-				    if (days > 2) {
-                        log("wrote " + name + " : " + path + " " + days);
-                    } else {
-                        doWrite = false;
-                    }
-                }
+                path += "/about.rdf";
+                write = checkTime(path);
+            } else if (name.equals("JournalArticle")) {
+                path += "/" + rc.getProperty(article).getString()+".rdf";
+                write = true;
             }
-            if (doWrite) {
-                //log("wrote " + name + " : " + path );
+            if (write) {
                 StringWriter writer = new StringWriter();
                 model.write(writer, "RDF/XML-ABBREV");
-                FileUtil.write(path, writer.toString());
+                write = FileUtil.write(path, writer.toString());
+                if (write) log("write " + name + " : " + path );
             }
         } else {
             log("complicated [" + rc.getURI() + "]");
         }
-        return true;
+        return write;
     }
 
     private Model getPartOf(Resource rc) {
         Model model = ModelFactory.createDefaultModel();
-        model.setNsPrefix("dct", dct);
-        model.setNsPrefix("fabio", fabio);
-        model.setNsPrefix("foaf", foaf);
-        model.setNsPrefix("aiiso", aiiso);
-        model.setNsPrefix("prism", prism);
-        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
+        model = PrefixModel.prefix(model);
         StmtIterator si = rc.listProperties();
         while( si.hasNext() ) {
             Statement stmt = si.nextStatement();
@@ -233,54 +284,6 @@ public class NLMAnalyzer implements Analyzer {
             }
         }
         return model;
-    }
-
-    public class NLM {
-        String journal;
-        String year;
-        String issue;
-        String volume;
-        String article;
-        String url;
-
-        public NLM(String xml) {
-            Document doc = null;
-            DocumentBuilder db = null;
-            try {
-                db = docfactory.newDocumentBuilder();
-                InputSource is = new InputSource(new StringReader(xml));
-                doc = db.parse(is);
-            } catch(SAXException e) { log(e); }
-              catch(IOException e) { log(e); }
-              catch(ParserConfigurationException e) { log(e); }
-            NodeList nodes = doc.getElementsByTagName("journal-id");
-            journal = nodes.getLength()==0?null:nodes.item(0).getTextContent();
-            nodes = doc.getElementsByTagName("year");
-            year = nodes.getLength()==0?null:nodes.item(0).getTextContent();
-            nodes = doc.getElementsByTagName("volume");
-            volume = nodes.getLength()==0?null:nodes.item(0).getTextContent();
-            nodes = doc.getElementsByTagName("issue-id");
-            issue = nodes.getLength()==0?null:nodes.item(0).getTextContent();
-            nodes = doc.getElementsByTagName("article-id");
-            article = nodes.getLength()==0?null:nodes.item(0).getTextContent();
-            if (article!=null) {
-                nodes = doc.getElementsByTagName("self-uri");
-                for (int j = 0; j < nodes.getLength(); j++) {
-                    Element el = (Element)nodes.item(j);
-                    if (el.hasAttribute("content-type")) {
-                        String str = el.getAttribute("content-type");
-                        if ( str.equals("application/pdf")) {
-                             url = el.getAttribute("xlink:href");
-                        }
-                    }
-                }
-            }
-        }
-
-        public String toString() {
-            return journal + " " + year + " " + volume + " " + issue
-                   + " " + article + " " + url;
-        }
     }
 
     private void log(Exception e) {

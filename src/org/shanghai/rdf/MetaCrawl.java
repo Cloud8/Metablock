@@ -55,10 +55,14 @@ public class MetaCrawl {
     public void create() {
         chunkSize = 200;
         count = 0;
-        String xslt = FileUtil.read(xsltFile);
-        if (xslt==null) 
-            log(xsltFile + " not found!");
-        xmlTransformer = new XMLTransformer(xslt);
+        if (xsltFile==null) {
+            xmlTransformer = new XMLTransformer();
+        } else {
+            String xslt = FileUtil.read(xsltFile);
+            if (xslt==null) 
+                log(xsltFile + " not found!");
+            xmlTransformer = new XMLTransformer(xslt);
+        }
         xmlTransformer.create();
     }
 
@@ -153,7 +157,7 @@ public class MetaCrawl {
 
     public String read(String resource) {
         Model mod = transporter.read(resource);
-        String rdf = xmlTransformer.asString(mod);
+        String rdf = xmlTransformer.toString(mod, resource);
         return rdf;
     }
 

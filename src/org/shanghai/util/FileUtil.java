@@ -124,12 +124,14 @@ public class FileUtil {
         return null;
     }
 
-    public static void write(String path, String text) {
+    public static boolean write(String path, String text) {
+        boolean b = false;
         try {
-		    writeFile(path, text);
+		    b = writeFile(path, text);
 		} catch(IOException e) {
 		  e.printStackTrace();
-		}
+		} 
+        return b;
     }
 
     /** copy from URL to Filesystem */
@@ -200,16 +202,19 @@ public class FileUtil {
         return FileUtil.read(is);
     }
 
-    private static void writeFile(String path, String text) throws IOException {
+    private static boolean writeFile(String path, String text) throws IOException {
         Writer out = null;
+        boolean b = false;
         try {
             out = new BufferedWriter(new OutputStreamWriter(
                      new FileOutputStream(path), "UTF-8"));
             out.write(text);
+            b = true;
         } catch(FileNotFoundException e) { 
             //throw new IOException(e.toString()); 
         } finally {
             if (out != null) out.close();
+            return b;
         }
     }
 

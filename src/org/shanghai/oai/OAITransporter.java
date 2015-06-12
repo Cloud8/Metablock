@@ -51,7 +51,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
     private static TransformerFactory factory;
 
     private XMLTransformer transformer;
-    private NLMAnalyzer analyzer;
 
     private boolean archive = false;
     private int count=0;
@@ -81,13 +80,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 transformer.create();
             }
         }
-        if (settings.prefix.equals("nlm")) {
-            analyzer = new NLMAnalyzer(settings.urnPrefix, settings.archive);
-            analyzer.create();
-            if (archive) {
-                log("archive to " + settings.archive);
-            }
-        }
         log("harvest " + settings.harvest + " : " + from + " : " + until 
             + " : " + settings.prefix + " # " + settings.set);
     }
@@ -97,9 +89,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
         if (transformer!=null) {
             transformer.dispose();
             transformer = null;
-        }
-        if (analyzer!=null) {
-            analyzer.dispose();
         }
     }
 
@@ -240,7 +229,13 @@ public class OAITransporter implements MetaCrawl.Transporter {
             GetRecord record = new GetRecord(
                                settings.harvest, identifier, settings.prefix);
             result = new String(record.toString().getBytes("UTF-8"));
-        } catch (IOException e) { log(e); }
+        } catch (IOException e) { 
+            if (e.toString().contains("403")) {
+                log(e.toString()); 
+            } else {
+                log(e); 
+            }
+        }
         finally {
            return result;
         }
@@ -286,13 +281,104 @@ public class OAITransporter implements MetaCrawl.Transporter {
     private String archive(String identifier, String xml) {
         String path = settings.archive;
         if ("nlm".equals(settings.prefix)) {
-            analyzer.archive(xml);
+            writeData(path, xml);
         } else if (path!=null && new File(path).isDirectory()) {
             String outf = path + "/" + identifier.replaceAll("/",":") + ".xml";
             log("archive to " + outf);
             FileUtil.write(outf, xml);
         }
         return path;
+    }
+
+    private String writeData(String path, String xml) {
+        if (path==null || ! new File(path).isDirectory()) {
+            return null;
+        }
+
+        NLM nlm = new NLM(xml);
+        //log(nlm.toString());
+        if (nlm.year!=null)
+            path += "/" + nlm.year;
+        if (nlm.issueId!=null)
+            path += "/" + nlm.issueId;
+        if (nlm.articleId!=null)
+            path += "/" + nlm.articleId;
+        File check = new File(path);
+        if (!check.exists())
+            if (!new File(path).mkdirs())
+                return path;
+        if (nlm.url!=null) {
+            FileUtil.copy(nlm.url, path + "/index.html");
+            String from = nlm.url.replace("view", "viewFile"); // OJS
+            //log("read [" + from + "]");
+            FileUtil.copy(from, path + "/" + nlm.articleId + ".pdf");
+        }
+        if (nlm.articleId!=null) {
+            FileUtil.write(path + "/" + nlm.articleId + ".nlm", xml);
+            log("wrote " + path + "/" + nlm.articleId + ".nlm");
+        } else {
+            //log(nlm.toString());
+            log("failed " + path + "/" + nlm.articleId + ".nlm");
+        }
+        return path;
+    }
+
+    public class NLM {
+        String journal;
+        String year;
+        String issueId;
+        String volume;
+        String number;
+        String articleId;
+        String url;
+
+        public NLM(String xml) {
+            Document doc = null;
+            DocumentBuilder db = null;
+            try {
+                db = docfactory.newDocumentBuilder();
+                InputSource is = new InputSource(new StringReader(xml));
+                doc = db.parse(is);
+            } catch(SAXException e) { log(e); }
+              catch(IOException e) { log(e); }
+              catch(ParserConfigurationException e) { log(e); }
+            NodeList nodes = doc.getElementsByTagName("journal-id");
+            journal = nodes.getLength()==0?null:nodes.item(0).getTextContent();
+            nodes = doc.getElementsByTagName("pub-date");
+            for (int j = 0; j < nodes.getLength(); j++) {
+                Element el = (Element)nodes.item(j);
+				if (el.getAttribute("pub-type").equals("collection")) {
+				    year = el.getElementsByTagName("year")
+                             .item(0).getTextContent();
+				}
+            }
+            //year = nodes.getLength()==0?null:nodes.item(0).getTextContent();
+            nodes = doc.getElementsByTagName("volume");
+            volume = nodes.getLength()==0?null:nodes.item(0).getTextContent();
+            nodes = doc.getElementsByTagName("issue-id");
+            issueId = nodes.getLength()==0?null:nodes.item(0).getTextContent();
+            nodes = doc.getElementsByTagName("issue");
+            number = nodes.getLength()==0?null:nodes.item(0).getTextContent();
+            nodes = doc.getElementsByTagName("article-id");
+            articleId=nodes.getLength()==0?null:nodes.item(0).getTextContent();
+            if (articleId!=null) {
+                nodes = doc.getElementsByTagName("self-uri");
+                for (int j = 0; j < nodes.getLength(); j++) {
+                    Element el = (Element)nodes.item(j);
+                    if (el.hasAttribute("content-type")) {
+                        String str = el.getAttribute("content-type");
+                        if ( str.equals("application/pdf")) {
+                             url = el.getAttribute("xlink:href");
+                        }
+                    }
+                }
+            }
+        }
+
+        public String toString() {
+            return journal + " " + year + " " + volume + " " + issueId
+                   + " " + articleId + " " + url;
+        }
     }
 
     public void test() {

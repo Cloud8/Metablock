@@ -38,8 +38,8 @@ public class Main {
                + "          -probe check setup\n"
                + "          -test [directory] test files\n"
                + "          -dump [resource] out of store\n"
-               + "          -post [resource] rdf file to storage\n"
-               + "          -del [resource] delete from storage\n"
+               + "          -post [resource] to storage\n"
+               + "          -del [resource] from storage\n"
                + "          -destroy : destroy storage.\n"
 			   + "\n";
         System.out.print(usage);
@@ -48,7 +48,7 @@ public class Main {
 
     public void make(String[] args) {
         //for (String s : args) System.out.print(s + " ");
-        //System.out.println(args.length);
+        //System.out.println(" ["+args.length+"]");
         if (args.length==0) {
             org.shanghai.rdf.Main.help();
             return;
@@ -137,7 +137,7 @@ public class Main {
                 if (args[1].equals("-probe")) {
                     this.crawl.probe();
                 } else if (args[1].equals("-test")) {
-                    this.crawl.test("");
+                    this.crawl.test();
                 } else if (args[1].equals("-dump")) {
                     this.crawl.dump();
                 } else if (args[1].equals("-clean")) {

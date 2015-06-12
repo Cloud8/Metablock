@@ -1,6 +1,6 @@
 package org.seaview.pdf;
 
-import org.seaview.nlp.AbstractAnalyzer;
+import org.seaview.data.AbstractAnalyzer;
 
 import pl.edu.icm.cermine.PdfBxStructureExtractor;
 import pl.edu.icm.cermine.metadata.model.DocumentMetadata;
@@ -44,30 +44,21 @@ import java.util.regex.Matcher;
 import java.util.logging.Logger;
 import java.util.List;
 import java.net.MalformedURLException;
+import java.lang.IllegalArgumentException;
 
-public class Cermine extends AbstractAnalyzer {
+/*
+  nice : http://archiv.ub.uni-marburg.de/diss/z2015/0047 ref. 66
+  see : cermine-impl/src/main/java/pl/edu/icm/cermine/RDFGenerator.java
+ */
+public class Cermine extends AbstractExtractor {
 
-    // for monographs : only add references if found more than this
-    private static final int MONOTHRESHOLD = 89; 
-
-    protected static final String dct = DCTerms.NS;
 	private PdfBxStructureExtractor cermine;
     private PdfNLMMetadataExtractor   bibExtractor;
     private PdfNLMReferencesExtractor refExtractor;
-
     private BxDocument doc;
-    private boolean doTitle;
-    private boolean doRefs;
-
-    private int bad = 0;
-    public int count;
-
-    private static final String about /* will become rdf:about */
-                                = "http://localhost/refs/";
 
     public Cermine(boolean title, boolean refs) {
-        this.doTitle = title;
-        this.doRefs = refs;
+        super(title, refs);
     }
 
     @Override
@@ -75,64 +66,50 @@ public class Cermine extends AbstractAnalyzer {
     }
 
     @Override
-    public AbstractAnalyzer create() {
+    public void create() {
         count = 0;
-        // log("doTitle " + doTitle + " doRefs " + doRefs);
         try {
 		    cermine = new PdfBxStructureExtractor();
-            if (doTitle) {
+            if (title) {
                 bibExtractor = new PdfNLMMetadataExtractor();
             }
-            if (doRefs) {
+            if (refs) {
                 refExtractor = new PdfNLMReferencesExtractor();
             }
         } catch(AnalysisException e) { log(e); }
-        return this;
     }
 
-    @Override
-    public void analyze(Model model, Resource rc, String fname) {
-        log("analyze " + rc.getURI() + " [" + fname + "]");
-        PDFLoader pl = new PDFLoader().create();
-        pl.analyze(model, rc, fname);
-        int threshold = 0;
-        if (pl.size > 33) {
-            threshold = MONOTHRESHOLD;
-        }
-        fname = pl.maltreat(3, 0.70); // pages 0-3 and 30 % from the tail 
+    public void create(String fname) {
         try {
-            InputStream is = pl.createInputStream();
-            Element metadata;
-            Element[] references;
+            InputStream is = new FileInputStream(fname);
             doc = cermine.extractStructure(is);
-            if (doTitle) {
-                // log("cermine metadata start");
-                //metadata = bibExtractor.extractMetadata(doc);
-                metadata = bibExtractor.extractMetadataAsNLM(doc);
-                //log(metadata);
-				readCermine(metadata, rc, model);
-		    }
-            if (doRefs) {
-                // log("cermine reference start");
-			    //references = refExtractor.extractReferences(doc); 
-			    references = refExtractor.extractReferencesAsNLM(doc); 
-                //log(references);
-                int x = fname.indexOf("/data/");
-                String logname = x>0?fname.substring(0,x):fname;
-                log(logname + " " + references.length + " references");
-                count += references.length;
-				readReferences(references, rc, model, threshold);
-			}
             is.close();
-            //log("cermine : all done.");
         } catch(FileNotFoundException e) {log(e);}
            catch(MalformedURLException e) {log(e);}
            catch(IOException e) {log(e);}
-           catch(AnalysisException e) { e.printStackTrace(); log(e);}
+           catch(AnalysisException e) {log(e);}
+           catch(IllegalArgumentException e) {log(e);}
         finally {
-            pl.dispose();
-            return ;
+            return;
         }
+    }
+
+    @Override
+    public void extractMetadata(Model model, Resource rc, String fname) {
+        try {
+            Element metadata = bibExtractor.extractMetadataAsNLM(doc);
+			readCermine(metadata, rc, model);
+        } catch(AnalysisException e) { e.printStackTrace(); log(e);}
+    }
+
+    @Override
+    public void extractReferences(Model model, Resource rc, String fname, int threshold) {
+        references = model.createProperty(dct, "references");
+        try {
+            Element[] refArray = refExtractor.extractReferencesAsNLM(doc); 
+            count += refArray.length;
+		    readReferences(refArray, rc, model, threshold);
+        } catch(AnalysisException e) { e.printStackTrace(); log(e);}
     }
 
     @SuppressWarnings("unchecked")
@@ -141,7 +118,6 @@ public class Cermine extends AbstractAnalyzer {
         if (metadata==null) {
             return rc;
         }
-        //log("readCermine");
         Element meta = metadata;
         meta = meta==null?null:meta.getChild("front");
         meta = meta==null?null:meta.getChild("article-meta");
@@ -149,7 +125,6 @@ public class Cermine extends AbstractAnalyzer {
         meta = meta==null?null:meta.getChild("article-title");
         String title = meta==null?null:meta.getText();
         rc = inject(rc, mod, "title", title);
-        //log("title: " + title);
 
         meta = metadata;
         meta = meta==null?null:meta.getChild("front");
@@ -161,10 +136,7 @@ public class Cermine extends AbstractAnalyzer {
             for (Element el : (List<Element>)meta.getChildren()) {
                 authors[i++] = el.getChildText("string-name");
             }
-            for (String aut : authors) {
-                rc = inject(rc, mod, "creator", aut);
-                // log("author: " + aut);
-            }
+            rc = injectAuthors(mod, rc, authors);
         }
 
         meta = metadata;
@@ -182,7 +154,7 @@ public class Cermine extends AbstractAnalyzer {
         meta = meta==null?null:meta.getChild("pub-date");
         meta = meta==null?null:meta.getChild("year");
         String year = meta==null?null:meta.getText();
-        //log("year: " + year);
+        if (test) log("year: " + year);
         if (year!=null) {
             String issued = year + "-12-01";
             rc = inject(rc, mod, "issued", issued);
@@ -193,119 +165,70 @@ public class Cermine extends AbstractAnalyzer {
         return rc;
     }
 
+    @SuppressWarnings({"unchecked"})
     private void readReferences(Element[] refs, Resource rc, Model org, int threshold)
         throws AnalysisException {
         // log("References: Cermine.");
+        int found = 0;
+        Model mod = ModelFactory.createDefaultModel();
+        Seq seq = mod.createSeq(rc.getURI() + "#References");
         if (refs==null || refs.length==0) {
             log("No references found.");
-            return;
-        }
-        Model mod = ModelFactory.createDefaultModel();
-        // log("references found");
-        Seq seq = mod.createSeq(rc.getURI() + "#References");
-        String concept = dct + "BibliographicResource";
-        Resource rcConcept = mod.createResource(concept);
-        int found = 0;
-        for (Element ref : refs) {
-            String raw = ref.getValue();
-            Element titleEl = ref.getChild("article-title"); 
-            if (titleEl!=null) {
-                String uri = null;
-				String title = titleEl.getValue();
-                if (title==null) {
-                    continue;
+        } else {
+            //log(refs);
+            String concept = dct + "BibliographicResource";
+            Resource rcConcept = mod.createResource(concept);
+            for (Element element : refs) {
+                String raw = element.getValue();
+                if ( reject(raw) ) {
+                    continue ;
                 }
-                if (raw.contains("http://")) {
-                    List<String> links = pullLinks(raw);
-                    if (links.size()>0) {
-                        uri = links.get(0);
+                Element titleEl = element.getChild("article-title"); 
+                if (titleEl!=null) {
+				    String title = titleEl.getValue();
+                    if (title==null) {
+                        continue;
                     }
-                } else if (raw.contains("arXiv:")) {
-                    uri = getArxivId(raw);
+                    String uri = getUri(raw, title);
+
+				    Resource ref = mod.createResource(uri, rcConcept);
+				    ref = inject(ref, mod, "bibliographicCitation", raw);
+                    ref = inject(ref, mod, "title", title);
+				    Element year = element.getChild("year");
+                    if (year!=null) {
+                        ref = inject(ref, mod, "date", year.getValue());
+                    }
+                    List<String> authors = new ArrayList<String>();
+                    for (Element el : 
+                          (List<Element>)element.getChildren("string-name")) {
+                        //rc = inject(rc, mod, "creator", el.getValue());
+                        authors.add(el.getValue());
+                    }
+                    if (authors.size()>0) {
+                        ref = injectAuthors(mod, ref,
+                            authors.toArray(new String[authors.size()]));
+                    }
+				    //Element creator = ref.getChild("string-name");
+                    //if (creator!=null) {
+                    //    rcx = inject(rcx, mod, "creator", creator.getValue());
+                    //}
+				    seq.add(ref);
+                    found++;
                 }
-                if (uri==null || !validate(uri)) {
-                    try {
-                        uri = about + URLEncoder.encode(title, "UTF-8");
-                        //log("article-title: " + title);
-                    } catch(UnsupportedEncodingException e) { log(e); }
-                } else {
-                    log("uri: " + uri);
-                }
-                //log(ref);
-				Resource rcx = mod.createResource(uri, rcConcept);
-				rcx = inject(rcx, mod, "bibliographicCitation", raw);
-                rcx = inject(rcx, mod, "title", title);
-				seq.add(rcx);
-                found++;
             }
         }
-        if (found>threshold) {
+        if (found>threshold && !test) {
             log("added " + found + " references");
-			rc.addProperty(mod.createProperty(dct, "references"), seq);
+			rc.removeAll(references);
+			rc.addProperty(references, seq);
             org.add(mod);
         } else {
-            log("skipped " + found + " references");
-        }
-    }
-
-    /** inject property only, if it does not exist already */
-    private Resource inject(Resource rc, Model mod, String term, String val) {
-       if (val==null) {
-           return rc;
-       }
-       try {
-           Property prop = mod.createProperty(dct,term);
-           if (!rc.hasProperty(prop)) {
-               rc.addProperty(prop, val);
-           }
-       } finally {
-           return rc;
-       }
-    }
-
-    private ArrayList<String> pullLinks(String text) {
-    ArrayList<String> links = new ArrayList<String>();
-
-    String regex = "\\(?\\b(http://|www[.])[-A-Za-z0-9+&amp;@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&amp;@#/%=~_()|]";
-    Pattern p = Pattern.compile(regex);
-    Matcher m = p.matcher(text);
-    while(m.find()) {
-        String urlStr = m.group();
-        if (urlStr.startsWith("(") && urlStr.endsWith(")")) {
-            urlStr = urlStr.substring(1, urlStr.length() - 1);
-        }
-        links.add(urlStr);
-    }
-    return links;
-    }
-
-    private String getArxivId(String raw) {
-	    int x = raw.indexOf("arXiv:");
-	    int y = raw.indexOf(" ",x);
-		if (y>x && x>0) {
-		    String arxiv = raw.substring(x+6,y);
-			arxiv = arxiv.replaceAll("[^a-zA-Z0-9\\:\\.]","");
-		    String url = "http://arxiv.org/abs/" + arxiv;
-			return url;
-		}
-		return null;
-    }
-
-    public boolean validate(String url) {
-        boolean b = true;
-        final URI uri;
-        try {
-            uri = new URL(url).toURI();
-            if (url.endsWith("-")) {
-                log("bad uri: " + url);
-                b = false;
+            if (test) {
+                log("test: " + found + " references found.");
+            } else {
+                rc.addProperty(references, "");
+                log("skipped " + found + " references, set to empty.");
             }
-        } catch (MalformedURLException e) {
-            b = false;
-        } catch (URISyntaxException e) {
-            b = false;
-        } finally {
-            return b;
         }
     }
 
@@ -317,19 +240,7 @@ public class Cermine extends AbstractAnalyzer {
     }
 
     protected void log(Exception e) {
-        logger.info(e.toString());
-    }
-
-    protected void log(Model mod) {
-        mod.write(System.out, "RDF/XML");
-    }
-
-    protected void log(Element[] elements) {
-        XMLOutputter outp = new XMLOutputter(Format.getPrettyFormat());
-        for (Element el : elements) {
-            String str = outp.outputString(el);
-            System.out.println(str);
-        }
+        logger.severe(e.toString());
     }
 
     protected void log(Element el) {

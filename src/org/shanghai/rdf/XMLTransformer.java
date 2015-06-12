@@ -66,10 +66,13 @@ import org.w3c.dom.Element;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.rdf.model.RDFReader;
+import com.hp.hpl.jena.rdf.model.RDFWriter;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.arp.JenaReader;
@@ -86,36 +89,31 @@ public class XMLTransformer {
     private StringWriter stringWriter;
 
     private String xslt; 
-    //private static TransformerFactory factory;
     private static SAXTransformerFactory factory; 
-    //private MyErrorHandler myErrorHandler;
     private XMLReader xr;
 
-    public XMLTransformer(String xslt) {
-        //if (xslt==null)
-        //    log("bad xslt");
-        this.xslt = xslt;
+    public XMLTransformer() {
         stringWriter = new StringWriter();
     }
 
+    public XMLTransformer(String xslt) {
+        this();
+        this.xslt = xslt;
+    }
+
     public void create() {
-        //factory = TransformerFactory.newInstance();
-        //factory = ((SAXTransformerFactory) factory);
+        if (xslt==null) {
+            return;
+        }
         factory = ((SAXTransformerFactory) TransformerFactory.newInstance());
         factory.setErrorListener(new MyErrorListener());
         try {
             InputStream in = new ByteArrayInputStream(xslt.getBytes("UTF-8"));
-            //Source src = new StreamSource(in);
-            //templates = factory.newTemplates(src);
-            //TransformerHandler th = factory.newTransformerHandler();
             TemplatesHandler th = factory.newTemplatesHandler();
             xr = XMLReaderFactory.createXMLReader();
             xr.setContentHandler(th);
             xr.setErrorHandler(new MyErrorHandler());
-            //SAXSource src = new SAXSource(xr, new InputSource(in));
             SAXSource src = new SAXSource(xr, new InputSource(in));
-            //factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
-            //following line throws warning
             templates = factory.newTemplates(src);
             if (in!=null) in.close();
         } catch(SAXNotRecognizedException e) { 
@@ -134,9 +132,14 @@ public class XMLTransformer {
         catch(IOException e) {log(e);}
     }
 
+    //cheap transformer
     public String transform( Model mod ) {
-        //cheap transformer
         return transform( asString(mod) );
+    }
+
+    /** GH201501 : used by rdf/MetaCrawl */
+    public String transform( Model mod, String resource ) {
+        return transform( toString(mod, resource) );
     }
 
     public Model transform( Document doc ) {
@@ -147,7 +150,6 @@ public class XMLTransformer {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             Result result = new StreamResult(bos);
             transformer.transform( new DOMSource(doc), result);
-            //InputStream in = new ByteArrayInputStream(rdf.getBytes("UTF-8"));
             InputStream in = new ByteArrayInputStream(bos.toByteArray());
             reader.read(model, in, null);
             bos.close();
@@ -180,9 +182,8 @@ public class XMLTransformer {
     }
 
     public String asString(Model model) {
-        String result = null;
+        stringWriter.getBuffer().setLength(0);
         model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-        //model.setNsPrefix("npg", "http://ns.nature.com/terms/");
         model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
         model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
         model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
@@ -191,18 +192,63 @@ public class XMLTransformer {
         model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
         model.setNsPrefix("dct", "http://purl.org/dc/terms/");
         model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.0/");
-        stringWriter.getBuffer().setLength(0);
         try {
-           //does use ontological information:
            model.write(stringWriter, "RDF/XML-ABBREV");
-           //only writes rdf description: bad logic.
-           //model.write(stringWriter, "RDF/XML");
         } catch(Exception e) {
-           //model.write(System.out,"TTL");
            model.write(System.out,"RDF/XML");
            e.printStackTrace();
         } finally {
            return stringWriter.toString();
+        }
+    }
+
+    /** TODO : serialize with topological ordered hierarchies */
+    public String toString(Model model, String resource) {
+        //log("toString " + resource);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        stringWriter.getBuffer().setLength(0);
+        String fabio = "http://purl.org/spar/fabio/";
+        model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+        //model.setNsPrefix("npg", "http://ns.nature.com/terms/");
+        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
+        //model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
+        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        model.setNsPrefix("fabio", fabio);
+        //model.setNsPrefix("pro", "http://purl.org/spar/pro/");
+        model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
+        model.setNsPrefix("dct", "http://purl.org/dc/terms/");
+        model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.0/");
+        try {
+           //force isPartOf hierarchical order
+           //Resource s = null;
+           //RDFNode r = null;
+           //Property p = mod.createProperty(DCTerms.getURI(), "hasPart");
+           //model = model.removeAll(s, p, r);
+           RDFWriter writer = model.getWriter("RDF/XML-ABBREV");
+           //writer.write(model, stringWriter, resource);
+           //writer.write(model, stringWriter, null);
+           writer.write(model, baos, null);
+           //faster
+           writer.setProperty("allowBadURIs","true");
+           //writer.setProperty("relativeURIs","");
+           writer.setProperty("tab","1");
+           //writer.setProperty("blockRules","sectionReification");
+           writer.setProperty("xmlbase", resource);
+		   //writer.setProperty("prettyTypes",
+           //new Resource[] { model.createResource(fabio+":PeriodicalIssue")});
+           //default writer does not sort topological
+           //model.write(stringWriter, "RDF/XML-ABBREV");
+           //only writes rdf description: bad logic.
+           //model.write(stringWriter, "RDF/XML");
+        } catch(Exception e) {
+           model.write(System.out,"RDF/XML-ABBREV");
+           e.printStackTrace();
+        } finally {
+           String result = null;
+           try {
+               result = baos.toString("UTF-8");
+           } catch(UnsupportedEncodingException e) { log(e); }
+           return result;
         }
     }
 
@@ -227,11 +273,6 @@ public class XMLTransformer {
         try {
             DOMSource domSource = new DOMSource(doc);
             Transformer transformer = factory.newTransformer();
-            //transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            //transformer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
-            //transformer.setOutputProperty
-            //    ("{http://xml.apache.org/xslt}indent-amount", "4");
-            //transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             java.io.StringWriter sw = new java.io.StringWriter();
             StreamResult sr = new StreamResult(sw);
             transformer.transform(domSource, sr);
@@ -363,7 +404,7 @@ public class XMLTransformer {
                          Logger.getLogger(XMLTransformer.class.getName());
 
     private static void log(String msg) {
-        logger.info("XMLTransformer :: " + msg);    
+        logger.info(msg);    
     }
 
     private static void log(Exception e) {

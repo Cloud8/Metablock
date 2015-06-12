@@ -4,6 +4,7 @@ import org.shanghai.rdf.XMLTransformer;
 import org.shanghai.solr.SolrClient;
 import org.shanghai.crawl.MetaCrawl;
 import org.shanghai.util.FileUtil;
+import org.shanghai.util.PrefixModel;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.core.CoreContainer;
@@ -56,6 +57,10 @@ public class SolrTransporter implements MetaCrawl.Transporter {
     private String iri;
     private String nsp;
 
+    public SolrTransporter(String solr) {
+        this.solrClient = new SolrClient(solr);
+    }
+
     public SolrTransporter(String solr, String iri) {
         this.solrClient = new SolrClient(solr);
         this.iri = iri;
@@ -94,6 +99,13 @@ public class SolrTransporter implements MetaCrawl.Transporter {
 
     @Override
     public Model read(String oid) { 
+        if (iri!=null && nsp!=null) {
+            return readFromIndex(oid);
+        }
+        return PrefixModel.retrieve(oid);
+    }
+
+    public Model readFromIndex(String oid) { 
         log("read iri [" + iri + "]" + oid);
         SolrDocument sdoc = solrClient.read(oid);
         Model model = ModelFactory.createDefaultModel();

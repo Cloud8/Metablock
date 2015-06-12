@@ -1,6 +1,8 @@
 package org.seaview.data;
 
 import org.shanghai.crawl.FileTransporter;
+import org.shanghai.util.PrefixModel;
+
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -54,8 +56,9 @@ public class FileScanner implements FileTransporter.Delegate {
     @Override
     public Model read(String fname) {
         String id = fname.replace("/",":");
-        Model model = ModelFactory.createDefaultModel();
-        model.setNsPrefix("dct", dct);
+        //Model model = ModelFactory.createDefaultModel();
+        //model.setNsPrefix("dct", dct);
+        Model model = PrefixModel.create();
         String path = new File(fname).getAbsolutePath();
         Resource rcCon = model.createResource(concept);
         Resource rc = model.createResource(id, rcCon);

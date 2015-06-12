@@ -29,6 +29,7 @@ public class FileTransporter implements MetaCrawl.Transporter {
     private int count = 0;
 	private int logC = 0;
     private String suffix;
+    //private String base;
 	private int depth = 0;
 	private int level = 0;
     private String directory;
@@ -37,7 +38,9 @@ public class FileTransporter implements MetaCrawl.Transporter {
 
     private List<Delegate> delegates;
 
+    //public FileTransporter(String base, String suffix, int depth, int logC) {
     public FileTransporter(String suffix, int depth, int logC) {
+        //this.base = base;
         this.suffix = suffix;
         this.depth = depth;
         this.logC = logC;
@@ -68,6 +71,9 @@ public class FileTransporter implements MetaCrawl.Transporter {
     @Override
     public Model read(String fname) {
         Model mod = null;
+        if (fname.startsWith("http://")) {
+			return mod;
+        }
         for(Delegate d: delegates) {
             //log(d.getClass().getName() + " reads " + fname);
             if (d.canRead(new File(fname))) {
@@ -77,6 +83,18 @@ public class FileTransporter implements MetaCrawl.Transporter {
             }
         }
 		return mod;
+    }
+
+    private String findName(String fname) {
+	    String key = fname.substring(fname.indexOf("/",8));
+		//log("find " + key);
+		for (String str : identifiers) {
+		    if (str.contains(key)) {
+                log("read " + str + " " + fname);
+			    return str;
+			}
+		}
+		return key;
     }
 
     //@Override 
@@ -131,11 +149,11 @@ public class FileTransporter implements MetaCrawl.Transporter {
     private void crawl(File f, int mDepth) {
         if (mDepth!=0 && level>mDepth)
             return;
-    	if (f.isDirectory()) {
+    	if (f.isDirectory() && f.canRead()) {
             //log("crawling " + f.getName() + " level " + level); 
         	File[] subFiles = f.listFiles();
 			if (subFiles==null) {
-    	        log(" problem: " + f.getName() + " [" + count + "]");
+    	        log(" problem: " + f.getAbsolutePath() + " [" + count + "]");
             } else {
 		        level++;
         	    for (int i = 0; i < subFiles.length; i++) {

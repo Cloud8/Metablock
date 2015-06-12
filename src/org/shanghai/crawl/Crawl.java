@@ -6,6 +6,7 @@ import org.shanghai.crawl.MetaCrawl;
 import org.shanghai.crawl.RDFStorage;
 import org.shanghai.crawl.FileTransporter;
 import org.shanghai.oai.OAITransporter;
+import org.shanghai.oai.NLMAnalyzer;
 
 import java.io.File;
 import java.util.logging.Logger;
@@ -29,6 +30,7 @@ public class Crawl {
     protected String source;
     protected String target;
     protected String engine;
+    private int oai_counter;
 
     public Crawl(Config config) {
         this.config = config;
@@ -50,15 +52,17 @@ public class Crawl {
         testFile = config.get("crawl.test");
         source = config.get("crawl.source");
         target = config.get("crawl.target");
+        oai_counter = 0;
     }
 
     public void create(String src, String trg, String eng) {
-        source = src;
-        target = trg;
-        engine = eng;
+        testFile = config.get("crawl.test");
+        source = src==null?config.get("crawl.source"):src;
+        target = trg==null?config.get("crawl.target"):trg;
+        engine = eng==null?config.get("crawl.engine"):eng;
     }
 
-    public void createCrawler() {
+    protected void createCrawler() {
         if (transporter==null) {
             createTransporter(source);
         }
@@ -67,7 +71,10 @@ public class Crawl {
             crawler.create();
         } else {
             int logC = config.getInt("crawl.count");
-            boolean create = config.getBoolean("crawl.create");
+            boolean create = true; // insert statements
+            if (engine!=null && engine.contains("del")) {
+                create = false; // update: delete before insert
+            }
             if (storage==null) {
                 createStorage(target);
             } if (storage==null) {
@@ -76,17 +83,36 @@ public class Crawl {
             crawler = new MetaCrawl(transporter,storage,testFile,logC,create);
             crawler.create();
         }
+        if (engine!=null && engine.contains("nlm")) {
+            String prefix = config.get("oai.urnPrefix");
+            String directory = null;
+            if (source.equals("oai")) { // write model files to oai archve
+                directory = config.getOAIList().get(oai_counter).archive;
+            } else if (target.startsWith("files")) { // help file target 
+                if (target.contains(":")) {
+                    directory = target.substring(target.indexOf(":")+1);
+                } else {
+                    directory = target;
+                }
+            }
+            crawler.inject(new NLMAnalyzer(prefix, directory).create());
+            log("injected NLMAnalyzer for [" + directory+ "]");
+        }
     }
 
     public void createTransporter(String crawl) {
-        if ("files".equals(crawl)) {
+        if (crawl.contains("files")) {
             String suffix = config.get("files.suffix");
+            //String base = config.get("files.base");
+            //if (crawl.contains("#")) {
+			//    base = crawl.substring(crawl.indexOf("#")+1);
+            //}
             int depth = config.getInt("files.depth");
             int logC = config.getInt("files.count");
             fc = new FileTransporter(suffix,depth,logC);
             fc.create(); 
             transporter = fc.inject(new TrivialScanner().create());
-            log("createTransporter [" + crawl + "]");
+            //log("createTransporter [" + crawl + "]");
         } else if ("oai".equals(crawl)) {
             Config.OAI settings = config.getOAIList().get(0);
             boolean archive = settings.archive!=null;
@@ -108,7 +134,7 @@ public class Crawl {
             if (store==null) {
                 log("createTransporter failed");
             } else {
-                log("createTransporter [" + crawl + "]");
+                //log("createTransporter [" + crawl + "]");
                 transporter  = new RDFTransporter(store, probe, enum_, dump, date);
                 transporter.create();
             }
@@ -128,7 +154,7 @@ public class Crawl {
             String dbpass = config.get(store+".dbpass");
             storage = new RDFStorage(virt,graph,dbuser,dbpass);
             storage.create();
-            log("createStorage [" + store + "]");
+            //log("createStorage [" + store + "]");
         } else if (store.startsWith("four")) {
             log("createStorage [" + store + "]");
             String four = config.get(store+".store");
@@ -140,14 +166,20 @@ public class Crawl {
             String transformer = config.get(store+".transformer");
             if (transformer==null)
                 log("Missing transformer [" + solr + "]. Will break.");
-            log("createStorage [" + store + "] [" + transformer + "]");
+            else log("createStorage [" + store + "] [" + transformer + "]");
             storage = new SolrStorage(solr,transformer);
             storage.create();
         } else if (store.startsWith("files")) {
             String directory = config.get("files.store");
+            if (source.equals("oai")) { // write model files to oai archive
+                directory = config.getOAIList().get(oai_counter).archive;
+            } 
+            if (store.contains(":")) {
+                directory = store.substring(store.indexOf(":")+1);
+            }
             storage = new FileStorage(directory);
             storage.create();
-            log("createStorage [" + store + "]");
+            log("createStorage [files:" + directory + "]");
         } else if ("empty".equals(store)) {
             storage = new EmptyStorage();
             storage.create();
@@ -165,20 +197,38 @@ public class Crawl {
         crawler.dispose();
     }
 
-    public void test(String rc) {
+    public void test() {
+        log("test " + source + " target " + target);
         createTransporter(source);
-        crawler = new MetaCrawl(transporter,testFile);
+        crawler = new MetaCrawl(transporter);
         crawler.create();
-        crawler.test(rc);
+        crawler.test();
+        crawler.dispose();
+    }
+
+    public void test(String resource) {
+        log("test source: " + source + " target " + target);
+        createCrawler();
+        createTransporter(source);
+        crawler = new MetaCrawl(transporter, testFile); // test mode
+        crawler.create();
+        if (source.equals("void")) {
+            int found = crawler.index(resource);
+            if (found>0) crawler.test();
+        } else {
+            crawler.test(resource);
+        }
         crawler.dispose();
     }
 
     public void test(String from, String until) {
-        createTransporter(source);
-        crawler = new MetaCrawl(transporter,testFile);
-        crawler.create();
+        target = "test";
+        createCrawler();
+        //createTransporter(source);
+        //crawler = new MetaCrawl(transporter,testFile);
+        //crawler.create();
         crawler.test(from, until);
-        crawler.dispose();
+        //crawler.dispose();
     }
 
     public void dump() {
@@ -190,6 +240,7 @@ public class Crawl {
     }
 
     public void dump(String rc) {
+        log("dump " + rc);
         createTransporter(source);
         crawler = new MetaCrawl(transporter,testFile);
         crawler.create();
@@ -287,11 +338,25 @@ public class Crawl {
                 } else if ("-dump".equals(target)) {
                     dump();
                 } else {
+                    oai_counter = i; // use right setting
                     createCrawler();
                     crawl();
                 }
                 transporter.dispose();
             }
+        }
+    }
+
+    private void crawl(String resource) {
+        //log("crawl # " + resource);
+        if (source.equals("files")) {
+            //log("crawl files: " + resource);
+            crawlFiles(resource);
+        } else if (source.equals("void")) {
+            crawler.index(resource);
+            crawl();
+        } else {
+            int b = crawler.crawl(resource);
         }
     }
 
@@ -316,15 +381,6 @@ public class Crawl {
         }
         crawl(); // copy transporter to storage
         log("crawled " + resource + " " + count);
-    }
-
-    private void crawl(String resource) {
-        if (source.equals("files")) {
-            //log("crawl files: " + resource);
-            crawlFiles(resource);
-        } else {
-            int b = crawler.crawl(resource);
-        }
     }
 
     private static final Logger logger =

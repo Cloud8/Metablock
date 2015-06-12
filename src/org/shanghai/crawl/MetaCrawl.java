@@ -49,6 +49,9 @@ public class MetaCrawl {
         public Analyzer create();
         public void dispose();
         public Resource analyze(Model model, String id);
+        public boolean  test();
+        public Resource test(Model model, String id);
+        public void dump(Model model, String id, String fname);
     }
 
     protected Transporter transporter;
@@ -84,15 +87,15 @@ public class MetaCrawl {
         this(t,s,null,0,true);//dump problems to sys.out
     } 
 
-    public MetaCrawl(Transporter t,String testFile) {
+    public MetaCrawl(Transporter t, String testFile) {
         this.transporter = t;
         this.testFile = testFile;
-        test=true;
+        test = true;
     } 
 
     public MetaCrawl(Transporter t) {
         this(t,null,null,0,true);//test case
-        test=true;
+        test = true;
     } 
 
     public void inject(Analyzer a) {
@@ -131,12 +134,30 @@ public class MetaCrawl {
         return transporter.probe();
     }
 
-    public void test(String resource) {
-        int count=transporter.crawl(resource);
-        for (String id : transporter.getIdentifiers(0,7))
-             if (id!=null)
-                 log("test " + resource + " : " + id);
-        log("found " + count + " items in [" + resource + "]"); 
+    public void test() {
+        for (String id : transporter.getIdentifiers(0,5))
+             if (id!=null) log("test " + id);
+        if (analyze) for (Analyzer a : analyzers) a.test();
+    }
+
+    private Resource test(Model model, String id) {
+        //log("test " + id); 
+        Resource rc = null;
+        if (analyze) {
+            for (Analyzer a : analyzers) {
+                 rc = a.test(model, id);
+            }
+        } else {
+            // log("no analyzer to test.");
+        }
+        // dump(model);
+        return rc;
+    }
+
+    public Resource test(String id) {
+        log("test " + id); 
+        Model mod = transporter.read(id);
+        return test(mod, id);
     }
 
     public void test(String from, String until) {
@@ -144,40 +165,38 @@ public class MetaCrawl {
         int y = Integer.parseInt(until);
         String[] ids = transporter.getIdentifiers(x,y);
         log("found " + ids.length  + " items "); 
+        for (String id : ids) {
+            test(id);
+        }
     }
 
     public int index(String source) {
         start = System.currentTimeMillis();
-        log("index " + source);
         int found = transporter.crawl(source);
         end = System.currentTimeMillis();
-        log("crawl " + source + " " + found + " items in " 
+        log("index " + source + " " + found + " items in " 
                      + (end - start)/1000 + " sec.");
         return found;
     }
 
     /** crawl this resource */
     public int crawl(String id) {
+        //log("crawl (" + id + ") " + create);
         boolean b = true;
         Model mod = transporter.read(id);
-        Resource rc = analyze(mod, id);
-        if(test&&count==0) dump(id,mod);
         if (mod==null) { //garbage, dont care.
-            log("failed " + id);
-            return 0;
+            log("zero model transporter " + id);
+            return count;
         }
-        if(test) ; // log(id);
+        Resource rc = test?test(mod, id):analyze(mod, id);
+        if(test&&count==0) dump(id,mod);
+        if(test || storage==null) ; // log(id);
         else {
-            if (!create) {
-                if (rc!=null)
-                    storage.delete(rc.getURI());
+            if (!create && rc!=null) {
+                log("delete " + rc.getURI());
+                storage.delete(rc.getURI());
             }
-            if (storage==null) {
-                //log("zero storage " + id);
-                b=true;
-            } else {
-			    b=storage.write(mod, id);
-            }
+	        b=storage.write(mod, id);
         }
         if(b) count++; //count storage success
         else {
@@ -254,7 +273,8 @@ public class MetaCrawl {
         try {
            model.write(writer, "RDF/XML-ABBREV");
         } catch(Exception e) {
-           model.write(System.out,"TTL");
+           // model.write(System.out,"TTL");
+           e.printStackTrace();
         } finally {
             if (testFile==null) {
                 System.out.println(writer.toString());
@@ -266,6 +286,7 @@ public class MetaCrawl {
     }
 
     private void dump(String id, Model model) {
+        //Resource rc = test(model, id);
         StringWriter writer = new StringWriter();
         try {
            model.write(writer, "RDF/XML-ABBREV");
@@ -281,19 +302,25 @@ public class MetaCrawl {
             System.out.println(data);
         } else {
             FileUtil.write(testFile, data);
-            log("dump " + id + " to " + testFile);
+            //log("dump " + id + " to " + testFile);
         }
     }
 
     public void dump(String id, String fn) {
         Model mod = transporter.read(id);
-        StringWriter writer = new StringWriter();
-        try {
-           mod.write(writer, "RDF/XML-ABBREV");
-        } catch(Exception e) {
-           mod.write(System.out,"TTL");
-        } finally {
-            FileUtil.write(fn, writer.toString());
+        if (analyze) {
+            for (Analyzer a : analyzers) {
+                 a.dump(mod, id, fn);
+            }
+        } else {
+            StringWriter writer = new StringWriter();
+            try {
+                mod.write(writer, "RDF/XML-ABBREV");
+            } catch(Exception e) {
+                mod.write(System.out,"TTL");
+            } finally {
+                FileUtil.write(fn, writer.toString());
+            }
         }
     }
 
@@ -338,6 +365,6 @@ public class MetaCrawl {
     }
 
     private void log(Model model) {
-        model.write(System.out, "RDF/XML");
+        model.write(System.out, "RDF/XML-ABBREV");
     }
 }

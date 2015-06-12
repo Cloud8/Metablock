@@ -61,7 +61,13 @@ public class SolrStorage implements MetaCrawl.Storage {
 
     @Override
     public synchronized boolean write(Model mod, String resource) {
-        String xml = transformer.transform(mod);
+        String xml = transformer.transform(mod, resource);
+        //writer.getBuffer().setLength(0);
+        //mod.write(writer, "RDF/JSON");
+        //String a = xml.substring(0, xml.indexOf("</doc>"));
+        //String b = "<field name=\"json_str\">" +writer.toString()+"</field>";
+        //String c = xml.substring(xml.indexOf("</doc>"));
+        //return solrPost.post(a + b + c);
         return solrPost.post(xml);
     } 
 

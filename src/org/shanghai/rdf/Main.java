@@ -99,8 +99,7 @@ public class Main {
     }
 
     public static void help() {
-        String usage = "   -config file.ttl (default is " + configFile + ")\n"
-                     + "   -index [index name] [command]\n"
+        String usage = "   -index [index name] [command]\n"
                      + "          -probe test setup\n"
                      + "          -test  [offset] [limit] record identifiers\n"
                      + "          -dump  [resource] [file] resource dump\n"
@@ -109,6 +108,7 @@ public class Main {
                      + "          -destroy : destroy index\n"
                      //+ "           [offset limit] limited build\n"
                      + "";
+        //usage += "   -config file.ttl (default is " + configFile + ")\n";
         System.out.print(usage);
     }
 

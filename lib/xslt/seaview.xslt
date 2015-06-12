@@ -5,18 +5,18 @@
      xmlns:dct="http://purl.org/dc/terms/"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
-     xmlns:pro="http://purl.org/spar/pro/"
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:fabio="http://purl.org/spar/fabio/"
-     xmlns:prism="http://prismstandard.org/namespaces/basic/2.0/"
      xmlns:frbr="http://purl.org/vocab/frbr/core#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:ore="http://www.openarchives.org/ore/terms/"
      version="1.0" >
 
 <xsl:output method="xml" encoding="UTF-8" indent="yes" />
 
 <xsl:template match="rdf:RDF">
  <add>
-   <xsl:comment>Shanghai RDF Transformer (2014)</xsl:comment>
+   <xsl:comment>Seaview RDF Transformer (2015)</xsl:comment>
    <xsl:apply-templates select="fabio:*" />
    <xsl:apply-templates select="dct:BibliographicResource" />
  </add>
@@ -25,19 +25,15 @@
 <xsl:template match="dct:BibliographicResource[dct:identifier]">
  <doc>
     <field name="recordtype">opus</field>
-    <field name="edition"><xsl:value-of select="@rdf:about"/></field>
-    <field name="alternative_str">
-       <xsl:value-of select="substring-after(@rdf:about,'http://localhost/')"/>
-    </field>
     <xsl:apply-templates select="dct:*"/>
     <xsl:apply-templates select="foaf:img" />
+    <xsl:apply-templates select="ore:aggregates" />
+    <xsl:apply-templates select="fabio:hasDOI" />
     <field name="allfields">
-        <xsl:value-of select="dct:identifier"/>
-        <xsl:value-of select="' '"/>
-        <xsl:if test="count(dct:references)>0">
-          <xsl:value-of select="'seaview '"/>
+        <xsl:value-of select="normalize-space(.)"/>
+        <xsl:if test="dct:isReferencedBy">
+        <xsl:value-of select="' isReferencedBy '"/>
         </xsl:if>
-        <xsl:value-of select="normalize-space(dct:*)"/>
     </field>
  </doc>
 </xsl:template>
@@ -45,25 +41,19 @@
 <xsl:template match="fabio:*[dct:identifier]">
  <doc>
     <field name="recordtype">opus</field>
-    <field name="edition"><xsl:value-of select="@rdf:about"/></field>
+    <field name="uri_str"><xsl:value-of select="@rdf:about"/></field>
     <xsl:apply-templates select="dct:*"/>
     <xsl:apply-templates select="foaf:img" />
-    <xsl:apply-templates select="pro:editor" />
-    <xsl:apply-templates select="prism:issn" />
-    <field name="allfields">
-        <xsl:value-of 
-         select="substring(dct:identifier,0,string-length(dct:identifier))" />
-        <xsl:value-of select="' '"/>
-        <xsl:value-of select="substring(@rdf:about,32)"/>
-        <xsl:value-of select="' '"/>
-        <xsl:if test="count(dct:references)>0">
-          <xsl:value-of select="'seaview '"/>
-        </xsl:if>
-        <xsl:for-each select="dct:*[not(@xml:lang)]">
-            <xsl:value-of select="concat(normalize-space(.),' ')"/>
-        </xsl:for-each>
-    </field>
+    <xsl:apply-templates select="fabio:hasISSN" />
+    <xsl:apply-templates select="ore:aggregates" />
+    <xsl:apply-templates select="fabio:hasDOI" />
+    <xsl:apply-templates select="fabio:hasISBN" />
+    <xsl:apply-templates select="fabio:hasISSN" />
+    <xsl:apply-templates select="fabio:hasURL" />
+    <field name="allfields"><xsl:value-of select="normalize-space(.)"/></field>
     <xsl:apply-templates select="." mode="type"/>
+    <xsl:apply-templates select="." mode="spec"/>
+    <xsl:apply-templates select="." mode="call"/>
  </doc>
 </xsl:template>
 
@@ -73,7 +63,7 @@
     <xsl:with-param name="id" select="."/>
    </xsl:call-template>
   </field>
-  <field name="callnumber"><xsl:value-of select="."/></field>
+  <field name="urn_str"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <xsl:template name="identity">
@@ -96,59 +86,94 @@
   <field name="title_short"><xsl:value-of select="." /></field>
   <field name="title_full"><xsl:value-of select="." /></field>
   <field name="title_sort"><xsl:value-of select="." /></field>
-  <!-- <field name="title_fullStr"><xsl:value-of select="." /></field> -->
 </xsl:template>
 
 <!-- AUTHOR -->
-<xsl:template match="dct:creator[position()=1]">
-  <xsl:choose>
-     <xsl:when test="foaf:Person/foaf:familyName">
-       <field name="author">
-          <xsl:value-of select="concat(foaf:Person/foaf:familyName,', ',foaf:Person/foaf:givenName)"/>
-       </field>
-     </xsl:when>
-     <xsl:when test="foaf:Person/foaf:name">
-       <field name="author">
-          <xsl:value-of select="foaf:Person/foaf:name"/>
-       </field>
-     </xsl:when>
-     <xsl:when test="normalize-space(.)!=''">
-       <field name="author">
-          <xsl:value-of select="normalize-space(.)"/>
-       </field>
-     </xsl:when>
-     <xsl:otherwise></xsl:otherwise>
-  </xsl:choose>
+<xsl:template match="dct:creator">
+  <xsl:apply-templates select="foaf:Person"/>
+  <xsl:apply-templates select="rdf:Seq"/>
 </xsl:template>
 
-<xsl:template match="dct:creator[position()!=1]">
- <xsl:choose>
-  <xsl:when test="foaf:Person/foaf:familyName">
-      <field name="author_additional">
-         <xsl:value-of select="foaf:Person/foaf:name"/>
-      </field>
-  </xsl:when>
-  <xsl:when test="normalize-space(.)!=''">
-      <field name="author_additional">
-          <xsl:value-of select="normalize-space(.)"/>
-      </field>
-  </xsl:when>
-  <xsl:otherwise></xsl:otherwise>
- </xsl:choose>
+<xsl:template match="dct:creator/foaf:Person">
+  <xsl:apply-templates select="foaf:name"/>
+</xsl:template>
+
+<xsl:template match="dct:creator/foaf:Person/foaf:name[1]">
+  <field name="author"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dct:creator/rdf:Seq">
+    <xsl:apply-templates select="rdf:li/foaf:Person"/>
+</xsl:template>
+
+<xsl:template match="dct:creator/rdf:Seq/rdf:li">
+    <xsl:apply-templates select="foaf:Person"/>
+</xsl:template>
+
+<xsl:template match="dct:creator/rdf:Seq/rdf:li/foaf:Person">
+    <xsl:apply-templates select="foaf:name"/>
+</xsl:template>
+
+<xsl:template match="dct:creator/rdf:Seq/rdf:li[1]/foaf:Person/foaf:name">
+  <field name="author"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template 
+     match="dct:creator/rdf:Seq/rdf:li[position()>1]/foaf:Person/foaf:name">
+  <field name="author2"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<!-- searchable, but not displayed -->
+<xsl:template match="dct:creator/rdf:Seq/rdf:li/foaf:Person[foaf:role='add']/foaf:name">
+  <field name="author_additional"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- CONTRIBUTOR -->
 <xsl:template match="dct:contributor">
-   <field name="author_additional"><xsl:value-of select="." /></field>
+    <xsl:apply-templates select="foaf:Person"/>
+    <xsl:apply-templates select="foaf:Organization"/>
 </xsl:template>
 
-<!-- EDITOR -->
-<xsl:template match="pro:editor">
+<xsl:template match="dct:contributor/foaf:Person">
+    <xsl:choose>
+      <xsl:when test="foaf:role='editor'">
+        <field name="author2">
+            <xsl:value-of select="concat(foaf:name,' (Hrsg)')"/>
+        </field>
+      </xsl:when>
+      <xsl:when test="foaf:role='advisor'">
+        <field name="author_additional">
+            <!-- <xsl:value-of select="concat(foaf:name,' (Gutachter)')"/> -->
+            <xsl:value-of select="foaf:name"/>
+        </field>
+      </xsl:when>
+      <xsl:when test="foaf:role='translator'">
+        <field name="author2">
+            <xsl:value-of select="concat(foaf:name,' [Übers.]')"/>
+        </field>
+      </xsl:when>
+      <xsl:otherwise>
+        <field name="author2">
+            <xsl:value-of select="foaf:name"/>
+        </field>
+      </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<xsl:template match="dct:contributor/foaf:Organization">
+    <xsl:apply-templates select="foaf:name"/>
+</xsl:template>
+
+<xsl:template match="dct:contributor/foaf:Person/foaf:name">
    <field name="author2"><xsl:value-of select="."/></field>
-   <field name="author2-role"><xsl:value-of select="'Editor'"/></field>
 </xsl:template>
 
-<xsl:template match="prism:issn">
+<xsl:template match="dct:contributor/foaf:Organization/foaf:name">
+   <field name="author2"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<!-- ISSN -->
+<xsl:template match="fabio:hasISSN">
    <field name="issn"><xsl:value-of select="." /></field>
    <field name="oai_set_str_mv">
        <xsl:value-of select="concat('issn:',.)"/></field>
@@ -188,13 +213,35 @@
   <field name="collection"><xsl:value-of select="."/></field>
 </xsl:template>
 
-<!-- ISBN -->
+<!-- ISBN ISSN -->
 <xsl:template match="dct:source">
-  <field name="series"><xsl:value-of select="."/></field>
+  <xsl:choose>
+  <xsl:when test="string-length(.)=9 and substring(.,4,1)='-'">
+    <field name="issn"><xsl:value-of select="."/></field>
+  </xsl:when>
+  <xsl:when test="string-length(.)=17 and substring(.,3,1)='-'">
+    <field name="isbn"><xsl:value-of select="."/></field>
+  </xsl:when>
+  <xsl:otherwise>
+    <field name="series"><xsl:value-of select="."/></field>
+  </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="fabio:hasISBN">
   <field name="isbn"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="fabio:hasISSN">
+  <field name="issn"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="fabio:hasDOI">
+  <field name="doi_str"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="fabio:hasURL">
+  <field name="edition"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- FORMAT -->
@@ -209,6 +256,11 @@
    <xsl:when test=".='de'">German</xsl:when>
    <xsl:when test=".='en'">English</xsl:when>
    <xsl:when test=".='fr'">French</xsl:when>
+   <xsl:when test=".='lt'">Latin</xsl:when>
+   <xsl:when test=".='es'">Spanish</xsl:when>
+   <xsl:when test=".='it'">Italian</xsl:when>
+   <xsl:when test=".='it'">Italian</xsl:when>
+   <xsl:when test=".='na'">Papua</xsl:when>
    <xsl:when test=".='java'">Java</xsl:when>
    <xsl:when test=".='php'">PHP</xsl:when>
    <xsl:otherwise><xsl:value-of select="."/></xsl:otherwise>
@@ -222,7 +274,7 @@
   </field>
 </xsl:template>
 
-<xsl:template match="dct:issued">
+<xsl:template match="dct:issued[1]">
   <field name="publishDate"><xsl:value-of select="." /></field>
   <field name="publishDateSort"><xsl:value-of select="." /></field>
   <field name="first_indexed">
@@ -239,117 +291,76 @@
   <field name="physical"><xsl:value-of select="."/></field>
 </xsl:template>
 
-<xsl:template match="foaf:img">
+<!-- dini publication types -->
+<xsl:template match="dct:type">
+  <field name="oai_set_str_mv">
+      <xsl:value-of select="concat('doc-type:',.)"/>
+  </field>
+</xsl:template>
+
+<xsl:template match="foaf:img[1]">
   <field name="thumbnail"><xsl:value-of select="." /></field>
 </xsl:template>
 
 <xsl:template match="dct:BibliographicResource" mode="type">
 </xsl:template>
 
-<!-- https://www.coar-repositories.org/activities/repository-interoperability/ig-controlled-vocabularies-for-repository-assets/wiki/info-eu-repo/ -->
-<xsl:template match="fabio:Book|fabio:Biography" mode="type">
-  <field name="format"><xsl:value-of select="'Book'"/></field>
-  <field name="oai_set_str_mv">
-         <xsl:value-of select="'doc-type:book'"/></field>
+<xsl:template match="fabio:*" mode="type">
+  <xsl:choose>
+  <xsl:when test="local-name()='DoctoralThesis'">
+    <field name="format"><xsl:value-of select="'Dissertation'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='JournalArticle'">
+    <field name="format"><xsl:value-of select="'Journal Articles'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='JournalIssue'">
+    <field name="format"><xsl:value-of select="'Issue'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='BookChapter'">
+    <field name="format"><xsl:value-of select="'Book Chapter'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='Periodical'">
+    <field name="format"><xsl:value-of select="'Volume Holdings'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='PeriodicalIssue'">
+    <field name="format"><xsl:value-of select="'Volume'"/></field>
+  </xsl:when>
+  <!--
+  <xsl:when test="local-name()='PeriodicalItem'">
+    <field name="format"><xsl:value-of select="'Volume'"/></field>
+  </xsl:when>
+  -->
+  <xsl:when test="local-name()='MusicalComposition'">
+    <field name="format"><xsl:value-of select="'Musical Score'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='MastersThesis'">
+    <field name="format"><xsl:value-of select="'Book'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='BachelorsThesis'">
+    <field name="format"><xsl:value-of select="'Book'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='Biography'">
+    <field name="format"><xsl:value-of select="'Book'"/></field>
+  </xsl:when>
+  <xsl:when test="local-name()='CollectedWorks'">
+    <field name="format"><xsl:value-of select="'Collected Works'"/></field>
+  </xsl:when>
+  <xsl:otherwise>
+    <field name="format"><xsl:value-of select="local-name()"/></field>
+  </xsl:otherwise>
+  </xsl:choose>
+
   <xsl:choose>
   <xsl:when test="contains(@rdf:about,'/eb/')">
     <field name="collection"><xsl:value-of select="'Digitalisat'"/></field>
   </xsl:when>
   <xsl:when test="contains(@rdf:about,'/es/')">
     <field name="collection"><xsl:value-of select="'Monograph'"/></field>
-    <field name="oai_set_str_mv">
-         <xsl:value-of select="'doc-type:report'"/>
-    </field>
-    <field name="oai_set_str_mv"><xsl:value-of select="'xMetaDissPlus'"/>
-    </field>
+  </xsl:when>
+  <xsl:when test="contains(@rdf:about,'/diss/')">
+    <field name="collection"><xsl:value-of select="'Monograph'"/></field>
   </xsl:when>
   </xsl:choose>
-</xsl:template>
-
-<xsl:template match="fabio:BookChapter" mode="type">
-  <field name="format"><xsl:value-of select="'Book Chapter'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:Catalog" mode="type">
-  <field name="format"><xsl:value-of select="'Catalog'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:CollectedWorks" mode="type">
-  <field name="format"><xsl:value-of select="'Collected Works'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:Database" mode="type">
-  <field name="format"><xsl:value-of select="'Database'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:DoctoralThesis" mode="type">
-  <field name="format"><xsl:value-of select="'Dissertation'"/></field>
-  <field name="collection"><xsl:value-of select="'Monograph'"/></field>
-  <field name="oai_set_str_mv"><xsl:value-of select="'xMetaDissPlus'"/></field>
-  <field name="oai_set_str_mv">
-      <xsl:value-of select="'doc-type:doctoralThesis'"/>
-  </field>
-</xsl:template>
-
-<xsl:template match="fabio:Journal" mode="type">
-  <field name="format"><xsl:value-of select="'Journal'"/></field>
-  <field name="oai_set_str_mv"><xsl:value-of select="'doc-type:Periodical'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:JournalIssue" mode="type">
-  <field name="format"><xsl:value-of select="'Issue'"/></field>
-  <field name="oai_set_str_mv"><xsl:value-of select="'doc-type:Periodical'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:JournalArticle" mode="type">
-  <field name="format"><xsl:value-of select="'Journal Articles'"/></field>
-  <field name="oai_set_str_mv">
-         <xsl:value-of select="'doc-type:article'"/>
-  </field>
-  <xsl:if test="contains(@rdf:about,'/ep/')">
-  <field name="oai_set_str_mv"><xsl:value-of select="'xMetaDissPlus'"/></field>
-  </xsl:if>
-</xsl:template>
-
-<xsl:template match="fabio:Periodical" mode="type">
-  <field name="format"><xsl:value-of select="'Volume Holdings'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:PeriodicalIssue" mode="type">
-  <field name="format"><xsl:value-of select="'Volume'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:PeriodicalItem" mode="type">
-  <field name="format"><xsl:value-of select="'Issue'"/></field>
-  <xsl:if test="contains(@rdf:about,'/eb/')">
-    <field name="collection"><xsl:value-of select="'Digitalisat'"/></field>
-  </xsl:if>
-</xsl:template>
-
-<xsl:template match="fabio:Article" mode="type">
-  <field name="format"><xsl:value-of select="'Article'"/></field>
-  <xsl:if test="contains(@rdf:about,'/eb/')">
-    <field name="collection"><xsl:value-of select="'Digitalisat'"/></field>
-  </xsl:if>
-</xsl:template>
-
-<xsl:template match="fabio:Image" mode="type">
-  <field name="format"><xsl:value-of select="'Image'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:MastersThesis" mode="type">
-  <field name="collection"><xsl:value-of select="'Monograph'"/></field>
-  <field name="oai_set_str_mv">
-         <xsl:value-of select="'doc-type:masterThesis'"/>
-  </field>
-</xsl:template>
-
-<xsl:template match="fabio:MusicalComposition" mode="type">
-  <field name="format"><xsl:value-of select="'Musical Score'"/></field>
-</xsl:template>
-
-<xsl:template match="fabio:*" mode="type">
-  <field name="format"><xsl:value-of select="'Work'"/></field>
 </xsl:template>
 
 <xsl:template match="dct:subject">
@@ -362,6 +373,7 @@
     </xsl:when>
     <xsl:otherwise>
       <field name="topic"><xsl:value-of select="." /></field>
+      <field name="topic_facet"><xsl:value-of select="." /></field>
     </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
@@ -372,16 +384,25 @@
   <field name="oai_set_str_mv">
    <xsl:value-of select="concat('ddc:',substring-after(@rdf:about,'class/'))"/>
   </field>
-  <field name="dewey-hundreds">
+  <!--
+  <field name="dewey-sort">
+      <xsl:value-of select="substring-after(@rdf:about,'class/')"/>
+  </field>
+  -->
+  <field name="dewey-raw">
       <xsl:value-of select="substring-after(@rdf:about,'class/')"/>
   </field>
   </xsl:if>
   <xsl:apply-templates select="skos:prefLabel" />
 </xsl:template>
 
-<xsl:template match="skos:Concept/skos:prefLabel">
+<xsl:template match="skos:Concept/skos:prefLabel[@xml:lang='de']">
     <field name="topic_facet"><xsl:value-of select="." /></field>
-    <field name="topic_browse"><xsl:value-of select="." /></field>
+</xsl:template>
+
+<xsl:template match="skos:Concept/skos:prefLabel[@xml:lang='en']">
+    <field name="genre"><xsl:value-of select="." /></field>
+    <field name="genre_facet"><xsl:value-of select="." /></field>
 </xsl:template>
 
 <!-- contents can be multivalued -->
@@ -402,57 +423,31 @@
  </xsl:choose>
 </xsl:template>
 
-<!-- annotations -->
-<xsl:template match="dct:isReferencedBy">
-  <field name="url"><xsl:value-of select="."/></field>
-</xsl:template>
-
-<xsl:template match="dct:hasFormat">
+<xsl:template match="ore:aggregates[@rdf:resource]">
   <xsl:choose>
-   <xsl:when test="contains(substring-before(.,'.xml'),'/mets')">
+   <xsl:when test="contains(@rdf:resource,'All.pdf')"><!-- viewer --></xsl:when>
+   <xsl:when test="contains(@rdf:resource,'/mets-')">
      <field name="url">
-      <xsl:value-of select="concat(../@rdf:about,'/view.html')" />
+         <xsl:value-of select="concat(../@rdf:about,'/view.html')"/>
      </field>
-    <field name="collection"><xsl:value-of select="'Digitalisat'"/></field>
-    <field name="oai_set_str_mv"><xsl:value-of select="'Digitalisat'"/></field>
+     <field name="collection"><xsl:value-of select="'Digitalisat'"/></field>
+     <field name="oai_set_str_mv"><xsl:value-of select="'Digitalisat'"/></field>
+   </xsl:when>
+   <xsl:when test="substring(@rdf:resource,string-length(@rdf:resource)-3,string-length(@rdf:resource))='.txt'"><!-- skip .txt files --></xsl:when>
+   <xsl:when test="starts-with(@rdf:resource, 'http://localhost/')">
+     <field name="url"><xsl:value-of select="substring(@rdf:resource,18)"/>
+     </field>
    </xsl:when>
    <xsl:otherwise>
-    <field name="url"><xsl:value-of select="." /></field>
-   </xsl:otherwise>
-  </xsl:choose>
-</xsl:template>
-
-<!-- core extension : alternative edition -->
-<xsl:template match="dct:alternative">
-  <field name="alternative_str">
-    <xsl:choose>
-    <xsl:when test="contains(.,'download')">
-    <xsl:value-of select="concat(substring-before(.,'download'),'view',substring-after(.,'download'))"/>
-    </xsl:when>
-    <xsl:otherwise><xsl:value-of select="."/></xsl:otherwise>
-    </xsl:choose>
-  </field>
-  <xsl:choose>
-   <xsl:otherwise>
-     <field name="url"><xsl:value-of select="../dct:alternative" /></field>
-   </xsl:otherwise>
-  </xsl:choose>
-</xsl:template>
-
-<xsl:template match="dct:relation">
-  <xsl:choose>
-   <xsl:when test="contains(.,'All.pdf')"><!-- viewer --></xsl:when>
-   <xsl:when test="count(../dct:alternative)>0"></xsl:when>
-   <xsl:otherwise>
-     <field name="url"><xsl:value-of select="." /></field>
+     <field name="url"><xsl:value-of select="@rdf:resource" /></field>
    </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
 <!-- RIGHTS : core extension -->
-<xsl:template match="dct:rights">
+<xsl:template match="dct:rights[1]">
  <xsl:choose>
-  <xsl:when test="../dct:accessRights"><!--Magazin-->
+  <xsl:when test="../dct:accessRights"><!--restricted-->
    <field name="oai_set_str_mv">
        <xsl:value-of select="'restricted_access'"/></field>
   </xsl:when>
@@ -463,14 +458,13 @@
    <field name="oai_set_str_mv"><xsl:value-of select="'open_access'"/></field>
   </xsl:otherwise>
  </xsl:choose>
+ <field name="license_str"><xsl:value-of select="@rdf:resource"/></field>
 </xsl:template>
 
 <!-- RIGHTS : core extension : IP address list -->
 <xsl:template match="dct:accessRights">
    <field name="rights_str_mv"><xsl:value-of select="."/></field>
-   <!--
    <field name="rights_str_mv"><xsl:value-of select="'127.0.0.1'"/></field>
-   -->
 </xsl:template>
 
 <!-- Top Hierarchies -->
@@ -494,9 +488,6 @@
   </field>
 </xsl:template>
 
-<xsl:template match="dct:hasPart[position()>1]">
-</xsl:template>
-
 <xsl:template match="dct:isPartOf">
   <field name="hierarchytype"></field>
   <field name="is_hierarchy_id">
@@ -514,6 +505,12 @@
   <field name="hierarchy_parent_title">
      <xsl:value-of select="fabio:*/dct:title"/>
   </field>
+  <!--
+  <field name="container_title"><xsl:value-of select="fabio:*/dct:title"/>
+  </field>
+  <field name="container_reference"><xsl:value-of select="fabio:*/dct:title"/>
+  </field>
+  -->
 
   <xsl:apply-templates select="fabio:Book[dct:identifier]" mode="hierarchy"/>
   <xsl:apply-templates select="fabio:PeriodicalIssue[dct:identifier]" mode="hierarchy"/>
@@ -521,7 +518,7 @@
   <xsl:apply-templates select="fabio:Journal[dct:identifier]" mode="hierarchy"/>
   <xsl:apply-templates select="fabio:Periodical[dct:identifier]" mode="hierarchy"/>
   <xsl:apply-templates select="fabio:JournalIssue/dct:subject" />
-  <xsl:apply-templates select="fabio:JournalIssue/prism:issn" />
+  <xsl:apply-templates select="fabio:JournalIssue/fabio:hasISSN" />
 </xsl:template>
 
 <!-- level two : issue -->
@@ -530,23 +527,31 @@
   <xsl:apply-templates select="dct:isPartOf/fabio:Journal/dct:publisher"/>
   <xsl:apply-templates select="dct:isPartOf/fabio:Periodical/dct:publisher"/>
 
-  <xsl:apply-templates mode="hierarchy" select="dct:isPartOf/fabio:Periodical"/>
-  <xsl:apply-templates mode="hierarchy" select="dct:isPartOf/fabio:Journal"/>
+  <xsl:apply-templates select="dct:isPartOf/fabio:Periodical" mode="hierarchy"/>
+  <xsl:apply-templates select="dct:isPartOf/fabio:Journal" mode="hierarchy"/>
 </xsl:template>
 
 <!-- is_hierarchy = hierarchy_top : Collection -->
 <!-- level one : issue -->
 <xsl:template match="dct:isPartOf/fabio:Journal" mode="hierarchy">
+  <!-- journal hierarchy -->
   <field name="hierarchy_top_id">
      <xsl:call-template name="identity">
           <xsl:with-param name="id" select="dct:identifier"/>
      </xsl:call-template>
   </field>
+  <field name="hierarchy_top_title"><xsl:value-of select="dct:title"/></field>
+  <!-- journal issue hierarchy -->
+  <field name="hierarchy_top_id">
+     <xsl:call-template name="identity">
+          <xsl:with-param name="id" select="../../dct:identifier"/>
+     </xsl:call-template>
+  </field>
   <field name="hierarchy_top_title">
-     <xsl:value-of select="dct:title"/>
+     <xsl:value-of select="../../dct:title"/>
   </field>
   <field name="hierarchy_browse">
-     <xsl:value-of select="concat(dct:title,'{{{_ID_}}}',substring(dct:identifier,0,string-length(dct:identifier)))" />
+     <xsl:value-of select="concat(../../dct:title,'{{{_ID_}}}',substring(../../dct:identifier,0,string-length(../../dct:identifier)))" />
   </field>
 </xsl:template>
 
@@ -557,33 +562,32 @@
           <xsl:with-param name="id" select="dct:identifier"/>
      </xsl:call-template>
   </field>
-  <field name="hierarchy_top_title">
-     <xsl:value-of select="dct:title"/>
-  </field>
+  <field name="hierarchy_top_title"><xsl:value-of select="dct:title"/></field>
   <field name="hierarchy_browse">
      <xsl:value-of select="concat(dct:title,'{{{_ID_}}}',substring(dct:identifier,0,string-length(dct:identifier)))" />
   </field>
 </xsl:template>
 
-<!-- FULLTEXT : ojs extension -->
-<xsl:template match="dct:fulltex">
+<!-- FULLTEXT : fulltext extension -->
+<xsl:template match="dct:fulltext">
   <field name="fulltext"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- REFERENCES : core extension -->
 <xsl:template match="dct:references">
   <xsl:apply-templates select="rdf:Seq"/>
+  <xsl:apply-templates select="rdf:Description"/>
 </xsl:template>
 
 <xsl:template match="dct:references/rdf:Seq">
   <xsl:apply-templates select="rdf:li/dct:BibliographicResource"/>
 </xsl:template>
 
-<xsl:template match="dct:references/rdf:Seq/rdf:li">
-  <xsl:apply-templates select="dct:BibliographicResource"/>
+<xsl:template match="dct:references/rdf:Description">
+  <xsl:apply-templates select="rdf:li/dct:BibliographicResource"/>
 </xsl:template>
 
-<xsl:template match="dct:references/rdf:Seq/rdf:li/dct:BibliographicResource">
+<xsl:template match="rdf:li/dct:BibliographicResource">
  <field name="ref_str_mv">
   <xsl:choose>
   <xsl:when test="starts-with(@rdf:about,'http://localhost')">
@@ -598,7 +602,7 @@
 
 <!-- CITATIONS : core extension -->
 <xsl:template match="dct:isReferencedBy">
- <field name="cites_str"><xsl:value-of select="."/></field>
+ <field name="cites_str_mv"><xsl:value-of select="@rdf:resource"/></field>
 </xsl:template>
 
 <!-- DOWNLOADS : core extension -->
@@ -606,10 +610,40 @@
  <field name="downloads_str"><xsl:value-of select="."/></field>
 </xsl:template>
 
+<!-- SERIES : spec extension -->
+<xsl:template match="fabio:*" mode="spec">
+ <xsl:choose>
+  <xsl:when test="contains(@rdf:about,'/eb/2014/10')">
+   <field name="series2">
+    <xsl:value-of select="'Semesterapparat Bohde WS 2014/15 Fotobücher'"/>
+   </field>
+  </xsl:when>
+  <xsl:when test="contains(@rdf:about,'/ep/')">
+    <field name="oai_set_str_mv">
+        <xsl:value-of select="'xMetaDissPlus'"/></field>
+  </xsl:when>
+ </xsl:choose>
+</xsl:template>
+
+<xsl:template match="fabio:*" mode="call">
+  <xsl:variable name="callnumber">
+      <xsl:value-of select="translate(
+           substring-after(substring-after(@rdf:about,'//'),'/'),'/',' ')"/>
+  </xsl:variable>
+  <field name="callnumber-raw"><xsl:value-of select="$callnumber"/></field>
+  <field name="callnumber-sort"><xsl:value-of select="$callnumber"/></field>
+  <field name="callnumber-label"><xsl:value-of select="$callnumber"/></field>
+  <field name="callnumber-first">
+      <xsl:value-of select="substring-before($callnumber,' ')"/>
+  </field>
+  <field name="callnumber-subject">
+      <xsl:value-of select="concat(substring-before($callnumber,' '),'/',
+                    substring-before(substring-after($callnumber,' '),' '))"/>
+  </field>
+</xsl:template>
+
 <!-- suppress emptyness -->
-<!--
-<xsl:template match="text()"/>
--->
+<!-- <xsl:template match="text()"/> -->
 
 <xsl:template match="*" priority="-1"/>
 

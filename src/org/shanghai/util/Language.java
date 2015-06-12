@@ -26,10 +26,12 @@ public class Language implements Analyzer {
     private Property language;
     private Property abstract_;
     private Property title;
+    private boolean loaded = false;
+    private String path;
 
     @Override
     public Analyzer create() {
-        String path = Language.class.getProtectionDomain()
+        path = Language.class.getProtectionDomain()
                               .getCodeSource().getLocation().getPath();
         path = path.substring(0,path.lastIndexOf("/")+1) + "languages";
         if (!new File(path).isDirectory()) {
@@ -37,9 +39,12 @@ public class Language implements Analyzer {
             path = path.substring(0,path.lastIndexOf("/")) 
                    + "/lib/languages";
         }
-        log("Language detect from " + path);
+        if (loaded) {
+            return this;
+        }
         try {
             DetectorFactory.loadProfile(path);
+            loaded = true;
         } catch(LangDetectException e) { log(e); }
         return this;
     }
@@ -67,17 +72,36 @@ public class Language implements Analyzer {
         ResIterator ri = model.listResourcesWithProperty(title);
         if (ri.hasNext() ) {
             rc = model.listResourcesWithProperty(title).nextResource();
-            analyze(model, rc);
+            analyze(model, rc, id);
         }
         return rc;
     }
 
-    public Resource analyze(Model model, Resource rc) {
+    @Override
+    public boolean test() {
+        log("test: " + this.getClass().getName() + " detect from " + path);
+        return true;
+    }
+
+    @Override
+    public Resource test(Model model, String id) {
+        return analyze(model, id);
+    }
+
+    @Override
+    public void dump(Model model, String id, String fname) {
+        log("dump not implemented");
+    }
+
+    public Resource analyze(Model model, Resource rc, String id) {
         createProperties(model);
+        if (rc.hasProperty(language)) {
+            return rc;
+        }
         String text = null;
         if (rc.hasProperty(abstract_)) {
             text = rc.getProperty(abstract_).getLiteral().getString();
-        } else {
+        } else if (rc.hasProperty(title)) {
             text = rc.getProperty(title).getLiteral().getString();
         }
         analyzeText(model, rc, text);
@@ -91,7 +115,7 @@ public class Language implements Analyzer {
             detector.append(text);
             lang = detector.detect();
             //log("language for " + rc.getURI() + " " + lang);
-            rc.removeAll(language);
+            //rc.removeAll(language);
             if (lang==null) {
                 log("no language for " + rc.getURI());
                 return ;
@@ -120,6 +144,7 @@ public class Language implements Analyzer {
 
     protected void log(Exception e) {
         logger.info(e.toString());
+        //e.printStackTrace();
     }
 
     private void log(Model mod) {

@@ -115,7 +115,9 @@ public class Virtuoso {
             cmd = "DELETE WHERE { <" + about + "> ?p ?o. }"; 
         else
             cmd = "DELETE FROM <" + graph +"> "+" { <" + about + "> ?p ?o }"
-                  + " WHERE { <" + about + "> ?p ?o }";
+                  + " WHERE { GRAPH  <" + graph +"> "
+                  + "       { <" + about + "> ?p ?o }"
+                  + "}";
         //log("delete [" + cmd + "]");
         return execute(cmd);
     }

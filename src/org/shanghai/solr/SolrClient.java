@@ -36,7 +36,7 @@ public class SolrClient {
         public void create() {
             super.create();
             this.server = super.server;
-            log("MySolrPost.create exposes server!");
+            log("MySolrPost.create exposes server! ");
         }
     }
 
@@ -109,7 +109,8 @@ public class SolrClient {
 
         //int fetchSize = 1000;
         SolrQuery query = new SolrQuery();
-        query.setQuery("id:*");
+        //query.setQuery("id:*");
+        query.setQuery("uri_str:*");
         query.setRows(fetchSize);
         try {
             QueryResponse rsp = solrPost.server.query(query);
@@ -126,7 +127,8 @@ public class SolrClient {
                 {
                      count++;
                      if (off<count && found<limit) {
-                         result[found] = (String) doc.getFieldValue("id"); 
+                         //result[found] = (String) doc.getFieldValue("id"); 
+                         result[found] = (String) doc.getFieldValue("uri_str"); 
                          if (result[found].length()==0) {
                              log(" empty : [" + count + "]");
                              result[found]=null;

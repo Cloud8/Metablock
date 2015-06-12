@@ -14,12 +14,22 @@ lib/%.class: src/%.java
 	@echo $<
 	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
-default: lib/seaview.jar
+default: lib/autobib.jar
 
 compile: $(CLASS) 
 
-lib/seaview.jar: $(CLASS) lib/seaview.ttl
+lib/autobib.jar: $(CLASS) lib/seaview.ttl
 	jar cf $@ -C lib org 
+
+autobib.jar: lib/autobib.jar lib/xslt lib/sparql lib/Manifest.txt
+	jar cfm $@ lib/Manifest.txt 
+	jar uf $@ -C lib com -C lib xslt -C lib sparql lib/seaview.ttl
+	jar uf $@ lib/*.jar 
+	cd lib; jar uf ../$@ *.properties
+
+fat: autobib.jar
+	@#java -Done-jar.verbose -jar autobib.jar
+	java -jar autobib.jar
 
 test: 
 	@java -cp lib:lib/* org.shanghai.rdf.Main
@@ -31,5 +41,9 @@ check:
 clean:
 	@rm -f $(CLASS)
 	@rm -rf lib/org
-	@rm -f lib/shanghai.jar
+	@rm -rf lib/com
+	@rm -f autobib.jar
+
+cleaner:
+	@rm -f lib/autobib.jar
 

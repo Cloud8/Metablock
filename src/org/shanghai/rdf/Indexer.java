@@ -105,13 +105,18 @@ public class Indexer {
 
     /** resource dump */
     public void dump(String uri) {
-        createStorage();
+        //createStorage();
+        //log("short dump");
+        rdfCrawl = new MetaCrawl(transporter,null,null,null,0);
+        rdfCrawl.create();
         String rdf = rdfCrawl.read(uri);
         System.out.println(rdf);
     }
 
     public void dump(String uri, String filename) {
-        createStorage();
+        //createStorage();
+        rdfCrawl = new MetaCrawl(transporter,null,null,null,0);
+        rdfCrawl.create();
         String rdf = rdfCrawl.read(uri);
         FileUtil.write(filename, rdf);
     }

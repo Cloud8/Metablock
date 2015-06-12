@@ -17,6 +17,7 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.shared.BadURIException;
+import com.hp.hpl.jena.shared.CannotEncodeCharacterException;
 
 public class FileStorage implements MetaCrawl.Storage {
 
@@ -45,86 +46,76 @@ public class FileStorage implements MetaCrawl.Storage {
 
     @Override
     public boolean delete(String resource) {
+        //log("unwilling to perform : delete " + resource);
         return false;
     }
 
     @Override
-    public boolean write(Model model, String id) {
+    public boolean write(Model model, String uri) {
         StringWriter writer = new StringWriter();
         boolean b = false;
         count++;
-        if (new File(store).isDirectory()) {
-            Property ident = model.createProperty(dct, "identifier");
+        if (new File(uri).isFile()) {
+            String fname = uri;
+            if (!fname.endsWith(".rdf") && fname.contains(".")) {
+                fname = fname.substring(0,fname.lastIndexOf(".")) + ".rdf";
+            }
+            try {
+                model.write(writer, "RDF/XML-ABBREV");
+                log("write " + fname);
+                FileUtil.write(fname, writer.toString());
+            } catch(CannotEncodeCharacterException e) { log(e); log(uri); }
+            finally {
+                b = true; 
+            }
+        } else if (new File(store).isDirectory()) {
+            if (!uri.startsWith("http")) {
+                Property i = model.createProperty(dct, "identifier");
+                if (model.listResourcesWithProperty(i).hasNext()) {
+                    Resource rc = model.listResourcesWithProperty(i)
+                                       .nextResource();
+				    uri = rc.getURI();
+                }
+            }
+			uri = uri.substring(7);
             String path = store;
-            if (model.listResourcesWithProperty(ident).hasNext()) {
-                Resource rc = model.listResourcesWithProperty(ident).nextResource();
-                String uri = rc.getURI().substring(8);
-                path += "/" + uri.substring(uri.indexOf("/")+1); 
-                String base = path.substring(0, path.lastIndexOf("/"));
-                if (new File(base).exists()) {
-                } else if (!new File(base).mkdirs()) {
-                     log("failed path [" + base + "]");
-                     return true;
-                }
-                if (new File(path).isDirectory()) {
-                    File check = new File(path + "/about.rdf");
-                    if (check.exists()) {
-                        if (!new File(path + "/about.old").exists()) 
-                            check.renameTo(new File(path + "/about.old"));
-                    }
-                    path = path + "/about.rdf";
-                } else if (path.endsWith(".pdf")) {
-                    path = path.substring(0, path.lastIndexOf('.')) + ".rdf";
-                } else if (new File(path).mkdirs()) {
-                    path += "/about.rdf";
+            String[] parts = uri.substring(uri.indexOf("/")+1).split("/");
+            for (String part : parts) {
+                if (path.contains(part)) {
+                    //System.out.print("[" + part + "]");
                 } else {
-                    path += ".rdf";
+					path += "/" + part;
                 }
-            } else { // its time for something completely different
-                path += "/" + id + ".rdf";
+            }
+            String base = path.substring(0, path.lastIndexOf("/"));
+            if (new File(base).exists()) {
+            } else if (!new File(base).mkdirs()) {
+                log("failed path [" + base + "]");
+                return true;
+            }
+            if (new File(path).isDirectory()) {
+                File check = new File(path + "/about.rdf");
+                if (check.exists()) {
+                    if (!new File(path + "/about.old").exists()) 
+                        check.renameTo(new File(path + "/about.old"));
+                }
+                path = path + "/about.rdf";
+            } else if (path.endsWith(".pdf")) {
+                path = path.substring(0, path.lastIndexOf('.')) + ".rdf";
+            } else if (new File(path).mkdirs()) {
+                path += "/about.rdf";
+            } else {
+                path += ".rdf";
             }
             model.write(writer, "RDF/XML-ABBREV");
-            //if (count%100==0) {
-                log("write to [" + path + "]");
-            //}
+            if (count%100==0) {
+                log("write " + uri + " to [" + path + "]");
+            }
             FileUtil.write( path, writer.toString());
+            //log("FileUtil.write( " + path + ")");
             b = true;
-        } else if (store.indexOf(":")>0) {
-            String[] str = store.split(":");
-            if (str.length==2 && str[0].equals("dct")) {
-                Property prop = model.createProperty(dct, str[1]);
-                String target = model.listResourcesWithProperty(prop)
-                               .nextResource().getProperty(prop).getString();
-                //log("write to [" + store + "] " + target);
-                if (target.startsWith("http://")) {
-                    b = true; //silence
-                } else if (new File(target).exists()) {
-                    model.write(writer, "RDF/XML-ABBREV");
-                    target = target.substring(0,target.lastIndexOf("."));
-                    FileUtil.write(target + suffix, writer.toString());
-                    b = true; 
-                } else {
-                    target = System.getProperty("user.home") + "/" + target;
-                    if (new File(target).exists()) {
-                        try {
-                            model.write(writer, "RDF/XML-ABBREV");
-                            target = target.substring(0, target.lastIndexOf("."));
-                            FileUtil.write(target + suffix, writer.toString());
-                        } catch(BadURIException e) {
-                            log(e);
-                            log("Could not write " + target);
-                        } finally {
-                            b = true;
-                        }
-                    } else {
-                        b = false; //nowhere to write to
-                    }
-                }
-            }
         } else {
-            model.write(writer, "RDF/XML-ABBREV");
-            FileUtil.write(store, writer.toString());
-            b = true; 
+          log("Unwilling to perform.");
         }
         return b;
     }

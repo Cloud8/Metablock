@@ -93,6 +93,9 @@ public class SolrPost {
     public boolean delete(String id) {
         boolean b = false;
         String delete = "id:"+id.replace(":","\\:").replace("#","*");
+        if (id.startsWith("http://")) {
+            delete = "uri_str:"+id.replace(":","\\:");
+        }
         //log("delete [" + id + "] [" + delete + "]");
         try {
             server.deleteByQuery(delete);

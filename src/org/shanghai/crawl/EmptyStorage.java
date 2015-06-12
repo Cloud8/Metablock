@@ -20,12 +20,13 @@ public class EmptyStorage implements MetaCrawl.Storage {
     @Override
     public boolean delete(String resource) {
         //System.out.println("empty delete"); 
-        return false;
+        return true;
     }
 
     @Override
     public boolean write(Model model, String resource) {
         //System.out.println("empty write"); 
+        //System.out.println(); 
         return true;
     }
 

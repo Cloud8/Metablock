@@ -42,12 +42,13 @@ public class JenaTDB {
 
     private Location location;
     private String graph;
+    private static boolean destroyed;
 
-    public JenaTDB(String tdbData) {
+    public JenaTDB(final String tdbData) {
         this.tdbData = tdbData;
     }
 
-    public JenaTDB(String tdbData, String uri) {
+    public JenaTDB(final String tdbData, String uri) {
         this.tdbData = tdbData;
         this.graph = uri;
     }
@@ -67,11 +68,16 @@ public class JenaTDB {
 		        model = dataset.getNamedModel(graph);
             }
         }
+        destroyed = false;
     }
 
     public synchronized void dispose() {
-        //synchronized(this) {
+        if (destroyed) return; // only close tdb once
+        destroyed = true;
         if (count==0) {
+            return;
+        }
+        if (dataset==null || model==null) {
             return;
         }
         log("closing " + tdbData + " [" + count + "]");
@@ -84,7 +90,6 @@ public class JenaTDB {
             dataset.close();
         }
         dataset=null;
-        //}
     }
 
     public void clean() {

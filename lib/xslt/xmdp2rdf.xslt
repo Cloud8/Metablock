@@ -16,6 +16,7 @@
      xmlns:ddb="http://www.d-nb.de/standards/ddb/" 
      xmlns:dini="http://www.d-nb.de/standards/xmetadissplus/type/" 
      xmlns:gnd="http://d-nb.info/gnd/" 
+     xmlns:ore="http://www.openarchives.org/ore/terms/"
      xsi:schemaLocation="http://www.d-nb.de/standards/xmetadissplus/ http://www.d-nb.de/standards/xmetadissplus/xmetadissplus.xsd"
      version="1.0" >
 
@@ -133,14 +134,18 @@
 
 <xsl:template match="dc:title">
   <dct:title><!--<xsl:copy-of select="@xsi:type"/>-->
-     <xsl:attribute name="xml:lang">
-      <xsl:choose>
-        <xsl:when test="@lang='ger'">de</xsl:when>
-        <xsl:when test="@lang='eng'">en</xsl:when>
-        <xsl:when test="@lang='fre'">fr</xsl:when>
-        <xsl:otherwise><xsl:value-of select="@lang"/></xsl:otherwise>
-      </xsl:choose>
-     </xsl:attribute>
+     <xsl:choose>
+        <xsl:when test="@lang=../dc:language"></xsl:when>
+        <xsl:when test="@lang='ger'">
+           <xsl:attribute name="xml:lang">de</xsl:attribute>
+        </xsl:when>
+        <xsl:when test="@lang='eng'">
+           <xsl:attribute name="xml:lang">en</xsl:attribute>
+        </xsl:when>
+        <xsl:when test="@lang='fre'">
+           <xsl:attribute name="xml:lang">fr</xsl:attribute>
+        </xsl:when>
+     </xsl:choose>
      <xsl:value-of select="."/>
   </dct:title>
 </xsl:template>
@@ -308,7 +313,7 @@
 </xsl:template>
 
 <xsl:template match="ddb:transfer">
-  <dct:relation><xsl:value-of select="."/></dct:relation>
+  <ore:aggregates rdf:resource="{.}"/>
 </xsl:template>
 
 <xsl:template match="pc:foreName">

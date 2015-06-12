@@ -1,6 +1,7 @@
 package org.seaview.pdf;
 
 import org.shanghai.crawl.FileTransporter;
+import org.shanghai.util.PrefixModel;
 
 import com.hp.hpl.jena.rdf.arp.JenaReader;
 import com.hp.hpl.jena.rdf.model.Model;
@@ -27,6 +28,8 @@ public class PDFScanner implements FileTransporter.Delegate {
 
     static final String foaf = "http://xmlns.com/foaf/0.1/";
     static final String dct = DCTerms.getURI();
+    static final String ore = "http://www.openarchives.org/ore/terms/";
+
     private static final String concept = dct + "BibliographicResource";
     private String iri; // about
     private String path; // relation
@@ -53,7 +56,9 @@ public class PDFScanner implements FileTransporter.Delegate {
 
     @Override
     public Model read(String fname) {
-        Model mod = ModelFactory.createDefaultModel();
+        //log("read " + fname);
+        //Model mod = ModelFactory.createDefaultModel();
+        Model mod = PrefixModel.create();
         String id = fname;
         if (id.startsWith(path)) {
             fname = fname.substring(path.length()+1);
@@ -68,11 +73,13 @@ public class PDFScanner implements FileTransporter.Delegate {
 
         mod.setNsPrefix("dct", dct);
         mod.setNsPrefix("foaf", foaf);
+        mod.setNsPrefix("ore", ore);
         Resource rcC = mod.createResource(concept);
         Resource rc = mod.createResource(iri + "/" + fname, rcC);
         try {
             rc.addProperty(mod.createProperty(dct, "identifier"), id);
-            rc.addProperty(mod.createProperty(dct, "relation"), fname);
+            rc.addProperty(mod.createProperty(ore, "aggregates"), 
+                           mod.createResource("http://localhost/" + fname));
         } //catch (FileNotFoundException e) { log(e); }
           catch (Exception e) { log(e); }
         finally {
@@ -82,6 +89,7 @@ public class PDFScanner implements FileTransporter.Delegate {
 
     @Override
     public boolean canRead(File file) {
+        //log("canRead " + file.getName());
         if (stop4RDF) {
             return false;
         }

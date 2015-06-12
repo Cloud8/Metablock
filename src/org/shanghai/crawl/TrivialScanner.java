@@ -23,6 +23,8 @@ import com.hp.hpl.jena.rdf.model.RDFErrorHandler;
 */
 public class TrivialScanner implements FileTransporter.Delegate {
 
+    private String current = "";
+
     public FileTransporter.Delegate create() {
         return this;
     }
@@ -32,6 +34,7 @@ public class TrivialScanner implements FileTransporter.Delegate {
     public void setDirectory(String dir) {}
 
     public boolean canRead(File file) {
+        current = file.getAbsolutePath();
         if (file.getName().endsWith(".rdf")) {
             return true;
         }
@@ -43,7 +46,7 @@ public class TrivialScanner implements FileTransporter.Delegate {
 
     class TrivialErrorHandler implements RDFErrorHandler {
         public void error(Exception e) {
-            log(e);
+            log(current + " : " + e);
         }
         public void fatalError(Exception e) {
             e.printStackTrace();

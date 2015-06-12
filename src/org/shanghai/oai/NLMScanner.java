@@ -66,7 +66,6 @@ public class NLMScanner implements FileTransporter.Delegate {
     public Model read(String fname) {
         //log("read " + fname);
         Model model = ModelFactory.createDefaultModel();
-        model.setNsPrefix("dct", dct);
         String xml = FileUtil.read(new File(fname));
         String rdf = transformer.transform(xml);
         RDFReader reader = new JenaReader();

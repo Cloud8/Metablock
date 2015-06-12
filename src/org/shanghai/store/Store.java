@@ -1,5 +1,7 @@
 package org.shanghai.store;
 
+import org.shanghai.util.PrefixModel;
+
 import java.util.logging.Logger;
 import java.net.URL;
 import java.io.StringReader;
@@ -11,6 +13,10 @@ import com.hp.hpl.jena.rdf.model.RDFReader;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.rdf.arp.JenaReader;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.rdf.model.Statement;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Property;
 
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
@@ -69,8 +75,10 @@ public class Store {
     public void create() {
         if (tdb)
             tripleStore.create();
-        if (construct==null)
-            construct = "CONSTRUCT { <subject> ?p ?o }";
+        if (construct==null) {
+            construct = "CONSTRUCT { <subject> ?p ?o . }"
+                      + " where { <subject> ?p ?o . }";
+        }
     }
 
     public synchronized void dispose() {
@@ -104,7 +112,10 @@ public class Store {
     }
 
     public Model read(String resource) {
-        return getModel(resource);
+        Model m = getModel(resource);
+        return PrefixModel.prefix(m);
+        //return m;
+        //return sort(m, resource);
     }
 
     public boolean update(Model mod) {
@@ -114,10 +125,14 @@ public class Store {
         return b;
     }
 
-    public boolean delete(String about) {
-        //log("delete " + about);
-        if (tdb)
-            return tripleStore.delete(about);
+    public boolean delete(String resource) {
+        //log("delete " + resource);
+        boolean b = false;
+        if (tdb) {
+            // Model m = getModel(resource);
+            // b = update(m); 
+            b = tripleStore.delete(resource);
+        }
         return false;
     }
 
@@ -160,9 +175,12 @@ public class Store {
         QueryExecution qexec = getExecutor(query);
         try {
             model = qexec.execConstruct();
-            model.setNsPrefix("fabio", "http://purl.org/spar/fabio/");
-            model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
-         } catch(Exception e) { log("[" + query + "]"); log(e); }
+            if (model.isEmpty()) {
+                log("empty model " + resource);
+                return null;
+            }
+            //else log("size " + model.size());
+         } catch(Exception e) { log("[" + query + "]"); log(resource); log(e); }
             finally {
             if (model!=null)
                qexec.close();
@@ -195,6 +213,37 @@ public class Store {
         }
         return null;
     }
+
+    /** obsolete : topological sort */
+    /**
+    private static final String dct = DCTerms.getURI();
+    private static final String prism =
+                         "http://prismstandard.org/namespaces/basic/2.0/";
+    private static final String fabio = "http://purl.org/spar/fabio/";
+    private static final String foaf = "http://xmlns.com/foaf/0.1/";
+    private static final String aiiso = "http://purl.org/vocab/aiiso/schema#";
+    private static final String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+    private Model sort(Model m, String resource) {
+        //return m; 
+        Model model = ModelFactory.createDefaultModel();
+        Resource rc = m.getResource(resource);
+        RDFNode node = null;
+        Property prop = null;
+        StmtIterator si = m.listStatements(rc, prop, node);
+        while( si.hasNext() ) {
+            Statement stmt = si.nextStatement();
+            model.add(stmt);
+            if (stmt.getObject().isResource()) {
+                StmtIterator sub = stmt.getObject()
+                                       .asResource().listProperties();
+                while( sub.hasNext() ) {
+                    model.add(sub.nextStatement());
+                }
+            }
+        }
+        return model;
+    }
+    **/
 
     private static final Logger logger =
                          Logger.getLogger(Store.class.getName());

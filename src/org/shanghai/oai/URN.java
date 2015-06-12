@@ -66,6 +66,8 @@ public class URN {
             src = src.replace("diss/","");
             src = src.replace("ep/","ep");
             src = src.replace("eb/","eb");
+            src = src.replace("es/","es");
+            src = src.replace("ed/","ed");
             src = src.replace("/","-");
             urn = getUrnCheck(prefix + src);
         }
