@@ -15,12 +15,20 @@
 <!--
   /** @license http://www.apache.org/licenses/LICENSE-2.0
     * @author Goetz Hatop <fb.com/goetz.hatop>
-    * @title An XSLT Transformer for NLM to RDF
+    * @title XSLT Transformer for NLM to RDF
     * @date 2014-06-05
    **/ -->
 
 <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
 <xsl:strip-space elements="*"/>
+
+<xsl:variable name="base" select="nlm:article/nlm:front/nlm:article-meta"/>
+<xsl:param name="uri" 
+     select="substring-before($base/nlm:self-uri[1]/@xlink:href,'/article')"/>
+<xsl:param name="year" 
+     select="$base/nlm:pub-date[@pub-type='collection']/nlm:year"/>
+<xsl:param name="seq" select="$base/nlm:issue"/>
+<xsl:param name="aid" select="$base/nlm:article-id[@pub-id-type='other']"/>
 
 <xsl:template match="/">
   <xsl:apply-templates select="*" />
@@ -28,20 +36,17 @@
 
 <xsl:template match="nlm:article">
  <rdf:RDF>
- <fabio:JournalArticle rdf:about="nlm:article-meta/nlm:self-uri[1]/@xlink:href">
+   <fabio:JournalArticle rdf:about="{concat($uri,'/',$year,'/',$seq,'/',$aid)}">
     <xsl:apply-templates select="nlm:front/nlm:article-meta" />
-    <xsl:apply-templates select="nlm:journal-meta" />
- </fabio:JournalArticle>
+    <xsl:apply-templates select="nlm:front/nlm:journal-meta" />
+    <!-- <xsl:apply-templates select="nlm:body" /> -->
+   </fabio:JournalArticle>
  </rdf:RDF>
 </xsl:template>
 
 <xsl:template match="nlm:article-meta">
     <dct:type><xsl:value-of select="'article'"/></dct:type>
-    <dct:title>
-       <xsl:value-of select="nlm:title-group/nlm:article-title"/>
-    </dct:title>
-    <xsl:apply-templates select="nlm:publisher" />
-
+    <xsl:apply-templates select="nlm:title-group/nlm:article-title"/>
     <xsl:apply-templates select="nlm:contrib-group"/>
     <xsl:apply-templates select="nlm:pub-date[@pub-type='collection']" />
     <xsl:apply-templates select="nlm:pub-date[@pub-type='epub']" />
@@ -52,16 +57,20 @@
     <fabio:hasURL>
         <xsl:value-of select="nlm:self-uri[1]/@xlink:href"/>
     </fabio:hasURL>
-    <xsl:variable name="doc">
-        <xsl:value-of 
-            select="nlm:self-uri[@content-type='application/pdf']/@xlink:href"/>
+    <xsl:variable name="doc"><xsl:value-of 
+         select="nlm:self-uri[@content-type='application/pdf']/@xlink:href"/>
     </xsl:variable>
+    <!-- the document we are talking about. Better term ? -->
     <ore:aggregates rdf:resource="{concat(substring-before($doc,'view'),
                                 'download',substring-after($doc,'view'))}"/>
     <xsl:apply-templates select="nlm:article-id" />
     <xsl:apply-templates select="nlm:issue-id" />
     <xsl:apply-templates select="nlm:issue" />
     <xsl:apply-templates select="nlm:volume" />
+</xsl:template>
+
+<xsl:template match="nlm:title-group/nlm:article-title">
+  <dct:title><xsl:value-of select="."/></dct:title>
 </xsl:template>
 
 <xsl:template match="nlm:article-categories">
@@ -86,7 +95,7 @@
 
 <xsl:template match="nlm:contrib-group/nlm:contrib[@contrib-type='author']">
   <rdf:li>
-    <foaf:Person rdf:about="http://localhost/aut/{translate(concat(nlm:name/nlm:given-names,'_',nlm:name/nlm:surname),' ,[].','_')}">
+    <foaf:Person rdf:about="{concat($uri,'/aut/',translate(concat(nlm:name/nlm:given-names,'_',nlm:name/nlm:surname),' ,[].','_'))}">
       <xsl:apply-templates select="nlm:name"/>
     </foaf:Person>
   </rdf:li>
@@ -111,8 +120,8 @@
 </xsl:template>
 
 <xsl:template match="nlm:contrib-group/nlm:contrib/nlm:name/nlm:aff">
-  <!-- foaf term ? -->
-  <foaf:affiliation><xsl:value-of select="."/></foaf:affiliation>
+  <!-- better term ? -->
+  <foaf:plan><xsl:value-of select="."/></foaf:plan>
 </xsl:template>
 
 <xsl:template match="nlm:permissions">
@@ -125,14 +134,15 @@
 
 <xsl:template match="nlm:publisher">
  <dct:publisher>
-   <foaf:Organization rdf:about="http://localhost/org/ojs">
+   <foaf:Organization 
+     rdf:about="{concat($uri,'/aut/',translate(.,' ,[].','_'))}">
       <foaf:name><xsl:value-of select="." /></foaf:name>
    </foaf:Organization>
  </dct:publisher>
 </xsl:template>
 
 <xsl:template match="nlm:body">
-  <dct:fulltext><xsl:value-of select="." /></dct:fulltext>
+  <dct:fulltext><xsl:value-of select="nlm:p" /></dct:fulltext>
 </xsl:template>
 
 <xsl:template match="nlm:permissions/nlm:copyright-statement">
@@ -144,26 +154,18 @@
 </xsl:template>
 
 <xsl:template match="nlm:journal-meta">
-  <xsl:param name="url">
-     <xsl:value-of select="substring-before(../nlm:article-meta/nlm:self-uri/@xlink:href,'/article')"/>
- </xsl:param>
-
   <dct:isPartOf>
-    <fabio:JournalIssue rdf:about="{concat($url,'/',../nlm:article-meta/nlm:pub-date[@pub-type='collection']/nlm:year,'/',../nlm:article-meta/nlm:issue-id)}">
+    <fabio:JournalIssue rdf:about="{concat($uri,'/',$year,'/',$seq)}">
       <xsl:choose>
       <xsl:when test="../nlm:article-meta/nlm:volume">
         <dct:title>
           <xsl:value-of select="concat('Vol. ',
-              ../nlm:article-meta/nlm:volume, ' (',
-              ../nlm:article-meta/nlm:pub-date[@pub-type='collection']/nlm:year
-              ,')')"/>
+              ../nlm:article-meta/nlm:volume, ' (', $year ,')')"/>
         </dct:title>
       </xsl:when>
       <xsl:otherwise>
         <dct:title>
-          <xsl:value-of select="concat(
-              ../nlm:article-meta/nlm:pub-date[@pub-type='collection']/nlm:year
-              ,',',../nlm:article-meta/nlm:issue)"/>
+          <xsl:value-of select="concat($year, ',', $seq)"/>
         </dct:title>
       </xsl:otherwise>
       </xsl:choose>
@@ -172,11 +174,11 @@
       <xsl:apply-templates select="../nlm:article-meta/nlm:pub-date"/>
       <dct:type><xsl:value-of select="'PeriodicalPart'"/></dct:type>
       <xsl:apply-templates select="nlm:issn"/>
-
+      <xsl:apply-templates select="nlm:publisher"/>
       <dct:isPartOf>
-       <fabio:Journal rdf:about="{$url}">
-        <dct:title><xsl:value-of select="nlm:journal-title"/></dct:title>
-       </fabio:Journal>
+        <fabio:Journal rdf:about="{$uri}">
+          <dct:title><xsl:value-of select="nlm:journal-title"/></dct:title>
+        </fabio:Journal>
       </dct:isPartOf>
   </fabio:JournalIssue>
  </dct:isPartOf>
@@ -240,9 +242,7 @@
 </xsl:template>
 
 <xsl:template match="nlm:kwd">
-  <xsl:if test=".!=''">
   <dct:subject><xsl:value-of select="."/></dct:subject>
-  </xsl:if>
 </xsl:template>
 
 <xsl:template match="text()"/>

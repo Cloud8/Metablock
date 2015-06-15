@@ -17,9 +17,9 @@ import java.util.logging.Logger;
 */
 public class Main extends org.shanghai.crawl.Main {
 
-    private String source = null;
-    private String target = null;
-    private String engine = null;
+    protected String source = null;
+    protected String target = null;
+    protected String engine = null;
 
     @Override
     public void create() {

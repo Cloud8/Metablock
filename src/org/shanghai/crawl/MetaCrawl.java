@@ -46,6 +46,11 @@ public class MetaCrawl {
 
     /** model analyzer */
     public interface Analyzer {
+        static final String fabio = "http://purl.org/spar/fabio/";
+		static final String foaf = "http://xmlns.com/foaf/0.1/";
+		static final String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+		static final String aiiso = "http://purl.org/vocab/aiiso/schema#";
+		static final String dct = DCTerms.getURI();
         public Analyzer create();
         public void dispose();
         public Resource analyze(Model model, String id);

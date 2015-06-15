@@ -24,6 +24,7 @@ lib/autobib.jar: $(CLASS) lib/seaview.ttl
 autobib.jar: lib/autobib.jar lib/xslt lib/sparql lib/Manifest.txt
 	jar cfm $@ lib/Manifest.txt 
 	jar uf $@ -C lib com -C lib xslt -C lib sparql lib/seaview.ttl
+	jar uf $@ lib/languages
 	jar uf $@ lib/*.jar 
 	cd lib; jar uf ../$@ *.properties
 

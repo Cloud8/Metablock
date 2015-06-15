@@ -38,11 +38,6 @@ import java.util.logging.Logger;
 
 public class NLMAnalyzer implements Analyzer {
 
-    private static final String dct = DCTerms.getURI();
-    private static final String fabio = "http://purl.org/spar/fabio/";
-    private static final String foaf = "http://xmlns.com/foaf/0.1/";
-    private static final String aiiso = "http://purl.org/vocab/aiiso/schema#";
-    private static final String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
     private DocumentBuilderFactory docfactory;
 
     private String store;
@@ -57,7 +52,7 @@ public class NLMAnalyzer implements Analyzer {
     Property modified;   // dct
     Property issueId;    // fabio:hasIssueIdentifier -- issue identifier
     //Property number;     // fabio:hasSequenceIdentifier -- issue sequence
-    //Property volume;     // fabio:hasVolumeIdentifier -- the issue volume
+    //Property volume;     // fabio:hasVolumeIdentifier -- issue volume
     Property article;  // fabio:hasElectronicArticleIdentifier
     Property type;       // rdf
 
@@ -116,18 +111,19 @@ public class NLMAnalyzer implements Analyzer {
 		        makeIdentifier(object);
             }
         }
-        Model sub = getPartOf(rci);
         boolean b = false;
         if (store==null) { // no writes from here
             // log("analyze " + id + " " + rc.getURI());
-        } else if (store.equals("files")) { // help file parent ??
+        } else if (store.equals("files") && rci!=null) { // help parent ??
             if (!hash.containsKey(rci.getURI())) {
+                Model sub = getPartOf(rci);
                 b = writeParent(sub, rci, id);
                 hash.put(rci.getURI(), rci.getURI());
             }
         } else { 
 	        b = writeModel(model, rc, store); // write articel
-            if (b && !hash.containsKey(rci.getURI())) {
+            if (b && rci!=null && !hash.containsKey(rci.getURI())) {
+                Model sub = getPartOf(rci);
                 b = writeModel(sub, rci, store); // write issue
                 hash.put(rci.getURI(), rci.getURI());
             }
@@ -179,7 +175,8 @@ public class NLMAnalyzer implements Analyzer {
 			String id = urn.getUrn(rc.getURI());
             if (id==null) {
                 log("URN failed : " + rc.getURI() + " " + id);
-            }
+                id = rc.getURI().replaceAll("[^a-zA-Z0-9\\:\\.]","");
+            } 
             //log("makeIdentifier " + rc.getURI() + "[" + id + "]");
 			rc.addProperty(identifier, id);
         }
@@ -269,8 +266,7 @@ public class NLMAnalyzer implements Analyzer {
     }
 
     private Model getPartOf(Resource rc) {
-        Model model = ModelFactory.createDefaultModel();
-        model = PrefixModel.prefix(model);
+        Model model = PrefixModel.create();
         StmtIterator si = rc.listProperties();
         while( si.hasNext() ) {
             Statement stmt = si.nextStatement();

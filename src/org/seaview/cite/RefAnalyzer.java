@@ -29,6 +29,8 @@ import com.hp.hpl.jena.update.UpdateFactory;
 import com.hp.hpl.jena.update.Update;
 import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.GraphStore;
+import com.hp.hpl.jena.rdf.model.NodeIterator;
+import com.hp.hpl.jena.rdf.model.RDFNode;
 //import com.hp.hpl.jena.query.DatasetFactory;
 //import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.shared.PropertyNotFoundException;
@@ -52,15 +54,14 @@ public class RefAnalyzer extends AbstractAnalyzer {
     protected Property date;
     protected Property aggregates;
     protected Property language;
-    protected Property sparql;
     protected Property isReferencedBy;
 
     private int ref_count = 0; // all references
     private int uri_count = 0; // with external uri
     private int doi_count = 0; // with doi
     private int loc_count = 0; // local virtual uri
-    private int rdf_count = 0;
-    private int upd_count = 0;
+    private int rdf_count = 0; // with rdf data behind uri
+    private int upd_count = 0; // update 
     private int nop_count = 0; // no references
     private int yop_count = 0; // found references
 
@@ -75,9 +76,9 @@ public class RefAnalyzer extends AbstractAnalyzer {
     public RefAnalyzer(Transporter transporter, Storage storage) {
         this.transporter = transporter;
         this.storage = storage;
-        if ("test".equals(storage)) {
-            test = true;
-        }
+        //if ("test".equals(storage)) {
+        //    test = true;
+        //}
     }
 
     @Override
@@ -110,7 +111,6 @@ public class RefAnalyzer extends AbstractAnalyzer {
         date = model.createProperty(dct, "date");
         language = model.createProperty(dct, "language");
         aggregates = model.createProperty(ore, "aggregates");
-        sparql = model.createProperty(voidNS, "sparqlEndpoint");
         isReferencedBy = model.createProperty(dct, "isReferencedBy");
         if (rc.hasProperty(references)) {
             //log("reference analyze " + rc.getURI());
@@ -147,7 +147,6 @@ public class RefAnalyzer extends AbstractAnalyzer {
         } else if (uri.startsWith("http://localhost/")) {
             loc_count++;
             model.add(model.createStatement(obj, isReferencedBy, rc));
-            //updateStorage(model, rc, obj); // set isReferencedBy
         } else if (uri.contains("doi")) {
             doi_count++;
             if (!test) {
@@ -157,17 +156,21 @@ public class RefAnalyzer extends AbstractAnalyzer {
                     log("linked data uri: " + uri);
                 }
             }
-        } else if (uri.contains("uni-")) {
+        } else if (uri.contains("uni-marburg.de")) {
             uri_count++;
             log("repository [" + uri + "]"); 
             if (!test) updateRemote(uri, rc.getURI());
+        } else if (uri.contains("uni-")) {
+            uri_count++;
+            log("repository [" + uri + "]"); 
+            //if (!test) updateRemote(uri, rc.getURI());
         } else if (uri.contains("econstor")) {
             uri_count++;
             log("econstor [" + uri + "]"); 
-            if (!test) updateRemote(uri, rc.getURI());
+            //if (!test) updateRemote(uri, rc.getURI());
         } else {
             uri_count++;
-            if (!test) updateRemote(uri, rc.getURI());
+            //if (!test) updateRemote(uri, rc.getURI());
         }
     }
 
@@ -198,13 +201,6 @@ public class RefAnalyzer extends AbstractAnalyzer {
     @Override
     public Resource test(Model model, String id) {
         Resource rc = findResource(model, id);
-        //log("test " + rc.getURI());
-        // try {
-        //     model = PrefixModel.prefix(model);
-        //     model = PrefixModel.retrieveRaw(rc.getURI(), model);
-        // } catch(MalformedURLException e) { log(e); }
-        //   catch(IOException e) { log(e); }
-        // model = PrefixModel.retrieve(rc.getURI());
         test = true;
         analyze(model, rc, id);
         return rc;
@@ -279,20 +275,26 @@ public class RefAnalyzer extends AbstractAnalyzer {
 
     /** look up void dataset for this model and see if sparql is supported */
     private String findService(Model model, String uri) {
-        String sparqlSrv = null;
         if (uri.startsWith("http://archiv.ub.uni-marburg.de")) {
             upd_count++;
-            return "http://localhost:8890/sparql"; // dev test
+            return "http://localhost:8890/sparql"; // GH201506 dev test
         }
-        ResIterator ri = model.listSubjectsWithProperty(sparql);
+        String sparql = null;
+        Property sp = model.createProperty(voidNS, "sparqlEndpoint");
+        ResIterator ri = model.listSubjectsWithProperty(sp);
         if (ri.hasNext()) {
             upd_count++;
-            sparqlSrv = ri.nextResource().getProperty(sparql)
-                          .getResource().getURI();
+            sparql = ri.nextResource().getProperty(sp).getResource().getURI();
         } else {
-            log("sparql: no service " + uri);
+            Property inSet = model.createProperty(voidNS, "inDataset");
+            NodeIterator ni = model.listObjectsOfProperty(inSet);
+            if(ni.hasNext()) {
+                String dataset = ni.next().asResource().getURI();
+                log("check dataset: " + dataset);
+                return findService(model, dataset);
+            }
         }
-        return sparqlSrv;
+        return sparql;
     }
 
     private void sparqlUpdate(String service, String uri, String resource) {

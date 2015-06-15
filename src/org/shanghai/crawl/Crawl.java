@@ -353,8 +353,12 @@ public class Crawl {
             //log("crawl files: " + resource);
             crawlFiles(resource);
         } else if (source.equals("void")) {
-            crawler.index(resource);
-            crawl();
+            int found = crawler.index(resource);
+            if (found==0) {
+                crawler.crawl(resource);
+            } else {
+                crawl();
+            }
         } else {
             int b = crawler.crawl(resource);
         }

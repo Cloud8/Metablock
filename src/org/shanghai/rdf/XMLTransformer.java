@@ -3,9 +3,9 @@ package org.shanghai.rdf;
 import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.logging.Level;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.HashMap;
 
 import java.io.InputStream;
 import java.io.FileInputStream;
@@ -91,6 +91,7 @@ public class XMLTransformer {
     private String xslt; 
     private static SAXTransformerFactory factory; 
     private XMLReader xr;
+    private Map<String,String> params;
 
     public XMLTransformer() {
         stringWriter = new StringWriter();
@@ -125,11 +126,19 @@ public class XMLTransformer {
         } catch(IOException e) { 
             log("create: " + e);
         }
+        params = new HashMap<String,String>();
     }
 
     public void dispose() {
         try { stringWriter.close(); }
         catch(IOException e) {log(e);}
+        if (params!=null) {
+            params.clear();
+        }
+    }
+
+    public void setParameter(String name, String value) {
+        params.put(name, value);
     }
 
     //cheap transformer
@@ -147,6 +156,9 @@ public class XMLTransformer {
         RDFReader reader = new JenaReader();
         try {
             Transformer transformer = templates.newTransformer();
+            for (String name : params.keySet()) {
+                transformer.setParameter(name, params.get(name));
+            }
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             Result result = new StreamResult(bos);
             transformer.transform( new DOMSource(doc), result);
@@ -168,6 +180,9 @@ public class XMLTransformer {
             StringReader reader = new StringReader(xmlString);
 		    StringWriter writer = new StringWriter();
             Transformer transformer = templates.newTransformer();
+            for (String name : params.keySet()) {
+                transformer.setParameter(name, params.get(name));
+            }
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
             SAXSource src = new SAXSource(new InputSource(reader));
             src.setXMLReader(xr);
@@ -183,41 +198,23 @@ public class XMLTransformer {
 
     public String asString(Model model) {
         stringWriter.getBuffer().setLength(0);
-        model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
-        model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
-        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
-        model.setNsPrefix("fabio", "http://purl.org/spar/fabio/");
-        model.setNsPrefix("pro", "http://purl.org/spar/pro/");
-        model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
-        model.setNsPrefix("dct", "http://purl.org/dc/terms/");
-        model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.0/");
+        model = prefix(model);
         try {
-           model.write(stringWriter, "RDF/XML-ABBREV");
+            model.write(stringWriter, "RDF/XML-ABBREV");
         } catch(Exception e) {
-           model.write(System.out,"RDF/XML");
-           e.printStackTrace();
+            model.write(System.out,"RDF/XML");
+            e.printStackTrace();
         } finally {
-           return stringWriter.toString();
+            return stringWriter.toString();
         }
     }
 
-    /** TODO : serialize with topological ordered hierarchies */
+    /** Desire : serialize with topological ordered hierarchies */
     public String toString(Model model, String resource) {
         //log("toString " + resource);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         stringWriter.getBuffer().setLength(0);
-        String fabio = "http://purl.org/spar/fabio/";
-        model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-        //model.setNsPrefix("npg", "http://ns.nature.com/terms/");
-        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
-        //model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
-        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
-        model.setNsPrefix("fabio", fabio);
-        //model.setNsPrefix("pro", "http://purl.org/spar/pro/");
-        model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
-        model.setNsPrefix("dct", "http://purl.org/dc/terms/");
-        model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.0/");
+        model = prefix(model);
         try {
            //force isPartOf hierarchical order
            //Resource s = null;
@@ -273,6 +270,9 @@ public class XMLTransformer {
         try {
             DOMSource domSource = new DOMSource(doc);
             Transformer transformer = factory.newTransformer();
+            for (String name : params.keySet()) {
+                transformer.setParameter(name, params.get(name));
+            }
             java.io.StringWriter sw = new java.io.StringWriter();
             StreamResult sr = new StreamResult(sw);
             transformer.transform(domSource, sr);
@@ -347,6 +347,18 @@ public class XMLTransformer {
 		iter.close();
 		return doc;
 	}
+
+    private Model prefix(Model model) {
+        model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
+        model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
+        model.setNsPrefix("dct", "http://purl.org/dc/terms/");
+        model.setNsPrefix("fabio", "http://purl.org/spar/fabio/");
+        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        model.setNsPrefix("pro", "http://purl.org/spar/pro/");
+        model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
+        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
+        return model;
+    }
 
     class MyErrorListener implements ErrorListener {
         public void warning(TransformerException e)
