@@ -25,7 +25,7 @@ public class Main extends org.shanghai.crawl.Main {
     public void create() {
         config = new Config(configFile).create();
         crawl = new Crawl(config);
-        if (source==null && target==null) {
+        if (source==null && target==null && engine==null) {
             crawl.create();
         } else {
             crawl.create(source, target, engine);

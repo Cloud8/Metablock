@@ -108,7 +108,10 @@ public class PDFAnalyzer extends AbstractAnalyzer {
     @Override
     public void analyze(Model model, Resource rc, String fname) {
         references = model.createProperty(dct, "references");
-
+        if (rc==null) {
+            log("fatal: no resource " + fname);
+            return;
+        }
         if (refs && (rc.hasProperty(references))) {
             log("skipped references " + fname);
             //rc.removeAll(references); // does not work

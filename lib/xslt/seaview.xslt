@@ -89,7 +89,7 @@
 </xsl:template>
 
 <!-- AUTHOR -->
-<xsl:template match="dct:creator">
+<xsl:template match="dct:creator[1]">
   <xsl:apply-templates select="foaf:Person"/>
   <xsl:apply-templates select="rdf:Seq"/>
 </xsl:template>
@@ -98,7 +98,7 @@
   <xsl:apply-templates select="foaf:name"/>
 </xsl:template>
 
-<xsl:template match="dct:creator/foaf:Person/foaf:name[1]">
+<xsl:template match="dct:creator/foaf:Person[1]/foaf:name[1]">
   <field name="author"><xsl:value-of select="."/></field>
 </xsl:template>
 

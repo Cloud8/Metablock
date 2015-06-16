@@ -61,7 +61,7 @@ public class FileStorage implements MetaCrawl.Storage {
             }
             try {
                 model.write(writer, "RDF/XML-ABBREV");
-                log("write " + fname);
+                //log("write " + fname);
                 FileUtil.write(fname, writer.toString());
             } catch(CannotEncodeCharacterException e) { log(e); log(uri); }
             finally {

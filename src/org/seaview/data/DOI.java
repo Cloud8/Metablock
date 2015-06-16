@@ -77,18 +77,15 @@ public class DOI {
     static String createDoi(String uri) {
         String doi = null;
         String src = uri.substring(uri.indexOf("//")+2);
-        src = src.substring(src.indexOf("/"));
+        src = src.substring(src.indexOf("/")+1);
         if (uri.startsWith("http://meta-journal.net")) {
             doi = prefix + "/meta" + src.replace("/",".");
         } else if (uri.startsWith("http://")) {
             //log("createDoi " + uri + " " + src);
-            src = src.replace("/diss/","");
-            src = src.replace("/ep/","/ep");
-            src = src.replace("/eb/","eb");
-            src = src.replace("/es/","es");
-            src = src.replace("/ep0002","medrez");
-            src = src.replace("/ep0003","meta");
-            src = src.replace("/ep0004","mjr");
+            src = src.replace("diss/","");
+            src = src.replace("ep/0002","medrez");
+            src = src.replace("ep/0003","meta");
+            src = src.replace("ep/0004","mjr");
             src = src.replace("/",".");
             doi = prefix + "/" + src;
         }

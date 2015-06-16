@@ -104,12 +104,12 @@ public class MetaCrawl {
     } 
 
     public void inject(Analyzer a) {
-        log("injected " + a.getClass().getName());
         if (!analyze) {
             analyzers = new ArrayList<Analyzer>();
         }
         analyze = true;
         analyzers.add(a);
+        log("injected " + a.getClass().getName());
     }
 
     public void dispose() {
@@ -146,21 +146,21 @@ public class MetaCrawl {
     }
 
     private Resource test(Model model, String id) {
-        //log("test " + id); 
+        log("test: " + id);
         Resource rc = null;
         if (analyze) {
             for (Analyzer a : analyzers) {
+                 log("test: " + a.getClass().getName() + " " + id); 
                  rc = a.test(model, id);
             }
         } else {
-            // log("no analyzer to test.");
+            log("no analyzer to test.");
         }
         // dump(model);
         return rc;
     }
 
     public Resource test(String id) {
-        log("test " + id); 
         Model mod = transporter.read(id);
         return test(mod, id);
     }

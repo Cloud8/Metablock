@@ -2,6 +2,7 @@ package org.seaview.main;
 
 import org.seaview.pdf.PDFAnalyzer;
 import org.seaview.data.DOIAnalyzer;
+import org.seaview.data.DataAnalyzer;
 import org.seaview.data.FileScanner;
 import org.seaview.data.VoidTransporter;
 import org.seaview.data.ConsoleStorage;
@@ -31,7 +32,6 @@ import java.util.logging.Level;
 */
 public class Crawl extends org.shanghai.crawl.Crawl {
 
-    protected int count;
     private String directory;
 
     public Crawl(Config config) {
@@ -103,10 +103,13 @@ public class Crawl extends org.shanghai.crawl.Crawl {
                 crawler.inject(doi);
             }
             if (eng.contains("ref")) {
-                crawler.inject(new RefAnalyzer(transporter,storage).create());
+                crawler.inject(new RefAnalyzer().create());
             }
             if (eng.contains("ctx")) {
                 crawler.inject(new RefContext().create());
+            }
+            if (eng.contains("data")) {
+                crawler.inject(new DataAnalyzer().create());
             }
         }
     }
@@ -167,85 +170,6 @@ public class Crawl extends org.shanghai.crawl.Crawl {
         storage.create();
         return storage;
     }
-
-    /*
-    @Override
-    public void probe() {
-        log("probe " + source + "#" + target + "#" + engine);
-        super.probe();
-    }
-    */
-
-    /*
-    @Override
-    public void test() {
-        log("test() " + source + "#" + target + "#" + engine);
-        createCrawler();
-        //super.test();
-        crawler.test();
-    }
-    */
-
-    /*
-    @Override
-    public void test(String resource) {
-        log("test " + source + "#" + target + "#" + engine + "#"+resource);
-        target = "test";
-        createCrawler();
-        super.test(resource);
-        if ( (new File(resource)).isDirectory() ) {
-            crawler.index(resource);
-            crawler.crawl();
-        } else {
-            crawler.crawl(resource);
-        }
-        crawler.dispose();
-    }
-    */
-
-    /*
-    @Override
-    public void test(String from, String until) {
-        target = "test";
-        createCrawler();
-        crawler.test(from, until);
-        crawler.dispose();
-    }
-    */
-
-    /*
-    @Override
-    public void dump(String resource) {
-        log("dump " + source + "#" + target + "#" + engine);//+" "+resource);
-        //cmd = 2;
-        //createCrawler();
-        //crawler.index(resource);
-        //crawler.crawl();
-        super.dump(resource);
-    }
-    */
-
-    /*
-    @Override
-    public void dump(String resource, String outfile) {
-        log("dump " + source + "#" + target + " " 
-                    + engine + " " + resource + " to " + outfile);
-        createCrawler();
-        crawler.dump(resource, outfile);
-    }
-    */
-
-    /*
-    @Override
-    public void delete(String resource) {
-        log("del " + source + "#" + target + " " + engine + " " + resource);
-        //cmd = 3;
-        //createCrawler();
-        //crawler.index(resource);
-        //crawler.crawl();
-        super.delete(resource);
-    }
-    */
 
     private static final Logger logger =
                          Logger.getLogger(Crawl.class.getName());

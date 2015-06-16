@@ -70,7 +70,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
 
         from = settings.from   + "T00:00:00Z";
         until = settings.until + "T23:59:59Z";
-
         if (settings.transformer!=null) {
             String xslt = FileUtil.read(settings.transformer); 
             if (xslt==null) {
@@ -78,6 +77,9 @@ public class OAITransporter implements MetaCrawl.Transporter {
             } else {
                 transformer = new XMLTransformer( xslt );
                 transformer.create();
+                //if (settings.uri!=null) {
+                //    transformer.setParameter("uri", settings.uri);
+                //}
             }
         }
         log("harvest " + settings.harvest + " : " + from + " : " + until 

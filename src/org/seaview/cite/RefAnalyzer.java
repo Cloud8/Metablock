@@ -10,9 +10,6 @@ import org.seaview.data.AbstractAnalyzer;
 import org.seaview.data.DOI;
 
 import org.apache.jena.riot.system.IRIResolver;
-//import java.io.InputStream;
-//import java.io.IOException;
-
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -20,7 +17,6 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.Seq;
-//import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.update.UpdateExecutionFactory;
 import com.hp.hpl.jena.update.UpdateProcessor;
 import com.hp.hpl.jena.update.UpdateRequest;
@@ -31,12 +27,8 @@ import com.hp.hpl.jena.update.GraphStoreFactory;
 import com.hp.hpl.jena.update.GraphStore;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
-//import com.hp.hpl.jena.query.DatasetFactory;
-//import com.hp.hpl.jena.query.Dataset;
 import com.hp.hpl.jena.shared.PropertyNotFoundException;
-
 import java.util.logging.Logger;
-//import java.util.ArrayList;
 
 /**
     ✪ (c) reserved.
@@ -65,7 +57,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
     private int nop_count = 0; // no references
     private int yop_count = 0; // found references
 
-    private boolean test = true;
+    private boolean test = false;
 
     private Transporter transporter;
     private Storage storage;
@@ -76,22 +68,17 @@ public class RefAnalyzer extends AbstractAnalyzer {
     public RefAnalyzer(Transporter transporter, Storage storage) {
         this.transporter = transporter;
         this.storage = storage;
-        //if ("test".equals(storage)) {
-        //    test = true;
-        //}
+        log("transporter " + transporter.getClass().getName());
+        log("storage " + storage.getClass().getName());
     }
 
     @Override
     public AbstractAnalyzer create() {
-        //list = new ArrayList<String>();
         return this;
     }
 
     @Override
     public void dispose() {
-        //for (String uri: list) {
-        //    log("rdf uri " + uri);
-        //}
         log("ref: " + ref_count + " uri: " + uri_count + " doi: " + doi_count
          + " loc: " + loc_count + " rdf: " + rdf_count + " upd: " + upd_count 
          + " nop: " + nop_count + " yop: " + yop_count);
@@ -133,8 +120,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
         } else if (storage==null) {
             // no storage to write to
         } else {
-            //storage.write(model, rc.getURI());
-            storage.write(model, id);
+            // storage.write(model, id);
         }
     }
 
@@ -146,16 +132,17 @@ public class RefAnalyzer extends AbstractAnalyzer {
             log("bad reference " + ref_count); 
         } else if (uri.startsWith("http://localhost/")) {
             loc_count++;
-            model.add(model.createStatement(obj, isReferencedBy, rc));
+            // this breaks the model:
+            // model.add(model.createStatement(obj, isReferencedBy, rc));
         } else if (uri.contains("doi")) {
             doi_count++;
-            if (!test) {
-                boolean b = testModel(uri);
-                if (b) {
-                    rdf_count++;
-                    log("linked data uri: " + uri);
-                }
-            }
+            //if (!test) {
+            //    boolean b = testModel(uri);
+            //    if (b) {
+            //        rdf_count++;
+            //        log("linked data uri: " + uri);
+            //    }
+            //}
         } else if (uri.contains("uni-marburg.de")) {
             uri_count++;
             log("repository [" + uri + "]"); 
@@ -163,14 +150,14 @@ public class RefAnalyzer extends AbstractAnalyzer {
         } else if (uri.contains("uni-")) {
             uri_count++;
             log("repository [" + uri + "]"); 
-            //if (!test) updateRemote(uri, rc.getURI());
+            // if (!test) updateRemote(uri, rc.getURI());
         } else if (uri.contains("econstor")) {
             uri_count++;
             log("econstor [" + uri + "]"); 
-            //if (!test) updateRemote(uri, rc.getURI());
+            // if (!test) updateRemote(uri, rc.getURI());
         } else {
             uri_count++;
-            //if (!test) updateRemote(uri, rc.getURI());
+            // if (!test) updateRemote(uri, rc.getURI());
         }
     }
 
@@ -298,12 +285,13 @@ public class RefAnalyzer extends AbstractAnalyzer {
     }
 
     private void sparqlUpdate(String service, String uri, String resource) {
+        String graph = uri.substring(0, uri.indexOf('/', 8));
         String upd = "PREFIX dct: <http://purl.org/dc/terms/>\n"
-                   + "INSERT DATA { " // GRAPH " + "<" + graph + "> {\n"
-                   + "<" + uri + "> dct:isReferencedBy " 
+                   + "INSERT DATA {\n GRAPH <" + graph + ">"
+                   + "{ <" + uri + "> dct:isReferencedBy " 
                    + "<" + resource + "> . }\n}";
         //log("sparql: " + sparqlSrv + " update: [" + upd + "] " + graph); 
-        log("[" + upd + "]");
+        log(service + "\n[" + upd + "]");
         //Dataset ds = DatasetFactory.create(graph);
         //GraphStore graphStore = GraphStoreFactory.create(ds) ;
         GraphStore graphStore = GraphStoreFactory.create() ;

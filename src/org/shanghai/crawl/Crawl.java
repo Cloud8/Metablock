@@ -207,11 +207,9 @@ public class Crawl {
     }
 
     public void test(String resource) {
-        log("test source: " + source + " target " + target);
+        log("test source: " + source + " target: " + target);
         createCrawler();
         createTransporter(source);
-        crawler = new MetaCrawl(transporter, testFile); // test mode
-        crawler.create();
         if (source.equals("void")) {
             int found = crawler.index(resource);
             if (found>0) crawler.test();
@@ -224,11 +222,7 @@ public class Crawl {
     public void test(String from, String until) {
         target = "test";
         createCrawler();
-        //createTransporter(source);
-        //crawler = new MetaCrawl(transporter,testFile);
-        //crawler.create();
         crawler.test(from, until);
-        //crawler.dispose();
     }
 
     public void dump() {

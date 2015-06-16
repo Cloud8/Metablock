@@ -1,9 +1,48 @@
 
 
-Autobib
-========
+  AutoBib Manual
+=====================
 
-##### Indexing : from RDF to solr
+  AutoBib (abd) is a metadata framework for bibliograhical data build around 
+  the RDF data model. 
+  In its most basic functionality, it is a data crawler able to fetch a
+  RDF description from a data source, analyze the data and write the
+  possibly modified resource description back to a RDF target.
+
+##### RDF Data sources:
+  
+  - SPARQL service endpoints
+  - RDF data files from the filesystem
+  - OAI datasources
+  - RDF data files retrieved from the web
+
+##### RDF data targets:
+
+  - Virtuoso RDF storage
+  - Jena TDB storage
+  - 4store RDF storage
+  - RDF files on the local file system
+  - Solr search index as defined by the VuFind discovery system
+  - System console
+
+##### RDF data analyzers
+
+  - Language analyzer: guesses the language of a resource desription
+    from the dcterms abstract or title property
+  - NLM Analyzer: set urn identifier property, transform NLM to RDF 
+  - DOI Analyzer: register a DOI for a resource
+  - PDF Analyzer: extract bibliographic metadata and references from PDF
+
+  - REF Analyzer: some bibliographic relations are reflexive like so:
+    <code>paperA dcterms:references paperB</code> vs. 
+    <code>paperB dcterms:isReferencedBy paperA</code>. 
+    This Analyzer trys to update a referenced knowledge base with the inverse 
+    relation (experimental).
+
+  - CTX Analyzer: find citation context and set c4o:hasContext and 
+    c4o:hasInTextCitationFrequency property for a dct:bibliographicCitation
+
+##### Indexing : writing RDF data to a Solr search index
 
   To build a solr index from a SPARQL service endpoint,
   three steps are required:
@@ -20,30 +59,27 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   are rather general, but modelling of bibliographic resources may vary and 
   require modifications.  
 
+%% <!-- See http://journal.code4lib.org/articles/8526 -->
 
   All configurations are done in lib/seaview.ttl
 
-##### Sparql Endpoint Test
-  RDF data investigation is supported to a certain limit:
+##### RDF Transporter Test
 
-  <code>abd -probe</code> : get basic information about remote services.
+  [<code>abd -crawl -probe</code>] : get basic information about a data source .
 
-  <code>abd -test</code> : get some URIs based on enumeration query.
+  [<code>abd -crawl -test</code>] : get some URIs based on enumeration query.
 
-  <code>abd -dump</code> : dump a specific resource
+  [<code>abd -crawl -dump</code>] : dump a random resource
 
-  <code>abd -index </code> : load, transform and index.
+  [<code>abd -crawl -dump *resource*</code>] : dump a specific resource
 
-##### Crawling RDF and Lifting XML to RDF
+  [<code>abd -crawl -test *resource*</code>] : index and transform resource
 
-  The seaview program can be used to crawl xml data, lift data to rdf
-  and store everything into a triple store. 
-
-    abd -crawl oai : load oai data as defined by configuration file
+  [<code>abd -crawl *resource*</code>] : index, transform and write resource
 
 ##### About
 
-  The seaview program is written in Java and controled by a 
+  The autobib program is written in Java and controled by a 
   knowledge base written down in turtle together with some 
   command line flags.
 

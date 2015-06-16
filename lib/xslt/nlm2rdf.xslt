@@ -27,7 +27,7 @@
      select="substring-before($base/nlm:self-uri[1]/@xlink:href,'/article')"/>
 <xsl:param name="year" 
      select="$base/nlm:pub-date[@pub-type='collection']/nlm:year"/>
-<xsl:param name="seq" select="$base/nlm:issue"/>
+<xsl:param name="seq" select="$base/nlm:issue-id[@pub-id-type='other']"/>
 <xsl:param name="aid" select="$base/nlm:article-id[@pub-id-type='other']"/>
 
 <xsl:template match="/">
@@ -54,19 +54,23 @@
     <xsl:apply-templates select="nlm:kwd-group" />
     <xsl:apply-templates select="nlm:permissions" />
     <xsl:apply-templates select="nlm:abstract" />
-    <fabio:hasURL>
-        <xsl:value-of select="nlm:self-uri[1]/@xlink:href"/>
-    </fabio:hasURL>
-    <xsl:variable name="doc"><xsl:value-of 
-         select="nlm:self-uri[@content-type='application/pdf']/@xlink:href"/>
-    </xsl:variable>
-    <!-- the document we are talking about. Better term ? -->
-    <ore:aggregates rdf:resource="{concat(substring-before($doc,'view'),
-                                'download',substring-after($doc,'view'))}"/>
+    <xsl:apply-templates select="nlm:self-uri" />
     <xsl:apply-templates select="nlm:article-id" />
     <xsl:apply-templates select="nlm:issue-id" />
     <xsl:apply-templates select="nlm:issue" />
     <xsl:apply-templates select="nlm:volume" />
+</xsl:template>
+
+<xsl:template match="nlm:self-uri[not(@content-type)]">
+  <fabio:hasURL><xsl:value-of select="@xlink:href"/></fabio:hasURL>
+</xsl:template>
+
+<xsl:template match="nlm:self-uri[@content-type='application/pdf']">
+  <ore:aggregates rdf:resource="{concat(substring-before(@xlink:href,'view'),
+                          'download',substring-after(@xlink:href,'view'))}"/>
+</xsl:template>
+
+<xsl:template match="nlm:self-uri[@content-type='text/html']">
 </xsl:template>
 
 <xsl:template match="nlm:title-group/nlm:article-title">
@@ -157,6 +161,13 @@
   <dct:isPartOf>
     <fabio:JournalIssue rdf:about="{concat($uri,'/',$year,'/',$seq)}">
       <xsl:choose>
+      <xsl:when 
+        test="../nlm:article-meta/nlm:volume and ../nlm:article-meta/nlm:issue">
+        <dct:title>
+          <xsl:value-of select="concat('Vol. ',../nlm:article-meta/nlm:volume, 
+          ' No. ',../nlm:article-meta/nlm:issue, ' (', $year ,')')"/>
+        </dct:title>
+      </xsl:when>
       <xsl:when test="../nlm:article-meta/nlm:volume">
         <dct:title>
           <xsl:value-of select="concat('Vol. ',
@@ -164,11 +175,10 @@
         </dct:title>
       </xsl:when>
       <xsl:otherwise>
-        <dct:title>
-          <xsl:value-of select="concat($year, ',', $seq)"/>
-        </dct:title>
+        <dct:title><xsl:value-of select="concat($year, ',', $seq)"/></dct:title>
       </xsl:otherwise>
       </xsl:choose>
+      <xsl:apply-templates select="nlm:journal-id"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:issue-title"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:issue-id"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:pub-date"/>
@@ -177,11 +187,19 @@
       <xsl:apply-templates select="nlm:publisher"/>
       <dct:isPartOf>
         <fabio:Journal rdf:about="{$uri}">
-          <dct:title><xsl:value-of select="nlm:journal-title"/></dct:title>
+          <xsl:apply-templates select="nlm:journal-title"/>
         </fabio:Journal>
       </dct:isPartOf>
   </fabio:JournalIssue>
  </dct:isPartOf>
+</xsl:template>
+
+<xsl:template match="nlm:journal-meta/nlm:journal-id">
+  <xsl:comment><xsl:value-of select="."/></xsl:comment>
+</xsl:template>
+
+<xsl:template match="nlm:journal-meta/nlm:journal-title">
+  <dct:title><xsl:value-of select="."/></dct:title>
 </xsl:template>
 
 <xsl:template match="nlm:journal-meta/nlm:issn">

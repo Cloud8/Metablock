@@ -153,6 +153,7 @@ public class DOIAnalyzer extends AbstractAnalyzer {
 
     @Override
     public void test(Model model, Resource rc, String id) {
+        log("test " + id);
         createProperties(model, rc, id);
         if (!rc.hasProperty(creator)) {
             log("model has no creator, skip " + id);
