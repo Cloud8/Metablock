@@ -1,7 +1,7 @@
 
 
-  AutoBib Manual
-=====================
+  The AutoBib RDF Metadata Framework
+=====================================
 
   AutoBib (abd) is a metadata framework for bibliograhical data build around 
   the RDF data model. 
