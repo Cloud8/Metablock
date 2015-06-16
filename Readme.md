@@ -1,7 +1,7 @@
 
 
-  The AutoBib RDF Metadata Framework
-=====================================
+  Autobib: Preparations for a Semantic Repository.
+==================================================
 
   AutoBib (abd) is a metadata framework for bibliograhical data build around 
   the RDF data model. 
