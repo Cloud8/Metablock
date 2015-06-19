@@ -55,6 +55,7 @@ public class NLMAnalyzer implements Analyzer {
     //Property volume;     // fabio:hasVolumeIdentifier -- issue volume
     Property article;  // fabio:hasElectronicArticleIdentifier
     Property type;       // rdf
+    Property hasURL;     // fabio:hasURL
 
     public NLMAnalyzer(String prefix, String store) {
         urn = new URN(prefix);
@@ -86,6 +87,7 @@ public class NLMAnalyzer implements Analyzer {
         issueId = model.createProperty(fabio, "hasIssueIdentifier");
         //number = model.createProperty(fabio, "hasSequenceIdentifier");
         //volume = model.createProperty(fabio, "hasVolumeIdentifier");
+        hasURL = model.createProperty(fabio, "hasURL");
         type = model.createProperty(rdf, "type");
         article = model.createProperty(fabio, "hasElectronicArticleIdentifier");
         //log("analyze " + id);
@@ -128,6 +130,10 @@ public class NLMAnalyzer implements Analyzer {
                 hash.put(rci.getURI(), rci.getURI());
             }
             count++;
+        }
+        if (store.equals("files")) {
+            //archive index files
+            //writeIndex(model, rc, id);
         }
         //if (b) log(" issue " + id);
         return rc;
@@ -219,6 +225,21 @@ public class NLMAnalyzer implements Analyzer {
             }
         }
         return false;
+    }
+
+    /** archive index page to file system */
+    private boolean writeIndex(Model model, Resource rc, String fname) {
+        String path = fname.substring(0, fname.lastIndexOf("/"));
+        // archive index page
+        if (rc.hasProperty(hasURL)) {
+            String url = rc.getProperty(hasURL).getString();
+            //log("write index to " + path + "/index.html");
+            FileUtil.copy(url, path + "/index.html");
+            return true;
+        } else {
+            log("no hasURL " + path);
+            return false;
+        }
     }
 
     /** write model files to file system */

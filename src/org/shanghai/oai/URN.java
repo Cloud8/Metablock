@@ -33,7 +33,7 @@ import org.shanghai.rdf.Config;
 import org.shanghai.rdf.XMLTransformer;
 
 /**
-    ✪ (c) reserved.
+    (c) reserved.
     @license http://www.apache.org/licenses/LICENSE-2.0
     @author Goetz Hatop 
     @title Another URN implementation

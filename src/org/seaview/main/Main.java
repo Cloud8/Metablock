@@ -56,6 +56,14 @@ public class Main extends org.shanghai.crawl.Main {
 				}
             }
             super.make(result.toArray(new String[result.size()]));
+        } else if (args.length>2 && args[0].startsWith("-viewer")) {
+            config = new Config(configFile).create();
+            String xslt = config.get("opus.viewer");
+            boolean test = args[0].equals("-viewer:debug");
+            Viewer viewer = new Viewer(args[1], args[2], xslt, test);
+            viewer.create();
+            viewer.transform();
+            viewer.dispose();
         } else { 
             super.make(args);
         }

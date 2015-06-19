@@ -21,10 +21,6 @@ import java.util.logging.Logger;
 public abstract class AbstractAnalyzer implements Analyzer {
 
     public static final String ore = "http://www.openarchives.org/ore/terms/";
-    private static final String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-    protected static final String fabio = "http://purl.org/spar/fabio/";
-    protected static final String dct = DCTerms.NS;
-    protected static final String foaf = "http://xmlns.com/foaf/0.1/";
     protected static final String c4o = "http://purl.org/spar/c4o/";
     protected static final String voidNS = "http://rdfs.org/ns/void#";
 

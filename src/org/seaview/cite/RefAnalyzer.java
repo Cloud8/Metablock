@@ -31,7 +31,7 @@ import com.hp.hpl.jena.shared.PropertyNotFoundException;
 import java.util.logging.Logger;
 
 /**
-    ✪ (c) reserved.
+    (c) reserved.
     @license http://www.apache.org/licenses/LICENSE-2.0
     @author Goetz Hatop
     @title Inserts isReferencedBy statements into referenced Model
@@ -54,23 +54,22 @@ public class RefAnalyzer extends AbstractAnalyzer {
     private int loc_count = 0; // local virtual uri
     private int rdf_count = 0; // with rdf data behind uri
     private int upd_count = 0; // update 
-    private int nop_count = 0; // no references
-    private int yop_count = 0; // found references
+    private int nop_count = 0; // documents with no references
+    private int doc_count = 0; // documents with found references
 
     private boolean test = false;
 
-    private Transporter transporter;
-    private Storage storage;
+    //private Transporter transporter;
+    //private Storage storage;
 
-    public RefAnalyzer() {
-    }
+    //public RefAnalyzer() {}
 
-    public RefAnalyzer(Transporter transporter, Storage storage) {
-        this.transporter = transporter;
-        this.storage = storage;
-        log("transporter " + transporter.getClass().getName());
-        log("storage " + storage.getClass().getName());
-    }
+    //public RefAnalyzer(Transporter transporter, Storage storage) {
+    //    this.transporter = transporter;
+    //    this.storage = storage;
+    //    log("transporter " + transporter.getClass().getName());
+    //    log("storage " + storage.getClass().getName());
+    //}
 
     @Override
     public AbstractAnalyzer create() {
@@ -81,7 +80,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
     public void dispose() {
         log("ref: " + ref_count + " uri: " + uri_count + " doi: " + doi_count
          + " loc: " + loc_count + " rdf: " + rdf_count + " upd: " + upd_count 
-         + " nop: " + nop_count + " yop: " + yop_count);
+         + " nop: " + nop_count + " doc: " + doc_count);
     }
 
     @Override
@@ -109,19 +108,20 @@ public class RefAnalyzer extends AbstractAnalyzer {
                     } catch (PropertyNotFoundException e) { log(e); }
                     finally {}
                 }
-                yop_count++;
+                doc_count++;
+            } else {
+                nop_count++;
             }
-            nop_count++;
         } else {
             nop_count++;
         }
-        if (test) {
-            return;
-        } else if (storage==null) {
-            // no storage to write to
-        } else {
-            // storage.write(model, id);
-        }
+        //if (test) {
+        //    return;
+        //} else if (storage==null) {
+        //    // no storage to write to
+        //} else {
+        //    // storage.write(model, id);
+        //}
     }
 
     protected void analyzeReference(Model model, Resource rc, Resource obj) {
@@ -145,6 +145,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
             //}
         } else if (uri.contains("uni-marburg.de")) {
             uri_count++;
+            rdf_count++;
             log("repository [" + uri + "]"); 
             if (!test) updateRemote(uri, rc.getURI());
         } else if (uri.contains("uni-")) {
@@ -249,9 +250,8 @@ public class RefAnalyzer extends AbstractAnalyzer {
     private void updateRemote(String uri, String resource) {
         Model model = PrefixModel.retrieve(uri);
         if (model==null) {
-            // no rdf available
+        //    // no rdf available
         } else {
-            rdf_count++;
             log(uri + " is referenced by " + resource); 
             String sparql = findService(model, uri);
             if (sparql!=null) {

@@ -20,7 +20,7 @@ import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
 /**
-    ✪ (c) reserved.
+    (c) reserved.
     @license http://www.apache.org/licenses/LICENSE-2.0
     @author Goetz Hatop 
     @title Register DOI from fabio:hasDOI property
@@ -28,18 +28,12 @@ import com.hp.hpl.jena.vocabulary.DCTerms;
 */
 public class DOIAnalyzer extends AbstractAnalyzer {
 
-	//private static final String fabio = "http://purl.org/spar/fabio/";
-	//private static final String prism 
-    //                   = "http://prismstandard.org/namespaces/basic/2.0/";
-	//private static final String dct = "http://purl.org/dc/terms/"; 
     private static Logger log = Logger.getLogger(DOIAnalyzer.class.getName());
 
 	private Property hasDOI;
 	private Property hasURL;
 	private Property creator; // simple check to avoid bad models
 
-    //ojs journals 
-    //private String prism_doi = null;
     private String volume = null;
     private String number = null;
     private String year = null;
@@ -59,7 +53,7 @@ public class DOIAnalyzer extends AbstractAnalyzer {
     private String uri = null;
     private String doi = null;
 
-    private boolean quiet = true; // do not log so much
+    private boolean quiet = true; // do not talk too much
     private boolean delete = false;
     private boolean submit = false; // submit metadata
     private boolean register = false; // register metadata
@@ -145,7 +139,7 @@ public class DOIAnalyzer extends AbstractAnalyzer {
             }
             return; 
         } else {
-            log("doi register: " + doi + " " + uri);
+            log("doi: " + doi + " " + uri);
 		    rc.addProperty(hasDOI, doi);
             register(model, uri, id, doi);
         }
@@ -285,7 +279,7 @@ public class DOIAnalyzer extends AbstractAnalyzer {
             if (result.contains("OK")) {
                 result += ":" + this.doiGenerator.register(doi, uri); 
             }
-            log(uri + " [" + result + "]");
+            log(" [" + result + "] " + fname);
             if (result.contains("OK")) {
 			    syncDB(doi, uri, articleId); // update database
             } else {

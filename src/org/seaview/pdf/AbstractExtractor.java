@@ -1,6 +1,5 @@
 package org.seaview.pdf;
 
-import org.seaview.data.AbstractAnalyzer;
 import org.seaview.util.TextUtil;
 
 import com.hp.hpl.jena.rdf.model.Model;

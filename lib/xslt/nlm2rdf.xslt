@@ -62,15 +62,15 @@
 </xsl:template>
 
 <xsl:template match="nlm:self-uri[not(@content-type)]">
-  <fabio:hasURL><xsl:value-of select="@xlink:href"/></fabio:hasURL>
-</xsl:template>
-
-<xsl:template match="nlm:self-uri[@content-type='application/pdf']">
-  <ore:aggregates rdf:resource="{concat(substring-before(@xlink:href,'view'),
-                          'download',substring-after(@xlink:href,'view'))}"/>
 </xsl:template>
 
 <xsl:template match="nlm:self-uri[@content-type='text/html']">
+</xsl:template>
+
+<xsl:template match="nlm:self-uri[@content-type='application/pdf']">
+  <fabio:hasURL><xsl:value-of select="@xlink:href"/></fabio:hasURL>
+  <ore:aggregates rdf:resource="{concat(substring-before(@xlink:href,'view'),
+                          'download',substring-after(@xlink:href,'view'))}"/>
 </xsl:template>
 
 <xsl:template match="nlm:title-group/nlm:article-title">
@@ -150,11 +150,16 @@
 </xsl:template>
 
 <xsl:template match="nlm:permissions/nlm:copyright-statement">
- <xsl:if test="substring-before(substring-after(.,'href='),' ')!=''">
-  <dct:licence>
+ <xsl:choose>
+  <xsl:when test="substring-before(substring-after(.,'href='),' ')!=''">
+   <dct:licence>
     <xsl:value-of select="substring-before(substring-after(.,'href='),' ')"/>
-  </dct:licence>
- </xsl:if>
+   </dct:licence>
+  </xsl:when>
+  <xsl:otherwise>
+   <dct:licence><xsl:value-of select="."/></dct:licence>
+  </xsl:otherwise>
+ </xsl:choose>
 </xsl:template>
 
 <xsl:template match="nlm:journal-meta">
@@ -175,7 +180,7 @@
         </dct:title>
       </xsl:when>
       <xsl:otherwise>
-        <dct:title><xsl:value-of select="concat($year, ',', $seq)"/></dct:title>
+        <dct:title><xsl:value-of select="concat($year, ', ', ../nlm:article-meta/nlm:issue)"/></dct:title>
       </xsl:otherwise>
       </xsl:choose>
       <xsl:apply-templates select="nlm:journal-id"/>
@@ -259,7 +264,7 @@
   <xsl:apply-templates select="nlm:kwd" />
 </xsl:template>
 
-<xsl:template match="nlm:kwd">
+<xsl:template match="nlm:kwd[text()!='']">
   <dct:subject><xsl:value-of select="."/></dct:subject>
 </xsl:template>
 

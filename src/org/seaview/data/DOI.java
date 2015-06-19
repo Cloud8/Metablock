@@ -26,8 +26,7 @@ import java.util.logging.Logger;
 //import java.util.Base64;
 import org.apache.commons.codec.binary.Base64;
 
-/**
-    ✪ (c) reserved.
+/** ✪ (c) reserved.
     @license http://www.apache.org/licenses/LICENSE-2.0
     @author Goetz Hatop 
     @title Datacite DOI registration
@@ -81,8 +80,9 @@ public class DOI {
         if (uri.startsWith("http://meta-journal.net")) {
             doi = prefix + "/meta" + src.replace("/",".");
         } else if (uri.startsWith("http://")) {
-            //log("createDoi " + uri + " " + src);
             src = src.replace("diss/","");
+            src = src.replace("es/","es");
+            src = src.replace("eb/","eb");
             src = src.replace("ep/0002","medrez");
             src = src.replace("ep/0003","meta");
             src = src.replace("ep/0004","mjr");
@@ -95,16 +95,26 @@ public class DOI {
     static String createDoi(String uri, 
             String year, String volume, String number, String articleId) {
         String doi = createDoi(uri);
-        doi = doi.substring(0, doi.indexOf(".", doi.indexOf("/")));
-        doi += "." + year;
-        if (volume!=null) {
-             doi += "." + volume;
-        }
-        if (number!=null) {
-             doi += "." + number;
-        }
-        if (articleId!=null) {
-             doi += "." + articleId;
+        //log("createDoi " + uri + " " + doi);
+        String journal = doi.substring(doi.indexOf("/")+1);
+        journal = journal.substring(0, journal.indexOf("."));
+        //log("journal: [" + journal + "]");
+        if (journal.equals("medrez")) {
+            doi = doi.substring(0, doi.indexOf("/")+1);
+            doi += "ep." + year;
+            doi += "." + articleId;
+        } else {
+            doi = doi.substring(0, doi.indexOf(".", doi.indexOf("/")));
+            doi += "." + year;
+            if (volume!=null) {
+                 doi += "." + volume;
+            }
+            if (number!=null) {
+                 doi += "." + number;
+            }
+            if (articleId!=null) {
+                 doi += "." + articleId;
+            }
         }
         return doi;
     }

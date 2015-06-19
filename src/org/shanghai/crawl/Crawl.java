@@ -223,6 +223,7 @@ public class Crawl {
         target = "test";
         createCrawler();
         crawler.test(from, until);
+        crawler.dispose();
     }
 
     public void dump() {

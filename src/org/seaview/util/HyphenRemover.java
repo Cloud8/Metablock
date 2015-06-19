@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * <li>First rule not respected in PDFs, so cannot be applied (sticked to: 2
  * behind and 2 forward)</li>
  * <li>Be careful to remove ligatures before, because not in [A-Za-z]</li>
- * <li>Accents are not considered (in an other code, range [A-Za-z\300-\377])</li>
+ * <li>Accents are not considered (in an other code, range [A-Za-z\\300-\\377])</li>
  * </ul>
  * 
  * <h3>Possible hyphens in English (see <a
@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * <ul>
  * <li>U+002D HYPHEN-MINUS (mainly used)</li>
  * <li>U+00AD SOFT HYPHEN</li>
- * <li>U+2010 ‐ hyphen (HTML: &#8208;)</li>
+ * <li>U+2010 hyphen (HTML: #8208;)</li>
  * </ul>
  * 
  * @author orianne.rollier@epfl.ch

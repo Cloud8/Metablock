@@ -110,6 +110,8 @@ public class Crawl extends org.shanghai.crawl.Crawl {
             }
             if (eng.contains("data")) {
                 crawler.inject(new DataAnalyzer().create());
+                //String xslt = config.get("nlp.transformer");
+                //crawler.inject(new DataAnalyzer(xslt).create());
             }
         }
     }
