@@ -58,7 +58,7 @@ public class MetaCrawl {
         if (xsltFile==null) {
             xmlTransformer = new XMLTransformer();
         } else {
-            String xslt = FileUtil.read(xsltFile);
+            String xslt = FileUtil.readResource(xsltFile);
             if (xslt==null) 
                 log(xsltFile + " not found!");
             xmlTransformer = new XMLTransformer(xslt);

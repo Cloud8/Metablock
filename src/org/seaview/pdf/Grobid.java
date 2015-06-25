@@ -24,19 +24,6 @@ import java.net.URLEncoder;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import javax.naming.NameAlreadyBoundException;
-import java.net.URLEncoder;
-import java.net.URL;
-import java.io.UnsupportedEncodingException;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.net.URLConnection;
-import java.nio.file.Path;
-import java.nio.file.Files;
-import java.nio.file.FileSystems;
 
 import org.grobid.core.*;
 import org.grobid.core.data.*;
@@ -55,7 +42,6 @@ public class Grobid extends AbstractExtractor {
     private int bad;                      //Pattern.compile("[^\\x00-\\x7f]");
     private static final Pattern nonASCII = Pattern.compile("[^a-zA-Z]");
     private Property title;
-    private Property references;
     private String home;
 
     private Engine engine;
@@ -164,7 +150,6 @@ public class Grobid extends AbstractExtractor {
 
     @Override
     public void extractReferences(Model model, Resource rc, String fname, int threshold) {
-        references = model.createProperty(dct, "references");
         try {
                 List<BibDataSet> bdsl = engine.processReferences(fname, false);
                 readReferences(bdsl, rc, model, threshold);
@@ -175,7 +160,7 @@ public class Grobid extends AbstractExtractor {
     }
 
     private void readReferences(List<BibDataSet> bdsl, Resource rc, Model org, int threshold) {
-        //rc.removeAll(references); 
+        //rc.removeAll(DCTerms.references); 
         int found = 0;
         Model mod = ModelFactory.createDefaultModel();
         Seq seq = mod.createSeq(rc.getURI() + "#References");
@@ -254,13 +239,13 @@ public class Grobid extends AbstractExtractor {
         }
         if (found>threshold && !test) {
             log("added " + found + " references [" + threshold + "]");
-            rc.addProperty(references, seq);
+            rc.addProperty(DCTerms.references, seq);
             org.add(mod);
         } else {
             if (test) {
                 log("test: " + found + " references found.");
             } else {
-                rc.addProperty(references, "");
+                rc.addProperty(DCTerms.references, "");
                 log("skipped " + found + " references, set to empty.");
             }
         }

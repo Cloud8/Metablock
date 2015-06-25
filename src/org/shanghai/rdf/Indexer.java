@@ -1,11 +1,6 @@
 package org.shanghai.rdf;
 
 import org.shanghai.util.FileUtil;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.lang.Character;
 import java.util.logging.Logger;
 
 /**

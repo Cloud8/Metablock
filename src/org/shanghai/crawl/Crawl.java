@@ -8,7 +8,6 @@ import org.shanghai.crawl.FileTransporter;
 import org.shanghai.oai.OAITransporter;
 import org.shanghai.oai.NLMAnalyzer;
 
-import java.io.File;
 import java.util.logging.Logger;
 
 /**
@@ -115,8 +114,7 @@ public class Crawl {
             //log("createTransporter [" + crawl + "]");
         } else if ("oai".equals(crawl)) {
             Config.OAI settings = config.getOAIList().get(0);
-            boolean archive = settings.archive!=null;
-            transporter = new OAITransporter(settings, archive);
+            transporter = new OAITransporter(settings);
             transporter.create();
         } else {
             String store = config.get(crawl+".sparql");
@@ -300,31 +298,31 @@ public class Crawl {
         crawler.crawl();
     }
 
-    private boolean checkTarget(String target) {
-        File f = new File(target);
-        if (f.isDirectory() && f.canWrite()) {
-            return true;
-        }
-        return false;
-    }
+    //private boolean checkTarget(String target) {
+    //    File f = new File(target);
+    //    if (f.isDirectory() && f.canWrite()) {
+    //        return true;
+    //    }
+    //    return false;
+    //}
 
     protected void crawl(String source, String target) {
         if ("oai".equals(source)) {
-            boolean archive = checkTarget(target);
-            if (archive) {
-                createStorage("empty");
-            } else if (!target.startsWith("-")) {
-                createStorage(target);
-            }
+            //boolean archive = checkTarget(target);
+            //if (archive) {
+            //    createStorage("empty");
+            //} else if (!target.startsWith("-")) {
+            createStorage(target);
+            //}
             for (int i=0; i<config.getOAIList().size(); i++) {
 			    Config.OAI settings = config.getOAIList().get(i);
-                if (!archive) {
-                    archive = settings.archive!=null;
-                } else {
-                    settings.archive = target;
-                    log("archive to " + settings.archive + " directory.");
-                }
-                transporter = new OAITransporter(settings, archive);
+                //if (!archive) {
+                //archive = settings.archive!=null;
+                //} else {
+                //    settings.archive = target;
+                //    log("archive to " + settings.archive + " directory.");
+                //}
+                transporter = new OAITransporter(settings);
                 transporter.create();
                 if ("-probe".equals(target)) {
                     System.out.println(transporter.probe());
@@ -345,8 +343,14 @@ public class Crawl {
     private void crawl(String resource) {
         //log("crawl # " + resource);
         if (source.equals("files")) {
-            //log("crawl files: " + resource);
-            crawlFiles(resource);
+            //crawlFiles(resource);
+            int found = crawler.index(resource);
+            //log("crawl files: " + resource + " " + found);
+            //if (found==0) {
+            //    crawler.crawl(resource);
+            //} else {
+                crawl();
+            //}
         } else if (source.equals("void")) {
             int found = crawler.index(resource);
             if (found==0) {
@@ -359,6 +363,7 @@ public class Crawl {
         }
     }
 
+    /*
     private void crawlFiles(String resource) {
         File file = new File(resource);
         if (file.exists()) {
@@ -372,15 +377,16 @@ public class Crawl {
             log("crawl home: " + resource);
             String home = System.getProperty("user.home");
             if (new File(home + "/" + resource).exists()) {
-                if (fc!=null)
-                    fc.setDirectory(home);
-                else log("fc was zero");
+                //if (fc!=null)
+                //    fc.setDirectory(home);
+                //else log("fc was zero");
                 count += crawler.index(home + "/" + resource);
             } 
         }
         crawl(); // copy transporter to storage
         log("crawled " + resource + " " + count);
     }
+    */
 
     private static final Logger logger =
                          Logger.getLogger(Crawl.class.getName());

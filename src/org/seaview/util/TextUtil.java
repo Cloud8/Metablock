@@ -67,27 +67,7 @@ public class TextUtil {
         return sb.toString();
     }
 
-    private static String XXformat(String text, String docId) {
-        String line;
-        StringBuilder sb = new StringBuilder();
-        LineNumberReader reader = new LineNumberReader(new StringReader(text));
-        try {
-            while ((line = reader.readLine()) != null) {
-                String lineOut = line;
-                Matcher matcher = re.matcher(line);
-                while (matcher.find() && ((line = reader.readLine()) != null)) {
-                    lineOut = lineOut + " " + line;
-                    sb.append(lineOut.trim());
-                }
-                sb.append("\n");
-            }
-        } catch (Throwable t) {
-            logger.info("failed to format docId " + docId + " "+t.toString()); 
-        }
-        return sb.toString();
-    }
-
-    /** Bad : provide basic block formatting */
+    /** provide very basic block formatting */
     private static String block(String text) {
         int count = 0;
         StringBuilder sb = new StringBuilder();
@@ -98,13 +78,6 @@ public class TextUtil {
             if (word.length()==0) {
                 sb.append("\n\t");
             }
-            //if (sb.length() % 70 > 64) {
-            //    if (count==0)
-			//	    sb.append("\n" + (sb.length()%70) + "#");
-            //    count++;
-            //} else {
-			//    count=0;
-            //}
         }
         return sb.toString();
     }

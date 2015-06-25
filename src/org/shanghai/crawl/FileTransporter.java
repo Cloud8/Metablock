@@ -2,8 +2,11 @@ package org.shanghai.crawl;
 
 import org.shanghai.util.FileUtil;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.DirectoryStream;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -22,25 +25,22 @@ public class FileTransporter implements MetaCrawl.Transporter {
     public interface Delegate {
         public Delegate create();
         public void dispose();
-        public boolean canRead(File file);
+        public boolean canRead(String fname);
         public Model read(String fname);
     }
 
     private int count = 0;
 	private int logC = 0;
     private String suffix;
-    //private String base;
 	private int depth = 0;
 	private int level = 0;
-    private String directory;
+    //private String directory;
     private String[] suffixes;
     private List<String> identifiers;
 
     private List<Delegate> delegates;
 
-    //public FileTransporter(String base, String suffix, int depth, int logC) {
     public FileTransporter(String suffix, int depth, int logC) {
-        //this.base = base;
         this.suffix = suffix;
         this.depth = depth;
         this.logC = logC;
@@ -75,16 +75,22 @@ public class FileTransporter implements MetaCrawl.Transporter {
 			return mod;
         }
         for(Delegate d: delegates) {
-            //log(d.getClass().getName() + " reads " + fname);
-            if (d.canRead(new File(fname))) {
-                //mod = d.read(getIdentifier(fname));
-                mod = d.read(fname);
+            if (d.canRead(fname)) {
+                //log(d.getClass().getName() + " reads " + fname);
+                //if (directory==null) {
+                    mod = d.read(fname);
+                //} else {
+                //    mod = d.read(fname);
+                //    //log("read " + directory + "/" + fname);
+                //    //mod = d.read(directory + "/" + fname);
+                //}
                 break;
             }
         }
 		return mod;
     }
 
+    /*
     private String findName(String fname) {
 	    String key = fname.substring(fname.indexOf("/",8));
 		//log("find " + key);
@@ -96,6 +102,7 @@ public class FileTransporter implements MetaCrawl.Transporter {
 		}
 		return key;
     }
+    */
 
     //@Override 
     //public String getIdentifier(String fname) {
@@ -115,30 +122,58 @@ public class FileTransporter implements MetaCrawl.Transporter {
 
     @Override
     public int crawl(String resource) {
+        log("crawl " + resource);
         identifiers.clear();
+        count=0;
+        Path path = Paths.get(resource);
+        if (Files.isDirectory(path)) {
+            // this.directory = resource;
+        } else if (Files.isRegularFile(path)) {
+            // crawl(path, 0);
+            // return 1;
+        } else {
+            String home = System.getProperty("user.home");
+            path = Paths.get(home + "/" + resource);
+			// if (Files.isDirectory(path)) {
+            //     // this.directory = home + "/" + resource;
+            //     // this.directory = home;
+            // } else {
+            //     return 0;
+			// }
+        }
+        level = 0;
+		crawl(path, depth);
+        return count;
+    }
+
+    /*
+    public int oldCrawl(String resource) {
+        log("crawl " + resource);
+        identifiers.clear();
+        
 	    File f = new File(resource);
-        if (!f.exists()) {
+        if (f.exists()) {
+            this.directory = resource;
+        } else {
             String home = System.getProperty("user.home");
             f = new File(home + "/" + resource);
             if (f.exists()) {
-                setDirectory(home);
+                //setDirectory(home);
+                this.directory = home + "/" + resource;
             } else {
                 return 0;
             } 
         }
         level = 0;
-        //if (depth==0)
-        //    log("crawling " + resource );
-        //else
-        //    log("crawling "+resource+" with depth "+depth+":" + logC);
         count=0;
 		crawl(f, depth);
         return count;
     }
+    */
 
-    public void setDirectory(String directory) {
-         this.directory = directory;
-    }
+    //public void setDirectory(String directory) {
+    //     this.directory = directory;
+    //}
 
     public FileTransporter inject(Delegate d) {
          delegates.add(d);
@@ -146,6 +181,26 @@ public class FileTransporter implements MetaCrawl.Transporter {
     }
 
     //depth==0 means unlimited recurse. 
+    private void crawl(Path path, int mDepth) {
+        if (mDepth!=0 && level>mDepth)
+            return;
+    	if (Files.isDirectory(path) && Files.isReadable(path)) {
+            //log("crawling " + path.getFileName() + " level " + level); 
+			try {
+			    DirectoryStream<Path> paths = Files.newDirectoryStream(path);
+		        level++;
+                for (Path p:paths) {
+				    crawl(p, mDepth);
+				}
+                level--;
+			} catch(IOException e) { log(e); }
+        } else {
+            checkFile(path);
+        }
+        return;
+    }
+
+    /*
     private void crawl(File f, int mDepth) {
         if (mDepth!=0 && level>mDepth)
             return;
@@ -162,27 +217,28 @@ public class FileTransporter implements MetaCrawl.Transporter {
                 level--;
             }
         } else {
-            checkFile(f);
+            checkFile(f.getName());
         }
         return;
     }
+    */
 
-    private void checkFile(File f) {
+    private void checkFile(Path path) {
+        //log(" checkFile " + path.toString());
         boolean b = true;
         if (suffix!=null) {
             b = false;
             for (int i=0; i<suffixes.length; i++) {
-                 //log(f.getName() + " " + suffixes[i]);
-                 if (f.getName().endsWith(suffixes[i])) 
+                 if (path.toString().endsWith(suffixes[i])) 
                      b=true;
             }
         }
         if (!b)
             return;
         for(Delegate d: delegates) {
-            if (d.canRead(f)) {
-                //log(d.getClass().getName() + " canRead " + f.getName());
-                identifiers.add(f.getPath());
+            if (d.canRead(path.toString())) {
+                //log(d.getClass().getName() + " canRead " + path.toString());
+                identifiers.add(path.toString());
                 count++;
             } else {
                 b = false;
@@ -190,9 +246,37 @@ public class FileTransporter implements MetaCrawl.Transporter {
         }
         if (b&&logC!=0&&count%logC==0) {
             //log(count + ": " + f.getAbsolutePath() +" ["+ level +"]");
-            log(count + ": " + f.getPath() +" ["+ level +"]");
+            log(count + ": " + path.toString() +" ["+ level +"]");
         }
     }
+
+    /*
+    private void checkFile(String fname) {
+        boolean b = true;
+        if (suffix!=null) {
+            b = false;
+            for (int i=0; i<suffixes.length; i++) {
+                 if (fname.endsWith(suffixes[i])) 
+                     b=true;
+            }
+        }
+        if (!b)
+            return;
+        for(Delegate d: delegates) {
+            if (d.canRead(fname)) {
+                //log(d.getClass().getName() + " canRead " + f.getName());
+                identifiers.add(fname);
+                count++;
+            } else {
+                b = false;
+            }
+        }
+        if (b&&logC!=0&&count%logC==0) {
+            //log(count + ": " + f.getAbsolutePath() +" ["+ level +"]");
+            log(count + ": " + fname +" ["+ level +"]");
+        }
+    }
+    */
 
     private static final Logger logger = 
                          Logger.getLogger(FileTransporter.class.getName());

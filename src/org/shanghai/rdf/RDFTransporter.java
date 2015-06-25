@@ -5,14 +5,6 @@ import org.shanghai.store.Store;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import java.util.logging.Logger;
-import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
-import java.io.File;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -55,8 +47,8 @@ public class RDFTransporter implements MetaCrawl.Transporter {
     @Override
     public void create() {
         size=0;
-        probeQuery = FileUtil.read(probeQueryFile);
-        indexQuery = FileUtil.read(indexQueryFile);
+        probeQuery = FileUtil.readResource(probeQueryFile);
+        indexQuery = FileUtil.readResource(indexQueryFile);
         if (indexQuery==null || indexQuery.trim().length()==0) {
             log("Everything is wrong.");
         }
@@ -67,7 +59,7 @@ public class RDFTransporter implements MetaCrawl.Transporter {
             probeQuery = probeQuery.replace("<date>", "1970-01-01");
             indexQuery = indexQuery.replace("<date>", "1970-01-01");
         }
-        dumpQuery = FileUtil.read(descrQueryFile);
+        dumpQuery = FileUtil.readResource(descrQueryFile);
         reader = new RDFReader(new Store(sparqlService,dumpQuery));
         reader.create();
         //log(probeQueryFile + ":" + indexQueryFile);

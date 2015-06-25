@@ -19,10 +19,8 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.Seq;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
-import java.io.PrintStream;
 import java.io.BufferedReader;
 import java.io.StringReader;
-import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 import java.util.HashMap;

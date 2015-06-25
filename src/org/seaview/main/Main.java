@@ -2,6 +2,7 @@ package org.seaview.main;
 
 import org.seaview.main.Crawl;
 import org.seaview.data.Viewer;
+import org.seaview.data.OldViewer;
 import org.shanghai.rdf.Config;
 import org.shanghai.crawl.FileTransporter;
 import org.shanghai.crawl.TrivialScanner;
@@ -61,6 +62,16 @@ public class Main extends org.shanghai.crawl.Main {
             String xslt = config.get("opus.viewer");
             boolean test = args[0].equals("-viewer:debug");
             Viewer viewer = new Viewer(args[1], args[2], xslt, test);
+            viewer.create();
+            viewer.transform();
+            viewer.dispose();
+        } else if (args.length>2 && args[0].startsWith("-oview")) {
+            //GH201506: new version intendend
+            log("Attention: starting old viewer"); 
+            config = new Config(configFile).create();
+            String xslt = config.get("opus.viewer");
+            boolean test = args[0].equals("-oview:debug");
+            OldViewer viewer = new OldViewer(args[1], args[2], xslt, test);
             viewer.create();
             viewer.transform();
             viewer.dispose();

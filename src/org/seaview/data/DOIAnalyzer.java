@@ -7,17 +7,13 @@ import org.shanghai.util.PrefixModel;
 import org.shanghai.crawl.TrivialScanner;
 import org.shanghai.rdf.XMLTransformer;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.io.IOException;
-import java.util.logging.Logger;
-
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.vocabulary.DCTerms;
+import java.util.logging.Logger;
 
 /**
     (c) reserved.

@@ -13,26 +13,7 @@ import com.hp.hpl.jena.rdf.model.Seq;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.xml.sax.SAXException;
-
-import java.net.URL;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.URISyntaxException;
-
-import java.io.UnsupportedEncodingException;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.File;
-import java.io.InputStream;
-
-import java.util.ArrayList;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
 import java.util.logging.Logger;
-import java.util.List;
-import java.net.MalformedURLException;
 
 /*
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -187,6 +168,15 @@ public class PDFAnalyzer extends AbstractAnalyzer {
                 //rc.addProperty(creator, pl.getAuthor());
             }
         }
+
+        Property issued = model.createProperty(dct, "issued");
+        if (!rc.hasProperty(issued)) {
+            log("setting issue date from pdf catalog");
+		    if (pl.getDate()!=null) {
+                rc.addProperty(issued, pl.getDate());
+            }
+        }
+
     }
 
     private void extractReferences(Model model, Resource rc, String fname) {

@@ -24,17 +24,17 @@
 
 <xsl:template match="dct:BibliographicResource[dct:identifier]">
  <doc>
-    <field name="recordtype">opus</field>
-    <xsl:apply-templates select="dct:*"/>
-    <xsl:apply-templates select="foaf:img" />
-    <xsl:apply-templates select="ore:aggregates" />
-    <xsl:apply-templates select="fabio:hasDOI" />
     <field name="allfields">
         <xsl:value-of select="normalize-space(.)"/>
         <xsl:if test="dct:isReferencedBy">
         <xsl:value-of select="' isReferencedBy '"/>
         </xsl:if>
     </field>
+    <field name="recordtype">opus</field>
+    <xsl:apply-templates select="dct:*"/>
+    <xsl:apply-templates select="foaf:img" />
+    <xsl:apply-templates select="ore:aggregates" />
+    <xsl:apply-templates select="fabio:hasDOI" />
  </doc>
 </xsl:template>
 
@@ -104,10 +104,13 @@
 
 <xsl:template match="dct:creator/rdf:Seq">
     <xsl:apply-templates select="rdf:li/foaf:Person"/>
+    <xsl:apply-templates select="rdf:li[@rdf:resource]"/>
 </xsl:template>
 
-<xsl:template match="dct:creator/rdf:Seq/rdf:li">
-    <xsl:apply-templates select="foaf:Person"/>
+<xsl:template match="dct:creator/rdf:Seq/rdf:li[@rdf:resource]">
+    <xsl:variable name="rc" select="@rdf:resource"/>
+    <!--<xsl:comment><xsl:value-of select="$rc"/></xsl:comment>-->
+    <xsl:apply-templates select="//*/dct:creator/rdf:Seq/rdf:li/foaf:Person[@rdf:about=$rc]"/>
 </xsl:template>
 
 <xsl:template match="dct:creator/rdf:Seq/rdf:li/foaf:Person">
@@ -486,6 +489,11 @@
   <field name="is_hierarchy_title">
      <xsl:value-of select="../dct:title" />
   </field>
+  <field name="url"><xsl:value-of select="@rdf:resource" /></field>
+</xsl:template>
+
+<xsl:template match="dct:hasPart[position()>1][@rdf:resource]">
+  <field name="url"><xsl:value-of select="@rdf:resource" /></field>
 </xsl:template>
 
 <xsl:template match="dct:isPartOf">

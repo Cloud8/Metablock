@@ -4,8 +4,6 @@ import org.shanghai.rdf.Config;
 import org.shanghai.crawl.FileStorage;
 import org.shanghai.oai.OAITransporter;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -24,7 +22,9 @@ public class Test {
 
     public void create() {
         config = new Config(configFile).create();
-        transporter = new OAITransporter(config.getOAIList().get(0), false);
+        Config.OAI settings = config.getOAIList().get(0);
+        settings.archive = null; // prevent archiving
+        transporter = new OAITransporter(settings);
         transporter.create();
     }
 

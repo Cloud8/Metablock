@@ -5,17 +5,16 @@ import org.shanghai.crawl.TrivialScanner;
 import org.shanghai.rdf.Config;
 import org.shanghai.util.PrefixModel;
 
-import java.io.IOException;
+import java.io.StringWriter;
+import java.io.DataOutputStream;
+import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
-import java.io.InputStream;
-import java.io.DataOutputStream;
-import java.io.UnsupportedEncodingException;
-import java.io.File;
 import java.io.IOException;
-import java.io.FileNotFoundException;
-
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 import java.nio.charset.Charset;
 import java.net.URL;
 import java.net.HttpURLConnection;
@@ -58,7 +57,7 @@ public class DOI {
             String doi = getDoi(value);
             System.out.println(doi);
         } else if (cmd.equals("-post")) {
-            if (value.endsWith(".xml") && new File(value).exists()) {
+            if (value.endsWith(".xml") && Files.isRegularFile(Paths.get(value))) {
                 log("sending " + value);
                 String data = FileUtil.read(value);
                 String result = postData(data);
@@ -253,7 +252,7 @@ public class DOI {
             url = PrefixModel.resolveDOI(doi);
             b = true;
         } catch(MalformedURLException e) { log(e); }
-          catch(FileNotFoundException e) { }
+          //catch(FileNotFoundException e) { }
           catch(UnknownHostException e) { }
           catch(IOException e) { log(e); }
         finally {

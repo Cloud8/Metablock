@@ -6,7 +6,6 @@ import org.shanghai.rdf.SolrPost;
 import org.shanghai.util.FileUtil;
 import com.hp.hpl.jena.rdf.model.Model;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 
@@ -31,7 +30,7 @@ public class SolrStorage implements MetaCrawl.Storage {
 
     @Override
     public void create() {
-        String xslt = FileUtil.read(xsltFile);
+        String xslt = FileUtil.readResource(xsltFile);
         transformer = new XMLTransformer(xslt);
         transformer.create();
         solrPost.create();

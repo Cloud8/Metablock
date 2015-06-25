@@ -13,9 +13,8 @@ import com.hp.hpl.jena.rdf.model.RDFReader;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.rdf.arp.JenaReader;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -66,7 +65,7 @@ public class NLMScanner implements FileTransporter.Delegate {
     public Model read(String fname) {
         //log("read " + fname);
         Model model = ModelFactory.createDefaultModel();
-        String xml = FileUtil.read(new File(fname));
+        String xml = FileUtil.read(fname);
         String rdf = transformer.transform(xml);
         RDFReader reader = new JenaReader();
         reader.read(model, new StringReader(rdf), null);        
@@ -74,15 +73,15 @@ public class NLMScanner implements FileTransporter.Delegate {
     }
 
     @Override
-    public boolean canRead(File file) {
-	    if (file.getName().endsWith(".nlm")) {
+    public boolean canRead(String fname) {
+	    if (fname.endsWith(".nlm")) {
              return true;
         }
-	    if (file.getName().endsWith(".xml")) {
-            if (Character.isDigit(file.getName().charAt(0))) {
+	    if (fname.endsWith(".xml")) {
+            if (Character.isDigit(fname.charAt(0))) {
                 //log("can read " + file.getPath());
                 return true;
-            } else if (file.getName().startsWith("ojs")) {
+            } else if (fname.startsWith("ojs")) {
                 return true;
             }
         }

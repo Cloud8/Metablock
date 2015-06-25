@@ -8,14 +8,8 @@ import java.util.Map;
 import java.util.HashMap;
 
 import java.io.InputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.FileOutputStream;
-import java.io.File;
+//import java.io.OutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -420,8 +414,8 @@ public class XMLTransformer {
     }
 
     private static void log(Exception e) {
-        logger.log(Level.SEVERE, e.toString());
         e.printStackTrace(System.out);
+        logger.log(Level.SEVERE, e.toString());
     }
 
 }

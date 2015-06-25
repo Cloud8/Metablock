@@ -2,8 +2,10 @@ package org.shanghai.crawl;
 
 import org.shanghai.util.FileUtil;
 
-import java.io.File;
-import java.io.FileReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.logging.Logger;
@@ -41,7 +43,7 @@ public class FileStorage implements MetaCrawl.Storage {
 
     @Override
     public boolean test(String resource) {
-        return (new File(resource).exists());
+        return (Files.exists(Paths.get(resource)));
     }
 
     @Override
@@ -54,7 +56,7 @@ public class FileStorage implements MetaCrawl.Storage {
         StringWriter writer = new StringWriter();
         boolean b = false;
         count++;
-        if (new File(uri).isFile()) {
+        if (Files.isRegularFile(Paths.get(uri))) {
             String fname = uri;
             if (!fname.endsWith(".rdf") && fname.contains(".")) {
                 fname = fname.substring(0,fname.lastIndexOf(".")) + ".rdf";
@@ -67,11 +69,11 @@ public class FileStorage implements MetaCrawl.Storage {
             finally {
                 b = true; 
             }
-        } else if (new File(store).isDirectory()) {
+        } else if (Files.isDirectory(Paths.get(store))) {
             if (!uri.startsWith("http")) {
-                Property i = model.createProperty(dct, "identifier");
-                if (model.listResourcesWithProperty(i).hasNext()) {
-                    Resource rc = model.listResourcesWithProperty(i)
+                Property id = model.createProperty(dct, "identifier");
+                if (model.listResourcesWithProperty(id).hasNext()) {
+                    Resource rc = model.listResourcesWithProperty(id)
                                        .nextResource();
 				    uri = rc.getURI();
                 }
@@ -87,24 +89,31 @@ public class FileStorage implements MetaCrawl.Storage {
                 }
             }
             String base = path.substring(0, path.lastIndexOf("/"));
-            if (new File(base).exists()) {
-            } else if (!new File(base).mkdirs()) {
-                log("failed path [" + base + "]");
-                return true;
-            }
-            if (new File(path).isDirectory()) {
-                File check = new File(path + "/about.rdf");
-                if (check.exists()) {
-                    if (!new File(path + "/about.old").exists()) 
-                        check.renameTo(new File(path + "/about.old"));
+            //if (new File(base).exists()) {
+            //} else if (!new File(base).mkdirs()) {
+            //    log("failed path [" + base + "]");
+            //    return true;
+            //}
+            //if (new File(path).isDirectory()) {
+            if (Files.isDirectory(Paths.get(path))) {
+                //File check = new File(path + "/about.rdf");
+				Path check = Paths.get(path + "/about.rdf");
+                //if (check.exists()) {
+				if (Files.exists(check)) {
+                    //if (!new File(path + "/about.old").exists()) 
+                    //    check.renameTo(new File(path + "/about.old"));
+					try {
+					    Files.move(check, check.resolveSibling("about.old"));
+				    } catch(IOException e) { log(e); }
                 }
                 path = path + "/about.rdf";
             } else if (path.endsWith(".pdf")) {
                 path = path.substring(0, path.lastIndexOf('.')) + ".rdf";
-            } else if (new File(path).mkdirs()) {
-                path += "/about.rdf";
             } else {
-                path += ".rdf";
+				try {
+			        Path p = Files.createDirectories(Paths.get(path));
+				} catch(IOException e) { log(e); }
+                path += "/about.rdf";
             }
             model.write(writer, "RDF/XML-ABBREV");
             if (count%100==0) {

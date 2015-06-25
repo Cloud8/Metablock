@@ -23,7 +23,10 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
+//import java.net.URI;
 import java.io.StringWriter;
 import java.io.StringReader;
 import java.io.IOException;
@@ -131,10 +134,8 @@ public class NLMAnalyzer implements Analyzer {
             }
             count++;
         }
-        if (store.equals("files")) {
-            //archive index files
-            //writeIndex(model, rc, id);
-        }
+        //archive index files
+        writeIndex(model, rc, id);
         //if (b) log(" issue " + id);
         return rc;
     }
@@ -188,18 +189,30 @@ public class NLMAnalyzer implements Analyzer {
         }
     }
 
+    //@deprectated
     private boolean checkTime(String path) {
+        String dir = path.substring(0,path.lastIndexOf("/"));
+        String file = path.substring(path.lastIndexOf("/")+1);
+        return checkTime(dir, file);
+    }
+
+    private boolean checkTime(String dir, String file) {
         boolean write = false;
-        File check = new File(path);
-        if (check.exists()) {
-            //int days = (int)((System.currentTimeMillis() 
-            //           - check.lastModified())/(1000*60*60*24));
-            int modified = (int)((System.currentTimeMillis() 
-                         - check.lastModified())/(1000*60));
-			if (modified > 2) {
-                write = true;
-                // log("write " + path + " " + modified);
-           }
+        Path path = Paths.get(dir, file);
+        //File check = new File(path);
+        //if (path.exists()) {
+        if (Files.exists(path)) { 
+            try {
+                //int days = (int)((System.currentTimeMillis() 
+                //           - check.lastModified())/(1000*60*60*24));
+                int modified = (int)((System.currentTimeMillis() 
+                    - Files.getLastModifiedTime(path).toMillis())/(1000*60));
+                         //- path.lastModified())/(1000*60));
+			    if (modified > 2) {
+                    write = true;
+                    // log("write " + path + " " + modified);
+                }
+            } catch(IOException e) { log(e); }
         } else {
            write = true;
         }
@@ -208,22 +221,23 @@ public class NLMAnalyzer implements Analyzer {
 
     /** write issue resource description */
     private boolean writeParent(Model model, Resource rc, String resource) {
-        if ( (new File(resource)).exists() ) { // archive issue
+        //if ( (new File(resource)).exists() ) { // archive issue
             String path = null;
             if (resource.lastIndexOf("/")>0) {
                 path = resource.substring(0, resource.lastIndexOf("/"));
-                path = path.substring(0, path.lastIndexOf("/")) + "/about.rdf";
+                path = path.substring(0, path.lastIndexOf("/"));
+              //path = path.substring(0, path.lastIndexOf("/")) + "/about.rdf";
             } else {
                 return false;
             }
-            if (checkTime(path)) {
+            if (checkTime(path, "about.rdf")) {
                 log("write " + path);
                 StringWriter writer = new StringWriter();
                 model.write(writer, "RDF/XML-ABBREV");
                 FileUtil.write(path, writer.toString());
                 return true;
             }
-        }
+        //}
         return false;
     }
 
@@ -258,9 +272,9 @@ public class NLMAnalyzer implements Analyzer {
             if (rc.hasProperty(issueId)) {
                 path += "/" + rc.getProperty(issueId).getString();
                 //log("issue " + rc.getProperty(issueId).getString());
-                if (!new File(path).exists()) {
-                    new File(path).mkdirs();
-                }
+                //if (!new File(path).exists()) {
+                //    new File(path).mkdirs();
+                //}
             }
             if (rc.hasProperty(article)) {
                 path += "/" + rc.getProperty(article).getString();
@@ -268,8 +282,8 @@ public class NLMAnalyzer implements Analyzer {
             } 
             //log("writeModel to " + path);
             if (name.equals("JournalIssue")) {
+                write = checkTime(path, "about.rdf");
                 path += "/about.rdf";
-                write = checkTime(path);
             } else if (name.equals("JournalArticle")) {
                 path += "/" + rc.getProperty(article).getString()+".rdf";
                 write = true;

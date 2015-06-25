@@ -10,8 +10,12 @@ import com.hp.hpl.jena.rdf.model.ResIterator;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDF;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
 import java.util.logging.Logger;
 
 /*
@@ -57,7 +61,8 @@ public abstract class AbstractAnalyzer implements Analyzer {
     @Override
     public void dump(Model model, String id, String fname) {
         Resource rc = findResource(model, id);
-        dump(model, rc, id, fname);
+        log("dump not available " + rc.getURI() + " " + id);
+        //dump(model, rc, id, fname);
     }
 
     public abstract void analyze(Model model, Resource rc, String id);
@@ -66,30 +71,30 @@ public abstract class AbstractAnalyzer implements Analyzer {
         log("test " + rc.getURI() + " " + id);
     }
 
-    public void dump(Model model, Resource rc, String id, String outfile) {
-        log("dump not available " + rc.getURI() + " " + id);
-    }
+    //private void dump(Model model, Resource rc, String id, String outfile) {
+    //    log("dump not available " + rc.getURI() + " " + id);
+    //}
 
     protected Resource findResource(Model model, String id) {
         Resource rc = null;
-        Property type = model.createProperty(rdf, "type");
+        //Property type = model.createProperty(rdf, "type");
         Property agg = model.createProperty(ore, "aggregates");
         if (id.startsWith("http://")) {
             rc = model.getResource(id);
             return rc;
         }
-		ResIterator ri = model.listResourcesWithProperty(type);
+		ResIterator ri = model.listResourcesWithProperty(RDF.type);
         boolean isPart = false;
 		while( ri.hasNext() ) {
             Resource rcx = ri.nextResource();
-		    String ns = rcx.getPropertyResourceValue(type).getNameSpace();
-		    String name = rcx.getPropertyResourceValue(type).getLocalName();
+		    String ns = rcx.getPropertyResourceValue(RDF.type).getNameSpace();
+		    String name = rcx.getPropertyResourceValue(RDF.type).getLocalName();
             if (ns.equals(fabio)) {
 			    // log("findResource " + name + " [" + ns + "]");
                 if (rc==null) {
                     rc = rcx;
                 } else if (name.equals("JournalIssue") && 
-                           rc.getPropertyResourceValue(type)
+                           rc.getPropertyResourceValue(RDF.type)
                              .getLocalName().equals("Journal")) { // isPartOf
                     rc = rcx;
                 } 
@@ -137,7 +142,7 @@ public abstract class AbstractAnalyzer implements Analyzer {
         int x = id.lastIndexOf(".");
         if (x>0) {
             String fname = id.substring(0, x) + suffix;
-            if ( (new File(fname)).exists()) {
+            if (Files.isRegularFile(Paths.get(fname))) {
                 return fname;
             }
         }
@@ -173,18 +178,18 @@ public abstract class AbstractAnalyzer implements Analyzer {
         if (path.startsWith("http://archiv.ub.uni-marburg.de/")) {
             String test = "/srv/archiv/" + path.substring(32);
             logger.info("test " + test);
-            if (new File(test).canRead()) {
+            if (Files.isReadable(Paths.get(test))) {
                 return test;
             }
         }
         if (path.startsWith("http://")) {
             return path;
         } 
-        if (new File(path).canRead()) {
+        if (Files.isReadable(Paths.get(path))) {
             return path;
         }
         path = System.getProperty("user.home") + "/" + path;
-        if (new File(path).canRead()) {
+        if (Files.isReadable(Paths.get(path))) {
             return path;
         }
         return null;

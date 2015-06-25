@@ -35,11 +35,7 @@ import java.util.logging.Logger;
 
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.File;
 import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.io.ByteArrayInputStream;
 
 /*
  see https://github.com/openpreserve/OAIHarvester2/blob/master/src/main/java/ORG/oclc/oai/harvester2/verb/HarvesterVerb.java
@@ -57,9 +53,9 @@ public class OAITransporter implements MetaCrawl.Transporter {
     private String from;
     private String until;
 
-    public OAITransporter(Config.OAI settings, boolean archive) {
+    public OAITransporter(Config.OAI settings) {
         this.settings = settings;
-        this.archive = archive;
+        this.archive = settings.archive!=null;
     }
 
     @Override
@@ -284,16 +280,16 @@ public class OAITransporter implements MetaCrawl.Transporter {
         String path = settings.archive;
         if ("nlm".equals(settings.prefix)) {
             writeData(path, xml);
-        } else if (path!=null && new File(path).isDirectory()) {
-            String outf = path + "/" + identifier.replaceAll("/",":") + ".xml";
-            log("archive to " + outf);
-            FileUtil.write(outf, xml);
+        } else if (path!=null) {
+            path = path + "/" + identifier.replaceAll("/",":") + ".xml";
+            log("archive to " + path);
+            FileUtil.write(path, xml);
         }
         return path;
     }
 
     private String writeData(String path, String xml) {
-        if (path==null || ! new File(path).isDirectory()) {
+        if (path==null) {
             return null;
         }
 
@@ -305,10 +301,10 @@ public class OAITransporter implements MetaCrawl.Transporter {
             path += "/" + nlm.issueId;
         if (nlm.articleId!=null)
             path += "/" + nlm.articleId;
-        File check = new File(path);
-        if (!check.exists())
-            if (!new File(path).mkdirs())
-                return path;
+        //File check = new File(path);
+        //if (!check.exists())
+        //    if (!new File(path).mkdirs())
+        //        return path;
         if (nlm.url!=null) {
             FileUtil.copy(nlm.url, path + "/index.html");
             String from = nlm.url.replace("view", "viewFile"); // OJS

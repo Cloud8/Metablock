@@ -32,13 +32,16 @@ import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.net.URL;
 import java.net.MalformedURLException;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.StringWriter;
@@ -50,10 +53,12 @@ public class PDFLoader extends AbstractAnalyzer {
     private PDDocument document;
     private static final String scratchFile = System.getProperty("java.io.tmpdir") + "/seaview.pdf";
     public int size;
+    private SimpleDateFormat sdf; 
 
     public PDFLoader create() {
         size = 0;
         document = null;
+        sdf = new SimpleDateFormat("yyyy-MM-dd");
         return this;
     }
 
@@ -61,31 +66,37 @@ public class PDFLoader extends AbstractAnalyzer {
         if (document==null) {
             return ;
         }
-        try { document.close(); }
-        catch (IOException e) { log(e); }
-        if (scratchFile!=null && new File(scratchFile).exists()) {
-            new File(scratchFile).delete(); 
-            //scratchFile = null;
-        }
+        Path path = Paths.get(scratchFile);
+        try { 
+		    document.close(); 
+            if (Files.exists(path)) {
+                Files.delete(path);
+            }
+		} catch (IOException e) { log(e); }
         document = null;
     }
 
     @Override
     public void analyze(Model model, Resource rc, String id) {
         try {
-            File check = new File(id);
-            if ( check.isFile() && id.endsWith(".pdf") ) {
+            Path check = Paths.get(id);
+            //File check = new File(id);
+            //if ( check.isFile() && id.endsWith(".pdf") ) {
+            if ( Files.isRegularFile(check) && id.endsWith(".pdf") ) {
                 log("load file " + id);
-                document = PDDocument.load(check);
+                document = PDDocument.load(Files.newInputStream(check));
             } else {
                 String path = getPath(model, rc, id, ".pdf");
                 if (path==null) {
                     return;
                 }
-                check = new File(path);
-                if ( check.isFile() && path.endsWith(".pdf") ) {
+                //check = new File(path);
+                check = Paths.get(path);
+                //if ( check.isFile() && path.endsWith(".pdf") ) {
+                if ( Files.isRegularFile(check) && path.endsWith(".pdf") ) {
                     log("load path " + path);
-                    document = PDDocument.load(check);
+                    document = PDDocument.load(Files.newInputStream(check));
+                    //document = PDDocument.load(check);
                 } else {
                     log("load url " + path);
                     URL curl = new URL(path);
@@ -150,8 +161,9 @@ public class PDFLoader extends AbstractAnalyzer {
         String path = null;
         if (x>0) { 
             path = id.substring(0, id.lastIndexOf(".")) + ".txt";
-            File check = new File(path);
-            text = check.exists()?FileUtil.read(check):null;
+            //File check = new File(path);
+            //text = check.exists()?FileUtil.read(check):null;
+            text = FileUtil.read(path);
         }
         if (text==null) {
             if (document==null) {
@@ -272,7 +284,6 @@ public class PDFLoader extends AbstractAnalyzer {
         if (rc.hasProperty(issued)) {
             String iss = rc.getProperty(issued).getString();
             Calendar date = Calendar.getInstance();
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             try {
                 date.setTime(sdf.parse(iss));
                 info.setCreationDate(date);
@@ -296,6 +307,14 @@ public class PDFLoader extends AbstractAnalyzer {
 
     public String getAuthor() {
         return document.getDocumentInformation().getAuthor();
+    }
+
+    public String getDate() {
+        Calendar date = document.getDocumentInformation().getCreationDate();
+        if (date==null) {
+            return null;
+        }
+        return sdf.format(date.getTime());
     }
 
     protected static Logger logger =

@@ -2,7 +2,8 @@ package org.shanghai.crawl;
 
 import org.shanghai.store.Store;
 
-import java.io.File;
+import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.IOException;
@@ -33,12 +34,8 @@ public class TrivialScanner implements FileTransporter.Delegate {
 
     public void setDirectory(String dir) {}
 
-    public boolean canRead(File file) {
-        current = file.getAbsolutePath();
-        if (file.getName().endsWith(".rdf")) {
-            return true;
-        }
-        if (file.getName().endsWith(".abd")) {
+    public boolean canRead(String fname) {
+        if (fname.endsWith(".rdf")) {
             return true;
         }
         return false;
@@ -57,7 +54,9 @@ public class TrivialScanner implements FileTransporter.Delegate {
 
     public Model read(String file) {
         try {
-            InputStream in = new FileInputStream(new File(file));
+            //InputStream in = new FileInputStream(new File(file));
+            Path path = Paths.get(file);
+			InputStream in = path.getFileSystem().provider().newInputStream(path);
             Model m = ModelFactory.createDefaultModel();
             RDFReader reader = new JenaReader(); 
             reader.setErrorHandler(new TrivialErrorHandler());
@@ -83,7 +82,9 @@ public class TrivialScanner implements FileTransporter.Delegate {
     }
 
     private void log(Exception e) {
-        log(e.toString());
+        //log(e.toString());
+        e.printStackTrace();
+        //System.exit(0);
     }
 
 }

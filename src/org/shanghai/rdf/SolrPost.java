@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 import java.util.Map;
 import java.util.HashMap;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
@@ -42,14 +41,14 @@ public class SolrPost {
     public void create() {
         if (solr.startsWith("http://")) {
             server = new HttpSolrServer(solr);
-        } else if (solr.startsWith("/")) {
-            String solrDir = solr.substring(0,solr.lastIndexOf("/"));
-            String core = solr.substring(solr.lastIndexOf("/")+1);
-            log("solr emb " + solrDir + " core " + core);
-            CoreContainer container = new CoreContainer(solrDir);
-            container.load(solrDir, new File("solr.xml"));
-            server = new EmbeddedSolrServer( container, core);
-        }
+        } //else if (solr.startsWith("/")) {
+          //  String solrDir = solr.substring(0,solr.lastIndexOf("/"));
+          //  String core = solr.substring(solr.lastIndexOf("/")+1);
+          //  log("solr emb " + solrDir + " core " + core);
+          //  CoreContainer container = new CoreContainer(solrDir);
+          //  container.load(solrDir, new File("solr.xml"));
+          //  server = new EmbeddedSolrServer( container, core);
+        //}
     }
 
     public void dispose() {
@@ -82,9 +81,9 @@ public class SolrPost {
            DirectXmlRequest up = new DirectXmlRequest( "/update", data );
            server.request( up ); 
            b=true;
-        } catch(SolrServerException e) {log(e);/*log(data.substring(0,256));*/}
+        } catch(SolrServerException e) {/*log(e);*/log(data.substring(0,512));}
           catch(IOException e) { log(e); }
-          catch(SolrException e) { log(e);/*log(data.substring(0,256));*/}
+          catch(SolrException e) {/*log(e);*/log(data.substring(0,512));}
         finally {
           return b;
         }

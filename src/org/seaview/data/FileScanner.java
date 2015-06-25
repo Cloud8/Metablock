@@ -2,6 +2,7 @@ package org.seaview.data;
 
 import org.shanghai.crawl.FileTransporter;
 import org.shanghai.util.PrefixModel;
+import org.shanghai.util.FileUtil;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -10,13 +11,15 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
+import java.io.StringReader;
 import java.io.IOException;
-import java.io.FileNotFoundException;
+import java.io.ByteArrayInputStream;
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,8 +32,8 @@ import java.util.logging.Logger;
  */
 public class FileScanner implements FileTransporter.Delegate {
 
-    private static final String dct = "http://purl.org/dc/terms/";
-    private String concept = dct + "BibliographicResource";
+    //private static final String dct = "http://purl.org/dc/terms/";
+    //private String concept = dct + "BibliographicResource";
     private int count;
     private static final Logger logger =
                          Logger.getLogger(FileScanner.class.getName());
@@ -54,19 +57,18 @@ public class FileScanner implements FileTransporter.Delegate {
     }
 
     @Override
-    public Model read(String fname) {
-        String id = fname.replace("/",":");
-        //Model model = ModelFactory.createDefaultModel();
-        //model.setNsPrefix("dct", dct);
+    public Model read(String path) {
+        String id = path.replace("/",":");
         Model model = PrefixModel.create();
-        String path = new File(fname).getAbsolutePath();
-        Resource rcCon = model.createResource(concept);
+        //String path = new File(fname).getAbsolutePath();
+        Resource rcCon = model.createResource(DCTerms.BibliographicResource);
         Resource rc = model.createResource(id, rcCon);
-	    rc.addProperty(model.createProperty(dct,"identifier"), id); 
-	    rc.addProperty(model.createProperty(dct,"relation"), path); 
+	    rc.addProperty(DCTerms.identifier, id); 
+	    rc.addProperty(DCTerms.relation, 
+                       Paths.get(path).toAbsolutePath().toString()); 
         try {
-		    this.scanFile(id, fname, rc, model);
-        } catch(FileNotFoundException e) { log(e); }
+		    this.scanFile(id, path, rc, model);
+        } //catch(FileNotFoundException e) { log(e); }
           catch(IOException e) { log(e); }
         finally {
             return model;
@@ -74,10 +76,10 @@ public class FileScanner implements FileTransporter.Delegate {
     }
 
     @Override
-    public boolean canRead(File file) {
-	    if (file.getName().endsWith(".php")) {
+    public boolean canRead(String fname) {
+	    if (fname.endsWith(".php")) {
              return true;
-        } else if (file.getName().endsWith(".java")) {
+        } else if (fname.endsWith(".java")) {
              return true;
         }
         return false;
@@ -85,24 +87,24 @@ public class FileScanner implements FileTransporter.Delegate {
 
     private int lineCount;
     private void scanFile(String id, String fname, Resource rc, Model mod) 
-              throws FileNotFoundException, IOException
+              throws IOException
     {
 	    StringBuilder fulltextBuf;
         BufferedReader reader;
-        File file = new File(fname);
     
 		//RDA Content Type 
-	    rc.addProperty(mod.createProperty(dct,"format"), "Computer File"); 
+	    rc.addProperty(DCTerms.format, "Computer File"); 
         String language = fname.lastIndexOf(".")>0 ?
                           fname.substring(fname.lastIndexOf(".")+1) : "Polish";
-	    rc.addProperty(mod.createProperty(dct,"language"), language); 
+	    rc.addProperty(DCTerms.language, language); 
 
         String title = id;
-	    rc.addProperty(mod.createProperty(dct,"title"), title); 
+	    rc.addProperty(DCTerms.title, title); 
 
         lineCount = 0;
-        reader = new BufferedReader(new InputStreamReader(
-                 new FileInputStream(file), "UTF-8"));
+		String content = FileUtil.read(fname);
+		reader = new BufferedReader(new InputStreamReader(
+		         new ByteArrayInputStream(content.getBytes())));
         fulltextBuf = new StringBuilder();
         String line = reader.readLine();
         while(line != null) {
@@ -112,9 +114,8 @@ public class FileScanner implements FileTransporter.Delegate {
 			fulltextBuf.append("\n");
             line = reader.readLine();
         }
-	    rc.addProperty(mod.createProperty(dct,"extend"), 
-                                              ""+lineCount + " lines"); 
-	    rc.addProperty(mod.createProperty(dct,"fulltext"), 
+	    rc.addProperty(DCTerms.extent, ""+lineCount + " lines"); 
+	    rc.addProperty(mod.createProperty(DCTerms.NS,"fulltext"), 
                                                  fulltextBuf.toString());
 	}
 
@@ -134,21 +135,20 @@ public class FileScanner implements FileTransporter.Delegate {
             } 
             author = author.trim();
             if (author.length()>0)
-	        rc.addProperty(mod.createProperty(dct,"creator"), author); 
+	        rc.addProperty(DCTerms.creator, author); 
         } else if ( (found=line.indexOf("@package")) >=0 ) {
 		    String provenance = line.substring(found+8).trim();
-	        rc.addProperty(mod.createProperty(dct,"provenance"), provenance); 
+	        rc.addProperty(DCTerms.provenance, provenance); 
 	    } else if ( (found=line.indexOf("Copyright (C)")) >=0 ) {
 		    String publisher = line.substring(found+14).trim();
-	        rc.addProperty(mod.createProperty(dct,"publisher"), publisher); 
+	        rc.addProperty(DCTerms.publisher,  publisher); 
 	    } else if ( (found=line.indexOf("@title")) >=0 ) {
 		    String title = line.substring(found+6).trim();
-            Property prop = mod.createProperty(dct,"title");
-            rc.removeAll(prop);
-	        rc.addProperty(prop, title); 
+            rc.removeAll(DCTerms.title);
+	        rc.addProperty(DCTerms.title, title); 
 	    } else if ( (found=line.indexOf("@abstract")) >=0 ) {
 		    String abstract_ = line.substring(found+9).trim();
-	        rc.addProperty(mod.createProperty(dct,"abstract"), abstract_); 
+	        rc.addProperty(DCTerms.abstract_, abstract_); 
 	    }
     }
 }

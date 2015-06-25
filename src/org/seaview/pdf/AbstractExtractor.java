@@ -21,13 +21,6 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.URISyntaxException;
 
-import java.io.UnsupportedEncodingException;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.FileNotFoundException;
-import java.io.File;
-import java.io.InputStream;
-
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -50,7 +43,6 @@ public class AbstractExtractor {
     protected static final String about /* will become rdf:about */
                                 = "http://localhost/";
 
-    protected Property references;
     protected boolean title;
     protected boolean refs;
     public boolean test = false;
@@ -120,27 +112,6 @@ public class AbstractExtractor {
                        rc.addProperty(creator, TextUtil.cleanUTF(str));
                    }
                }
-               /**
-               String foaf = "http://xmlns.com/foaf/0.1/";
-               Resource concept = mod.createResource(foaf + "Person");
-               String uri = rc.getURI();
-               if (uri.contains("#")) {
-                   uri = uri.substring(0, uri.indexOf("#"));
-               }
-               String uriStr = "http://localhost/aut/"
-                             + val.replaceAll("[^a-zA-Z0-9\\:\\.]","");
-               Seq seq = mod.createSeq(uriStr);
-               for (String str : getAuthors(val)) {
-                   str = str.replaceAll("[^a-zA-Z0-9\\:\\.]","");
-                   if (str.length()>2) {
-                       uri = "http://localhost/aut/" + str;
-                       Resource prs = mod.createResource(uri, concept);
-                       prs.addProperty(mod.createProperty(foaf, "name"), str);
-                       seq.add(prs);
-                   }
-               }
-               rc.addProperty(mod.createProperty(dct, term), seq);
-               **/
            } else if (term.startsWith("has")) {
                Property prop = mod.createProperty(fabio,term);
                rc.addProperty(prop, val);

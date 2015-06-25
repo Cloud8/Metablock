@@ -19,15 +19,9 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.arp.JenaReader;
 import com.hp.hpl.jena.rdf.model.RDFReader;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.io.StringReader;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
-import java.net.MalformedURLException;
-import java.util.logging.Logger;
-
+import java.io.UnsupportedEncodingException;
 import java.io.StringWriter;
 import java.io.IOException;
 import java.util.logging.Logger;

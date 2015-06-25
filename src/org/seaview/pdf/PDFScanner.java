@@ -12,10 +12,6 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.RDFReader;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -33,17 +29,17 @@ public class PDFScanner implements FileTransporter.Delegate {
     private static final String concept = dct + "BibliographicResource";
     private String iri; // about
     private String path; // relation
-    private boolean stop4RDF;
+    //private boolean stop4RDF;
 
     public PDFScanner() {
         this.iri = "http://localhost";
         this.path = System.getProperty("user.home");
     }
 
-    public PDFScanner(boolean stop4RDF) {
-        this();
-        this.stop4RDF = stop4RDF;
-    }
+    //public PDFScanner(boolean stop4RDF) {
+    //    this();
+    //    this.stop4RDF = stop4RDF;
+    //}
 
     @Override
     public FileTransporter.Delegate create() {
@@ -56,8 +52,6 @@ public class PDFScanner implements FileTransporter.Delegate {
 
     @Override
     public Model read(String fname) {
-        //log("read " + fname);
-        //Model mod = ModelFactory.createDefaultModel();
         Model mod = PrefixModel.create();
         String id = fname;
         if (id.startsWith(path)) {
@@ -76,24 +70,24 @@ public class PDFScanner implements FileTransporter.Delegate {
         mod.setNsPrefix("ore", ore);
         Resource rcC = mod.createResource(concept);
         Resource rc = mod.createResource(iri + "/" + fname, rcC);
-        try {
+        //try {
             rc.addProperty(mod.createProperty(dct, "identifier"), id);
             rc.addProperty(mod.createProperty(ore, "aggregates"), 
-                           mod.createResource("http://localhost/" + fname));
-        } //catch (FileNotFoundException e) { log(e); }
-          catch (Exception e) { log(e); }
-        finally {
+                           mod.createResource(iri + "/" + fname));
+        //} //catch (FileNotFoundException e) { log(e); }
+        //  catch (Exception e) { log(e); }
+        //finally {
            return mod;
-        }
+        //}
     }
 
     @Override
-    public boolean canRead(File file) {
+    public boolean canRead(String file) {
         //log("canRead " + file.getName());
-        if (stop4RDF) {
-            return false;
-        }
-        if (file.getName().endsWith(".pdf")) {
+        //if (stop4RDF) {
+        //    return false;
+        //}
+        if (file.endsWith(".pdf")) {
             return true;
         }
         return false;

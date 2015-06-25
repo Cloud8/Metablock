@@ -31,12 +31,10 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.URISyntaxException;
 
-import java.io.UnsupportedEncodingException;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.io.FileNotFoundException;
-import java.io.File;
-import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.regex.Pattern;
@@ -104,7 +102,6 @@ public class Cermine extends AbstractExtractor {
 
     @Override
     public void extractReferences(Model model, Resource rc, String fname, int threshold) {
-        references = model.createProperty(dct, "references");
         try {
             Element[] refArray = refExtractor.extractReferencesAsNLM(doc); 
             count += refArray.length;
@@ -219,14 +216,14 @@ public class Cermine extends AbstractExtractor {
         }
         if (found>threshold && !test) {
             log("added " + found + " references");
-			rc.removeAll(references);
-			rc.addProperty(references, seq);
+			rc.removeAll(DCTerms.references);
+			rc.addProperty(DCTerms.references, seq);
             org.add(mod);
         } else {
             if (test) {
                 log("test: " + found + " references found.");
             } else {
-                rc.addProperty(references, "");
+                rc.addProperty(DCTerms.references, "");
                 log("skipped " + found + " references, set to empty.");
             }
         }

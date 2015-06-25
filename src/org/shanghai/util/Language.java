@@ -13,7 +13,8 @@ import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 
 import java.util.logging.Logger;
-import java.io.File;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 /*
  * Language detection
@@ -34,7 +35,7 @@ public class Language implements Analyzer {
         path = Language.class.getProtectionDomain()
                               .getCodeSource().getLocation().getPath();
         path = path.substring(0,path.lastIndexOf("/")+1) + "languages";
-        if (!new File(path).isDirectory()) {
+        if (!Files.isDirectory(Paths.get(path))) {
             path = path.substring(0,path.lastIndexOf("/"));
             path = path.substring(0,path.lastIndexOf("/")) 
                    + "/lib/languages";

@@ -56,6 +56,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
     private int upd_count = 0; // update 
     private int nop_count = 0; // documents with no references
     private int doc_count = 0; // documents with found references
+    private int all_count = 0; // all documents
 
     private boolean test = false;
 
@@ -80,7 +81,8 @@ public class RefAnalyzer extends AbstractAnalyzer {
     public void dispose() {
         log("ref: " + ref_count + " uri: " + uri_count + " doi: " + doi_count
          + " loc: " + loc_count + " rdf: " + rdf_count + " upd: " + upd_count 
-         + " nop: " + nop_count + " doc: " + doc_count);
+         + " nop: " + nop_count + " doc: " + doc_count + " all: " + all_count
+         + ": " + (100*doc_count/all_count) + "%");
     }
 
     @Override
@@ -115,6 +117,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
         } else {
             nop_count++;
         }
+        all_count++;
         //if (test) {
         //    return;
         //} else if (storage==null) {

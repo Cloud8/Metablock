@@ -20,7 +20,6 @@ import org.shanghai.solr.SolrTransporter;
 import org.shanghai.util.Language;
 import org.seaview.pdf.PDFScanner;
 
-import java.io.File;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -133,11 +132,11 @@ public class Crawl extends org.shanghai.crawl.Crawl {
                 fc.inject(new FileScanner().create());
             }
             if (suffix.contains(".pdf")) {
-                if (suffix.contains(".rdf")) {
-                    fc.inject(new PDFScanner(true).create());
-                } else {
+                //if (suffix.contains(".rdf")) {
+                //    fc.inject(new PDFScanner(true).create());
+                //} else {
                     fc.inject(new PDFScanner().create());
-                }
+                //}
             }
             if (suffix.contains(".rdf") || suffix.contains(".abd")) {
                 fc.inject(new TrivialScanner().create());

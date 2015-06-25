@@ -1,7 +1,6 @@
 package org.shanghai.solr;
 
 import org.shanghai.rdf.SolrPost;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -9,14 +8,9 @@ import org.apache.solr.client.solrj.request.DirectXmlRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrException;
-
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.SolrDocument;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.logging.Logger;
 
 /**
