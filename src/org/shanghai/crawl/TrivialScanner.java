@@ -52,17 +52,42 @@ public class TrivialScanner implements FileTransporter.Delegate {
         }
     }
 
+    /*
     public Model read(String file) {
+        InputStream in = null;
+        Model m = null;
         try {
-            //InputStream in = new FileInputStream(new File(file));
-            Path path = Paths.get(file);
-			InputStream in = path.getFileSystem().provider().newInputStream(path);
-            Model m = ModelFactory.createDefaultModel();
+            in = new FileInputStream(file);
+            //in = new FileInputStream(new File(file));
+			//in=Paths.get(file).getFileSystem().provider().newInputStream(path);
+            m = ModelFactory.createDefaultModel();
             RDFReader reader = new JenaReader(); 
             reader.setErrorHandler(new TrivialErrorHandler());
             reader.read(m, in, null);
-            in.close();
+        } catch(FileNotFoundException e) { 
+            log(file); log(e);
+        } catch(IOException e) { 
+            log(file); log(e); 
+        } finally {
+            if (in!=null) try {
+                in.close();
+            } catch(Exception e) { log(e); }
             return m;
+        }
+    }
+    */
+
+    public Model read(String file) {
+        InputStream in = null;
+        Model m = null;
+        try {
+            //InputStream in = new FileInputStream(new File(file));
+            Path path = Paths.get(file);
+			in = path.getFileSystem().provider().newInputStream(path);
+            m = ModelFactory.createDefaultModel();
+            RDFReader reader = new JenaReader(); 
+            reader.setErrorHandler(new TrivialErrorHandler());
+            reader.read(m, in, null);
         } catch(FileNotFoundException e) { 
             log(file); log(e);
         } catch(IOException e) { 
@@ -70,8 +95,12 @@ public class TrivialScanner implements FileTransporter.Delegate {
         } catch(Exception e) { 
             e.printStackTrace(); 
             log(file);  
+        } finally {
+            if (in!=null) try {
+                in.close();
+            } catch(Exception e) { log(e); }
+            return m;
         }
-        return null;
     }
 
     private static final Logger logger =

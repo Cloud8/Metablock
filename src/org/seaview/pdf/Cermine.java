@@ -45,7 +45,6 @@ import java.net.MalformedURLException;
 import java.lang.IllegalArgumentException;
 
 /*
-  nice : http://archiv.ub.uni-marburg.de/diss/z2015/0047 ref. 66
   see : cermine-impl/src/main/java/pl/edu/icm/cermine/RDFGenerator.java
  */
 public class Cermine extends AbstractExtractor {

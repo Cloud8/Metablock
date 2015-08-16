@@ -12,6 +12,10 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.RDFReader;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+
 import java.util.logging.Logger;
 
 /**
@@ -23,17 +27,17 @@ import java.util.logging.Logger;
 public class PDFScanner implements FileTransporter.Delegate {
 
     static final String foaf = "http://xmlns.com/foaf/0.1/";
-    static final String dct = DCTerms.getURI();
+    //static final String dct = DCTerms.getURI();
     static final String ore = "http://www.openarchives.org/ore/terms/";
 
-    private static final String concept = dct + "BibliographicResource";
     private String iri; // about
     private String path; // relation
-    //private boolean stop4RDF;
+    private boolean stop4RDF;
 
     public PDFScanner() {
         this.iri = "http://localhost";
         this.path = System.getProperty("user.home");
+        this.stop4RDF = true;
     }
 
     //public PDFScanner(boolean stop4RDF) {
@@ -64,30 +68,31 @@ public class PDFScanner implements FileTransporter.Delegate {
                 id = id.substring(1);
             }
         }
-
-        mod.setNsPrefix("dct", dct);
-        mod.setNsPrefix("foaf", foaf);
-        mod.setNsPrefix("ore", ore);
-        Resource rcC = mod.createResource(concept);
-        Resource rc = mod.createResource(iri + "/" + fname, rcC);
-        //try {
-            rc.addProperty(mod.createProperty(dct, "identifier"), id);
-            rc.addProperty(mod.createProperty(ore, "aggregates"), 
-                           mod.createResource(iri + "/" + fname));
-        //} //catch (FileNotFoundException e) { log(e); }
-        //  catch (Exception e) { log(e); }
-        //finally {
-           return mod;
-        //}
+        //mod.setNsPrefix("dct", dct);
+        //mod.setNsPrefix("foaf", foaf);
+        //mod.setNsPrefix("ore", ore);
+        //Resource concept = mod.createResource(DCTerms.BibliographicResource);
+        //Resource concept = mod.createResource(DCTerms.getURI() 
+        //                 + "BibliographicResource");
+        //Resource rc = mod.createResource(iri + "/" + fname, concept);
+        Resource rc = mod.createResource(iri + "/" + fname, DCTerms.BibliographicResource);
+        rc.addProperty(DCTerms.identifier, id);
+        rc.addProperty(mod.createProperty(ore, "aggregates"), 
+                       mod.createResource(iri + "/" + fname));
+        return mod;
     }
 
     @Override
     public boolean canRead(String file) {
-        //log("canRead " + file.getName());
-        //if (stop4RDF) {
-        //    return false;
-        //}
-        if (file.endsWith(".pdf")) {
+        if (stop4RDF) {
+            String check = file.substring(0, file.lastIndexOf(".") + 1) + "rdf";
+            if (Files.isReadable(Paths.get(check))) {
+                //log("exists " + check);
+                return false;
+            }
+        }
+        if (Files.isReadable(Paths.get(file))) {
+            //log("canRead " + file);
             return true;
         }
         return false;

@@ -36,12 +36,11 @@ import java.net.MalformedURLException;
  */
 public class AbstractExtractor {
 
-    //protected static final int MONOSIZE = 33; // pages considered mono
     protected static final String dct = DCTerms.NS;
     protected static final String fabio = "http://purl.org/spar/fabio/";
     protected static final String foaf = "http://xmlns.com/foaf/0.1/";
-    protected static final String about /* will become rdf:about */
-                                = "http://localhost/";
+    /* becomes rdf:about */
+    protected static final String about = "http://localhost/";
 
     protected boolean title;
     protected boolean refs;
@@ -82,11 +81,14 @@ public class AbstractExtractor {
     }
 
     public Resource injectAuthors(Model mod, Resource rc, String[] authors) {
+        if (authors.length==0 || rc.hasProperty(DCTerms.creator)) {
+            return rc;
+        }
         Seq seq = mod.createSeq();
-		//Resource prs = mod.createResource(
         Resource concept = mod.createResource(foaf + "Person");
 		int index = 1;
         for (String aut : authors) {
+            if (aut==null) continue;
             String uri = "http://localhost/aut/" 
                        + aut.replaceAll("[^a-zA-Z0-9\\:\\.]","");
             Resource prs = mod.createResource(uri, concept);
@@ -94,8 +96,7 @@ public class AbstractExtractor {
             seq.add(index++, prs);
 		    //seq.add(index++, aut);
         }
-		Property creator = mod.createProperty(dct, "creator");
-		rc.addProperty(creator, seq);
+		rc.addProperty(DCTerms.creator, seq);
         return rc;
     }
 
@@ -104,19 +105,14 @@ public class AbstractExtractor {
        if (val==null) {
            return rc;
        } else try {
-           if (term.equals("creator")) {
-               String[] authors = getAuthors(val);
-               Property creator = mod.createProperty(dct, term);
-               for (String str : authors) {
-                   if (str.length()>2) {
-                       rc.addProperty(creator, TextUtil.cleanUTF(str));
-                   }
-               }
-           } else if (term.startsWith("has")) {
-               Property prop = mod.createProperty(fabio,term);
-               rc.addProperty(prop, val);
+           Property prop;
+           if (term.startsWith("has")) {
+               prop = mod.createProperty(fabio, term);
            } else {
-               Property prop = mod.createProperty(dct,term);
+               prop = mod.createProperty(dct, term);
+           }
+           if (!rc.hasProperty(prop)) {
+               val = val.replaceAll("\\s+", " ");
                rc.addProperty(prop, val);
            }
        } finally {
@@ -144,39 +140,39 @@ public class AbstractExtractor {
         ArrayList<String> links = new ArrayList<String>();
         text = text.replace("\n","").replace("\r","");
 
-    String regex = "\\(?\\b(http://|www[.])[-A-Za-z0-9+&amp;@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&amp;@#/%=~_()|]";
-    Pattern p = Pattern.compile(regex);
-    Matcher m = p.matcher(text);
-    while(m.find()) {
-        String url = m.group();
-        if (url.startsWith("(") && url.endsWith(")")) {
-            url = url.substring(1, url.length() - 1);
-        }
-        if (url.contains("archiv.ub.unimarburg.de")) {
-            url = url.replace("archiv.ub.unimarburg.de", 
+        String regex = "\\(?\\b(http://|www[.])[-A-Za-z0-9+&amp;@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&amp;@#/%=~_()|]";
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(text);
+        while(m.find()) {
+            String url = m.group();
+            if (url.startsWith("(") && url.endsWith(")")) {
+                url = url.substring(1, url.length() - 1);
+            }
+            if (url.contains("archiv.ub.unimarburg.de")) {
+                url = url.replace("archiv.ub.unimarburg.de", 
                               "archiv.ub.uni-marburg.de");
-        }
-        if (url.contains("uni-marburg,de/diss/z2008/159")) {
-            url = url.replace("uni-marburg,de/diss/z2008/159", 
+            }
+            if (url.contains("uni-marburg,de/diss/z2008/159")) {
+                url = url.replace("uni-marburg,de/diss/z2008/159", 
                                     "uni-marburg.de/diss/z2008/0159");
+            }
+            if (url.endsWith("/")) {
+                url = url.substring(0, url.length()-1);
+            }
+            if (url.endsWith("/)")) {
+                url = url.substring(0, url.length()-2);
+            }
+            if (url.endsWith(".pdf") && url.contains("/pdf/")) {
+                url = url.substring(0, url.indexOf("/pdf/"));
+            }
+            if (url.endsWith(")")) {
+                url = url.substring(0, url.length()-1);
+            }
+            if (url.endsWith(";")) {
+                url = url.substring(0, url.length()-1);
+            }
+            links.add(url);
         }
-        if (url.endsWith("/")) {
-            url = url.substring(0, url.length()-1);
-        }
-        if (url.endsWith("/)")) {
-            url = url.substring(0, url.length()-2);
-        }
-        if (url.endsWith(".pdf") && url.contains("/pdf/")) {
-            url = url.substring(0, url.indexOf("/pdf/"));
-        }
-        if (url.endsWith(")")) {
-            url = url.substring(0, url.length()-1);
-        }
-        if (url.endsWith(";")) {
-            url = url.substring(0, url.length()-1);
-        }
-        links.add(url);
-    }
     return links;
     }
 

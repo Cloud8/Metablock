@@ -366,7 +366,6 @@ public class Config {
         public String until;
         public String set;
         public String archive; 
-        public String urnPrefix;
         public String days;
         public void show() {
            log("OAI: " + prefix 
@@ -387,9 +386,6 @@ public class Config {
                 until = getNow();
             } else {
                 until = until.substring(0, until.indexOf("^^"));
-            }
-            if (urnPrefix==null) {
-                urnPrefix = get("oai.urnPrefix");
             }
         }
     }

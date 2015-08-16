@@ -28,7 +28,6 @@ public class DOIAnalyzer extends AbstractAnalyzer {
 
 	private Property hasDOI;
 	private Property hasURL;
-	private Property creator; // simple check to avoid bad models
 
     private String volume = null;
     private String number = null;
@@ -49,7 +48,7 @@ public class DOIAnalyzer extends AbstractAnalyzer {
     private String uri = null;
     private String doi = null;
 
-    private boolean quiet = true; // do not talk too much
+    private boolean quiet = true; // no talking
     private boolean delete = false;
     private boolean submit = false; // submit metadata
     private boolean register = false; // register metadata
@@ -68,7 +67,7 @@ public class DOIAnalyzer extends AbstractAnalyzer {
     @Override
     public AbstractAnalyzer create() {
         doiGenerator = new DOI(prefix, server, user, pass);
-        String xslt = FileUtil.read(xsltFile);
+        String xslt = FileUtil.readResource(xsltFile);
         transformer = new XMLTransformer(xslt);
         transformer.create();
         return this;
@@ -113,7 +112,7 @@ public class DOIAnalyzer extends AbstractAnalyzer {
         }
         createProperties(model, rc, id);
 
-        if (!rc.hasProperty(creator)) {
+        if (!rc.hasProperty(DCTerms.creator)) {
             log("model has no creator, skip.");
             return ;
         }
@@ -126,14 +125,13 @@ public class DOIAnalyzer extends AbstractAnalyzer {
         }
 
         if (rc.hasProperty(hasDOI)) {
-            log("doi exists: " + doi + " [" + uri + "]");
             if (submit) {
                 resubmit(model, id, doi, uri);
-            }
-            if (register) {
+            } else if (register) {
                 register(model, id, doi, uri);
+            } else {
+                log("doi exists: " + doi + " [" + uri + "]");
             }
-            return; 
         } else {
             log("doi: " + doi + " " + uri);
 		    rc.addProperty(hasDOI, doi);
@@ -142,26 +140,33 @@ public class DOIAnalyzer extends AbstractAnalyzer {
     }
 
     @Override
-    public void test(Model model, Resource rc, String id) {
-        log("test " + id);
-        createProperties(model, rc, id);
-        if (!rc.hasProperty(creator)) {
+    public Resource test(Model model, String id) {
+        Resource rc = findResource(model, id);
+        if (!rc.hasProperty(DCTerms.creator)) {
             log("model has no creator, skip " + id);
-            return ;
+            return rc;
         }
 
+        log("test " + id);
+        createProperties(model, rc, id);
         if (rc.hasProperty(hasDOI)) {
-            log("doi exists: " + doi);
-            String test = test(doi, uri, true); // doi, uri, quiet
-            if (test!=null) log("test mode: [" + test + "]\n");
-            if (register) {
-                String durl = "http://doi.org/" + doi;
-                Model mod = PrefixModel.retrieve(durl);
-                log(mod);
+	        String test = rc.getProperty(hasDOI).getString();
+            if (test.equals(doi)) {
+                log("resource has doi: " + test + " [" + doi + "]");
+            } else {
+                log("WARNING doi: " + test + " vs. " + doi + "");
             }
+            //String test = test(doi, uri, true); // doi, uri, quiet
+            //if (test!=null) log("test mode: [" + test + "]\n");
+            //if (register) {
+            //    String durl = "http://doi.org/" + doi;
+            //    Model mod = PrefixModel.retrieve(durl);
+            //    log(mod);
+            //}
         } else {            
-            log("test mode add: " + doi); // + " " + rc.getURI());
+            log("test mode add: " + doi + " " + uri); // + " " + rc.getURI());
         }
+        return rc;
     }
 
     @Override
@@ -172,28 +177,28 @@ public class DOIAnalyzer extends AbstractAnalyzer {
             log("doi exists: " + doi + " [" + uri + "]");
         } else {
             log("doi: " + doi + " " + uri);
-		    rc.addProperty(hasDOI, doi);
+    		rc.addProperty(hasDOI, doi);
         }
         String xml = transformer.transform(model);
         FileUtil.write(fname, xml);
+        log("wrote " + fname);
     }
 
     private void createProperties(Model model, Resource rc, String id) {
 		hasDOI = model.createProperty(fabio, "hasDOI");
 		hasURL = model.createProperty(fabio, "hasURL");
-		creator = model.createProperty(dct, "creator");
         Property hasVolume = model.createProperty(fabio, "hasVolumeIdentifier");
         Property hasNumber = model.createProperty(fabio, "hasSequenceIdentifier");
         Property articleIdentifier = model.createProperty(fabio, 
                                             "hasElectronicArticleIdentifier");
-        Property dctYear = model.createProperty(dct, "created");
+        //Property dctYear = model.createProperty(dct, "created");
 
         uri = rc.getURI();
         if (rc.hasProperty(hasURL)) {
             uri = rc.getProperty(hasURL).getString();
         } 
-        if (rc.hasProperty(dctYear)) {
-		    year = rc.getProperty(dctYear).getString();
+        if (rc.hasProperty(DCTerms.created)) {
+		    year = rc.getProperty(DCTerms.created).getString();
         } else {
             year = null;
         }
@@ -212,29 +217,32 @@ public class DOIAnalyzer extends AbstractAnalyzer {
         } else {
             articleId = null;
         }
-
-        if (rc.hasProperty(hasDOI)) {
-            doi = rc.getProperty(hasDOI).getString();
-        } else if (articleId!=null) {
+        if (articleId!=null) {
             doi = doiGenerator.createDoi(uri, year, volume, number, articleId);
         } else {
             doi = doiGenerator.createDoi(uri);
         }
     }
   
+    /*
     private void opusOid(String oid) {
-		String q = "select url from opus where source_opus="+oid;
+		String   q = "select url from opus where source_opus="+oid;
 		String uri = db.getSingleText(q);
         String doi = doiGenerator.createDoi(uri);
-		String u = "update opus set doi=\""+doi+"\" where source_opus="+oid;
-		int res = db.update(u);
+		String   u = "update opus set doi=\""+doi+"\" where source_opus="+oid;
+		int    res = db.update(u);
+		         u = "update statistics set doi=\""+doi+"\" "
+                     + "where source_opus="+oid+" and uri=\""+uri+"\"";
+		       res = db.update(u);
 		log("opus " + doi + " " + uri);
     }
+    */
 
     private void opusUri(String doi, String uri) {
 		String u = "update opus set doi=\""+doi+"\" where url=\""+uri+"\"";
 		int res = db.update(u);
-		//log("opus " + doi + " " + uri);
+		u = "update statistics set doi=\""+doi+"\" where uri=\""+uri+"\"";
+		res = db.update(u);
     }
 
     private String ojsOid(String aid) {
@@ -323,9 +331,9 @@ public class DOIAnalyzer extends AbstractAnalyzer {
             if (ojs_doi==null) {
 			    syncDB(doi, uri, articleId); // update database
             } else if (ojs_doi.equals(doi) && tib!=null) { 
-		       test = tib;
+		        test = tib;
             } else {
-		       test = "failed: " + doi + " vs. " + ojs_doi + " [" + tib + "]";
+		        test = "failed: " + doi + " vs. " + ojs_doi + " [" + tib + "]";
             }
         }
         return test;

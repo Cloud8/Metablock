@@ -4,6 +4,12 @@ import org.shanghai.rdf.XMLTransformer;
 import org.shanghai.crawl.MetaCrawl;
 import com.hp.hpl.jena.rdf.model.Model;
 
+/**
+  @license http://www.apache.org/licenses/LICENSE-2.0
+  @author Goetz Hatop
+  @title Write Model to Console
+  @date 2015-07-01
+*/
 public class ConsoleStorage implements MetaCrawl.Storage {
 
     private XMLTransformer transformer;

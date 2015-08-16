@@ -19,6 +19,11 @@ import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.Seq;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
+import net.ricecode.similarity.JaroWinklerStrategy;
+import net.ricecode.similarity.SimilarityStrategy;
+import net.ricecode.similarity.StringSimilarityService;
+import net.ricecode.similarity.StringSimilarityServiceImpl;
+
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.io.IOException;
@@ -44,7 +49,7 @@ public class RefContext extends RefAnalyzer {
     private int count;
     private String text;
     private PDFLoader pl;
-    private boolean debug = false;
+    private StringSimilarityService similarity;
 
     private class Context {
         int count;
@@ -52,28 +57,37 @@ public class RefContext extends RefAnalyzer {
         String aut;
         String year;
         String ref;
+        String raw;
         public String toString() {
-            return ref==null?aut+" "+year:ref;
+            return ref==null?"["+aut+"#"+year+"]":ref;
         }
     }
 
     private Map<String, Context> hashTag;
 
     public RefContext() {
+        pl = new PDFLoader();
         this.size = 3;
     }
 
     public RefContext(int size) { 
+        pl = new PDFLoader();
         this.size = size;
+    }
+
+    public RefContext(String base) { 
+        this.size = 3;
+        pl = new PDFLoader(base);
     }
 
     @Override
     public AbstractAnalyzer create() {
-        //super.create();
+        pl.create();
         text = null;
         count = 0;
         hashTag = new HashMap<String, Context>();
-        pl = new PDFLoader();
+        SimilarityStrategy strategy = new JaroWinklerStrategy();
+		similarity = new StringSimilarityServiceImpl(strategy);
         return this;
     }
 
@@ -92,47 +106,47 @@ public class RefContext extends RefAnalyzer {
         pl.create();
         text = pl.fulltext(model, rc, id);
         pl.dispose();
+        if (test) log("analyze " + rc.getURI());
         super.analyze(model, rc, id); // fill up hashTag: analyzeReference
+        if (test) show();
         analyzeText(model, rc, id); // set hasContext for references
     }
 
-
     @Override
     protected void analyzeReference(Model model, Resource rc, Resource obj) {
-        if (!obj.hasProperty(bibliographicCitation)) {
+        if (!obj.hasProperty(DCTerms.bibliographicCitation)) {
             log("failed: " + " " + obj.getURI());
             return;
         }
         obj.removeAll(hasContext);
         obj.removeAll(hasCount);
-        String ref = obj.getProperty(bibliographicCitation).getString();
+        String ref = obj.getProperty(DCTerms.bibliographicCitation).getString();
         String uri = obj.getURI();
         Context ctx = new Context();
+        ctx.raw = ref;
         if (ref.startsWith("[")) {
             ctx.ref = ref.substring(ref.indexOf("["),ref.indexOf("]")+1);
             hashTag.put(uri, ctx);
-        } else if (obj.hasProperty(date) && obj.hasProperty(creator)) {
-            ctx.year = obj.getProperty(date).getString();
-            Resource prs = obj.getProperty(creator).getSeq().getResource(1);
+        } else if (obj.hasProperty(DCTerms.date) && obj.hasProperty(DCTerms.creator)) {
+            ctx.year = obj.getProperty(DCTerms.date).getString();
+            Resource prs = obj.getProperty(DCTerms.creator).getSeq().getResource(1);
             if (prs!=null && prs.hasProperty(name)) {
                 ctx.aut = prs.getProperty(name).getString();
                 if (ctx.aut.contains(",")) {
                     ctx.aut = ctx.aut.substring(0, ctx.aut.indexOf(","));
+                } else if (ctx.aut.contains(" ")) {
+                    ctx.aut = ctx.aut.substring(ctx.aut.lastIndexOf(" ")+1);
                 }
                 if (ctx.year!=null && ctx.aut!=null) {
                     hashTag.put(uri, ctx);
                 }
             }
         } else {
-            if (debug) log("no context for: " + rc.getURI());
+            if (test) log("no context for: " + rc.getURI());
         }
     }
 
     private void analyzeText(String text, String docId) {
-        //text = HyphenRemover.dehyphenate(text, docId);
-        //text = TextUtil.cleanUTF(text);
-        //text = text.replaceAll("\\p{Co}", "");
-        text = TextUtil.sentence(text);
         BufferedReader reader = new BufferedReader(new StringReader(text));
         String last=null;
         String context=null;
@@ -150,9 +164,13 @@ public class RefContext extends RefAnalyzer {
                        } else {
                            context = context.substring(0,512);
                        }
-                       ctx.context.add(context);
-                       ctx.count++;
-                       count++;
+                       double score = similarity.score(ctx.raw, context);
+                       context += " # " + score;
+                       if (score < 0.92) {
+                           ctx.context.add(context);
+                           ctx.count++;
+                           count++;
+                       }
                        if (count==size) {
                            seen = null;
                            context = null;
@@ -171,7 +189,6 @@ public class RefContext extends RefAnalyzer {
                             && line.contains(ctx.year)) {
                         context = size==1?line:last + " " + line;
                         seen = ctx;
-                        if (debug) log("context [" + line + "]");
                         count = size==1?1:2;
                     }
                 }
@@ -181,12 +198,12 @@ public class RefContext extends RefAnalyzer {
     }
 
     private void analyzeText(Model model, Resource rc, String id) {
-        String lang = rc.hasProperty(language)?
-                      rc.getProperty(language).getString():"en";
-        if (debug) log("analyze text: " + lang + " " + rc.getURI());
+        String lang = rc.hasProperty(DCTerms.language)?
+                      rc.getProperty(DCTerms.language).getString():"en";
+        if (test) log("analyze text (" + lang + ") " + rc.getURI());
         analyzeText(text, rc.getURI());
-        if (rc.hasProperty(references)) {
-            Seq seq = rc.getProperty(references).getSeq();
+        if (rc.hasProperty(DCTerms.references)) {
+            Seq seq = rc.getProperty(DCTerms.references).getSeq();
             if (seq!=null) {
                 for (int i = 1; i< seq.size(); i++) {
                     Resource obj = seq.getResource(i);
@@ -195,6 +212,7 @@ public class RefContext extends RefAnalyzer {
                         for (String context : ctx.context) {
                             RDFNode li = model.createTypedLiteral(context);
                             obj.addProperty(hasContext, li);
+                            if (test) log("context [" + context + "][" + ctx.raw + "][" + ctx.toString() + "]");
                         }
                         if (ctx.count>1) {
                             RDFNode li = model.createTypedLiteral(ctx.count);
@@ -203,6 +221,13 @@ public class RefContext extends RefAnalyzer {
                     }
                 }
             }
+        }
+    }
+
+    private void show() {
+        for (Map.Entry<String, Context> cursor : hashTag.entrySet()) {
+            Context ctx = cursor.getValue();
+            log(ctx.toString());
         }
     }
 

@@ -55,9 +55,10 @@ public class DOI {
     private void make(String cmd, String value) {
         if (cmd.startsWith("-test")) {
             String doi = getDoi(value);
-            System.out.println(doi);
+            System.out.println(value + " maps to " + doi);
         } else if (cmd.equals("-post")) {
-            if (value.endsWith(".xml") && Files.isRegularFile(Paths.get(value))) {
+            if (value.endsWith(".xml") 
+                && Files.isRegularFile(Paths.get(value))) {
                 log("sending " + value);
                 String data = FileUtil.read(value);
                 String result = postData(data);
@@ -68,6 +69,9 @@ public class DOI {
             log("register " + doi + " " + value);
             String result = register(doi, value); // register doi to url mapping
             log(result);
+        } else if (cmd.equals("-resolve")) { // same as test
+            String url = resolve(value);
+            log(url);
         }
     }
 
@@ -82,9 +86,9 @@ public class DOI {
             src = src.replace("diss/","");
             src = src.replace("es/","es");
             src = src.replace("eb/","eb");
-            src = src.replace("ep/0002","medrez");
             src = src.replace("ep/0003","meta");
             src = src.replace("ep/0004","mjr");
+            src = src.replace("ep/0002","ep");
             src = src.replace("/",".");
             doi = prefix + "/" + src;
         }
@@ -94,27 +98,18 @@ public class DOI {
     static String createDoi(String uri, 
             String year, String volume, String number, String articleId) {
         String doi = createDoi(uri);
-        //log("createDoi " + uri + " " + doi);
-        String journal = doi.substring(doi.indexOf("/")+1);
-        journal = journal.substring(0, journal.indexOf("."));
-        //log("journal: [" + journal + "]");
-        if (journal.equals("medrez")) {
-            doi = doi.substring(0, doi.indexOf("/")+1);
-            doi += "ep." + year;
-            doi += "." + articleId;
-        } else {
-            doi = doi.substring(0, doi.indexOf(".", doi.indexOf("/")));
-            doi += "." + year;
-            if (volume!=null) {
-                 doi += "." + volume;
-            }
-            if (number!=null) {
-                 doi += "." + number;
-            }
-            if (articleId!=null) {
-                 doi += "." + articleId;
-            }
+        doi = doi.substring(0, doi.indexOf(".", doi.indexOf("/")));
+        doi += year;
+        if (volume!=null) {
+            doi += "." + volume;
         }
+        if (number!=null) {
+            doi += "." + number;
+        }
+        if (articleId!=null) {
+            doi += "." + articleId;
+        }
+        //log("uri: " + uri + " " + doi);
         return doi;
     }
 
@@ -244,15 +239,14 @@ public class DOI {
         boolean b = false;
         if (doi.startsWith("http://")) {
         } else {
-            //log("doi mapped: " + doi);
-            doi += "http://dx.doi.org/" + doi;
+            doi = "http://dx.doi.org/" + doi;
         }
+        log("resolve: [" + doi + "]");
         String url = null;
         try {
             url = PrefixModel.resolveDOI(doi);
             b = true;
         } catch(MalformedURLException e) { log(e); }
-          //catch(FileNotFoundException e) { }
           catch(UnknownHostException e) { }
           catch(IOException e) { log(e); }
         finally {

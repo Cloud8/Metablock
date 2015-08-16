@@ -2,11 +2,13 @@ package org.seaview.main;
 
 import org.seaview.main.Crawl;
 import org.seaview.data.Viewer;
-import org.seaview.data.OldViewer;
+import org.seaview.data.OpusAnalyzer;
 import org.shanghai.rdf.Config;
 import org.shanghai.crawl.FileTransporter;
 import org.shanghai.crawl.TrivialScanner;
 import com.hp.hpl.jena.rdf.model.Model;
+
+import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -65,16 +67,20 @@ public class Main extends org.shanghai.crawl.Main {
             viewer.create();
             viewer.transform();
             viewer.dispose();
-        } else if (args.length>2 && args[0].startsWith("-oview")) {
-            //GH201506: new version intendend
-            log("Attention: starting old viewer"); 
+        } else if (args.length>2 && args[0].startsWith("-stats")) {
+            String logbase = args[1];
+            String docbase = args[2];
             config = new Config(configFile).create();
-            String xslt = config.get("opus.viewer");
-            boolean test = args[0].equals("-oview:debug");
-            OldViewer viewer = new OldViewer(args[1], args[2], xslt, test);
-            viewer.create();
-            viewer.transform();
-            viewer.dispose();
+            String s = config.get("opus.dbhost");
+            String p = config.get("opus.dbase");
+            String u = config.get("opus.dbuser");
+            String v = config.get("opus.dbpass");
+            String prefix = config.get("urn.prefix");
+            OpusAnalyzer oa = new OpusAnalyzer(s, p, u, v, prefix, false);
+            oa.create();
+            log("Statistics: " + logbase); 
+            oa.statistics(logbase, docbase);
+            oa.dispose();
         } else { 
             super.make(args);
         }

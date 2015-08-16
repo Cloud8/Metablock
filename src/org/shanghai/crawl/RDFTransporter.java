@@ -21,4 +21,8 @@ public class RDFTransporter extends org.shanghai.rdf.RDFTransporter
         return Integer.parseInt(super.probe());
     }
 
+    public Model test(String resource) {
+        Model model = read(resource);
+        return model;
+    }
 }

@@ -67,11 +67,11 @@ public class OAITransporter implements MetaCrawl.Transporter {
         from = settings.from   + "T00:00:00Z";
         until = settings.until + "T23:59:59Z";
         if (settings.transformer!=null) {
-            String xslt = FileUtil.read(settings.transformer); 
+            String xslt = FileUtil.readResource(settings.transformer); 
             if (xslt==null) {
                 log("No transformer file " + settings.transformer);
             } else {
-                transformer = new XMLTransformer( xslt );
+                transformer = new XMLTransformer(xslt);
                 transformer.create();
                 //if (settings.uri!=null) {
                 //    transformer.setParameter("uri", settings.uri);
@@ -185,6 +185,18 @@ public class OAITransporter implements MetaCrawl.Transporter {
         return 0;
     }
 
+    @Override 
+    public Model test(String resource) {
+        String raw = getRecord(resource);
+        if (raw==null) {
+            return null;
+        }
+        FileUtil.write("data/test.xml", raw);
+        String xml = getMetadata(raw);
+        Model model = XMLTransformer.asModel(xml);
+        return model;
+    }
+
     @Override
     public Model read(String identifier) {
         //log("read " + identifier);
@@ -215,9 +227,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
             rdf = xml;
             model = XMLTransformer.asModel(xml);
         }
-        //if (analyzer!=null) {
-        //    analyzer.analyze(model, identifier);
-        //}
         return model;
     }
 
@@ -399,7 +408,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
         log("transformer " + settings.transformer); 
         log("from " + settings.from); 
         log("until " + settings.until); 
-        log("urnPrefix " + settings.urnPrefix); 
         log(" archive " + settings.archive); 
     }
 

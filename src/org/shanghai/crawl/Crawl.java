@@ -83,7 +83,7 @@ public class Crawl {
             crawler.create();
         }
         if (engine!=null && engine.contains("nlm")) {
-            String prefix = config.get("oai.urnPrefix");
+            String prefix = config.get("urn.prefix");
             String directory = null;
             if (source.equals("oai")) { // write model files to oai archve
                 directory = config.getOAIList().get(oai_counter).archive;
@@ -102,10 +102,6 @@ public class Crawl {
     public void createTransporter(String crawl) {
         if (crawl.contains("files")) {
             String suffix = config.get("files.suffix");
-            //String base = config.get("files.base");
-            //if (crawl.contains("#")) {
-			//    base = crawl.substring(crawl.indexOf("#")+1);
-            //}
             int depth = config.getInt("files.depth");
             int logC = config.getInt("files.count");
             fc = new FileTransporter(suffix,depth,logC);
@@ -205,15 +201,9 @@ public class Crawl {
     }
 
     public void test(String resource) {
-        log("test source: " + source + " target: " + target);
+        log("test # " + resource + " " + target);
         createCrawler();
-        createTransporter(source);
-        if (source.equals("void")) {
-            int found = crawler.index(resource);
-            if (found>0) crawler.test();
-        } else {
-            crawler.test(resource);
-        }
+        crawler.test(resource);
         crawler.dispose();
     }
 
@@ -232,19 +222,18 @@ public class Crawl {
         crawler.dispose();
     }
 
-    public void dump(String rc) {
-        log("dump " + rc);
+    public void dump(String resource) {
+        //log("dump # " + resource);
         createTransporter(source);
         crawler = new MetaCrawl(transporter,testFile);
         crawler.create();
-        crawler.dump(rc);
+        crawler.dump(resource);
         crawler.dispose();
     }
 
     public void dump(String rc, String fn) {
-        createTransporter(source);
-        crawler = new MetaCrawl(transporter,testFile);
-        crawler.create();
+        //log("dump " + rc + " : " + fn);
+        createCrawler();
         crawler.dump(rc, fn);
         crawler.dispose();
     }
@@ -343,14 +332,8 @@ public class Crawl {
     private void crawl(String resource) {
         //log("crawl # " + resource);
         if (source.equals("files")) {
-            //crawlFiles(resource);
             int found = crawler.index(resource);
-            //log("crawl files: " + resource + " " + found);
-            //if (found==0) {
-            //    crawler.crawl(resource);
-            //} else {
-                crawl();
-            //}
+            crawl();
         } else if (source.equals("void")) {
             int found = crawler.index(resource);
             if (found==0) {
@@ -362,31 +345,6 @@ public class Crawl {
             int b = crawler.crawl(resource);
         }
     }
-
-    /*
-    private void crawlFiles(String resource) {
-        File file = new File(resource);
-        if (file.exists()) {
-            if (file.isDirectory()) {
-                log("crawl dir: " + resource);
-                count += crawler.index(resource);
-            } else {
-                count += crawler.crawl(resource);
-            }
-        } else {
-            log("crawl home: " + resource);
-            String home = System.getProperty("user.home");
-            if (new File(home + "/" + resource).exists()) {
-                //if (fc!=null)
-                //    fc.setDirectory(home);
-                //else log("fc was zero");
-                count += crawler.index(home + "/" + resource);
-            } 
-        }
-        crawl(); // copy transporter to storage
-        log("crawled " + resource + " " + count);
-    }
-    */
 
     private static final Logger logger =
                          Logger.getLogger(Crawl.class.getName());

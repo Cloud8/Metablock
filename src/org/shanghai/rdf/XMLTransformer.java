@@ -9,7 +9,6 @@ import java.util.HashMap;
 
 import java.io.InputStream;
 import java.io.IOException;
-//import java.io.OutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
@@ -82,12 +81,20 @@ public class XMLTransformer {
     private Templates templates;
     private StringWriter stringWriter;
 
-    private String xslt; 
+    private String xslt = null; 
     private static SAXTransformerFactory factory; 
     private XMLReader xr;
     private Map<String,String> params;
 
     public XMLTransformer() {
+        //this.xslt = "<xsl:stylesheet\n"
+        //    + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\n"
+        //    + "version=\"1.0\">\n"
+        //    + "<xsl:template match=\"@*|node()\" priority=\"-1\">\n"
+        //    + "<xsl:copy>\n"
+        //    + "<xsl:apply-templates select=\"@*|node()\"/></xsl:copy>\n"
+        //    + "</xsl:template>\n"
+        //    + "</xsl:stylesheet>\n";
         stringWriter = new StringWriter();
     }
 
@@ -97,11 +104,12 @@ public class XMLTransformer {
     }
 
     public void create() {
+        factory = ((SAXTransformerFactory) TransformerFactory.newInstance());
+        factory.setErrorListener(new MyErrorListener());
+        params = new HashMap<String,String>();
         if (xslt==null) {
             return;
         }
-        factory = ((SAXTransformerFactory) TransformerFactory.newInstance());
-        factory.setErrorListener(new MyErrorListener());
         try {
             InputStream in = new ByteArrayInputStream(xslt.getBytes("UTF-8"));
             TemplatesHandler th = factory.newTemplatesHandler();
@@ -120,7 +128,6 @@ public class XMLTransformer {
         } catch(IOException e) { 
             log("create: " + e);
         }
-        params = new HashMap<String,String>();
     }
 
     public void dispose() {
@@ -129,6 +136,10 @@ public class XMLTransformer {
         if (params!=null) {
             params.clear();
         }
+    }
+
+    public boolean empty() {
+        return xslt==null;
     }
 
     public void setParameter(String name, String value) {
@@ -184,7 +195,8 @@ public class XMLTransformer {
 			                       new StreamResult(writer));
             result = writer.toString();
         } catch(TransformerException e) { 
-            log(e); 
+            log(e.toString()); 
+            result = null;
         } finally {
             return result;
         }
@@ -232,7 +244,7 @@ public class XMLTransformer {
            //only writes rdf description: bad logic.
            //model.write(stringWriter, "RDF/XML");
         } catch(Exception e) {
-           model.write(System.out,"RDF/XML-ABBREV");
+           //model.write(System.out,"RDF/XML-ABBREV");
            e.printStackTrace();
         } finally {
            String result = null;
@@ -259,7 +271,7 @@ public class XMLTransformer {
         }
     }
 
-    String asString(Document doc) {
+    public String asString(Document doc) {
         String text = null;
         try {
             DOMSource domSource = new DOMSource(doc);
@@ -267,6 +279,12 @@ public class XMLTransformer {
             for (String name : params.keySet()) {
                 transformer.setParameter(name, params.get(name));
             }
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+			transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+			transformer.setOutputProperty(
+			            "{http://xml.apache.org/xslt}indent-amount", "2");
             java.io.StringWriter sw = new java.io.StringWriter();
             StreamResult sr = new StreamResult(sw);
             transformer.transform(domSource, sr);
