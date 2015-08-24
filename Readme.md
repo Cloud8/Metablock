@@ -5,15 +5,19 @@
 
   AutoBib (abd) is a metadata framework for bibliograhical data build around 
   the RDF data model. 
-  In its most basic functionality, it is a data crawler able to fetch a
-  RDF description from a data source, analyze the data and write the
-  possibly modified resource description back to a RDF target.
+  Most basically its a data crawler able to fetch a RDF description from a 
+  data source, analyze the data and write the possibly modified resource 
+  description back to a RDF target.
 
 ##### RDF Data sources:
   
   - SPARQL service endpoints
   - RDF data files from the filesystem
+<<<<<<< HEAD
   - OAI datasources with XSLT lifting
+=======
+  - OAI datasources lifted to RDF by XSLT 
+>>>>>>> dddcc345197c59648368853e940ba2db7be17128
   - RDF data files retrieved from the web
 
 ##### RDF data targets:
@@ -29,31 +33,26 @@
 
   - Language analyzer: guesses the language of a resource desription
     from the dcterms abstract or title property
-  - NLM Analyzer: set urn identifier property, transform NLM to RDF 
-  - DOI Analyzer: register a DOI for a resource
   - PDF Analyzer: extract bibliographic metadata and references from PDF
 
-  - REF Analyzer: some bibliographic relations are reflexive like so:
-    <code>paperA dcterms:references paperB</code> vs. 
-    <code>paperB dcterms:isReferencedBy paperA</code>. 
-    This Analyzer trys to update a referenced knowledge base with the inverse 
-    relation (experimental).
+  - REF Analyzer: extract bibliographic relations like
+    <code>paperA dcterms:references paperB</code>
 
-  - CTX Analyzer: find citation context and set c4o:hasContext and 
-    c4o:hasInTextCitationFrequency property for a dct:bibliographicCitation
+  - CTX Analyzer: find citation context bibliographic citation
 
-##### Indexing : writing RDF data to a Solr search index
+##### Search support : write RDF data to a Solr search index
 
   To build a solr index from a SPARQL service endpoint,
   three steps are required:
 
-  1. Resource Enumeration: List all resources that should be indexed,
+  1. Resource Enumeration: List resources 
 
-  2. Resource Dump: Query everything the triple store knows about a resource,
+  2. Resource Dump: Query knowledge about a resource,
 
-  3. Resource Tranformation: Transform RDF/XML to solr index format.
+  3. Resource Tranformation: Transform RDF data to solr index format.
 
 
+<<<<<<< HEAD
 Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   The sparql queries and xslt transformations from lib/sparql and lib/xslt
   are rather general, but modelling of bibliographic resources may vary and 
@@ -75,6 +74,8 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   [<code>abd -crawl -test *resource*</code>] : index and transform resource
 
   [<code>abd -crawl *resource*</code>] : index, transform and write resource
+=======
+>>>>>>> dddcc345197c59648368853e940ba2db7be17128
 
 ##### About
 
