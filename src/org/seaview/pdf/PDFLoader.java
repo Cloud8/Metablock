@@ -10,6 +10,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.ResIterator;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
@@ -20,6 +21,7 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.pdmodel.common.PDMetadata;
 import org.apache.pdfbox.pdmodel.common.PDStream;
 import org.apache.pdfbox.pdfwriter.COSWriter;
+import org.apache.pdfbox.pdmodel.PDPageTree;
 import org.apache.pdfbox.text.PDFTextStripper;
 
 import net.ricecode.similarity.JaroWinklerStrategy;
@@ -51,9 +53,17 @@ import java.util.logging.Logger;
 public class PDFLoader extends AbstractAnalyzer {
 
     private PDDocument document;
-    private static final String scratchFile = System.getProperty("java.io.tmpdir") + "/seaview.pdf";
+    private static final String scratchFile = 
+                         System.getProperty("java.io.tmpdir") + "/seaview.pdf";
     public int size;
     private SimpleDateFormat sdf; 
+
+    public PDFLoader() {
+    }
+
+    public PDFLoader(String docbase) {
+        super.docbase = docbase;
+    }
 
     public PDFLoader create() {
         size = 0;
@@ -80,8 +90,6 @@ public class PDFLoader extends AbstractAnalyzer {
     public void analyze(Model model, Resource rc, String id) {
         try {
             Path check = Paths.get(id);
-            //File check = new File(id);
-            //if ( check.isFile() && id.endsWith(".pdf") ) {
             if ( Files.isRegularFile(check) && id.endsWith(".pdf") ) {
                 log("load file " + id);
                 document = PDDocument.load(Files.newInputStream(check));
@@ -90,13 +98,10 @@ public class PDFLoader extends AbstractAnalyzer {
                 if (path==null) {
                     return;
                 }
-                //check = new File(path);
                 check = Paths.get(path);
-                //if ( check.isFile() && path.endsWith(".pdf") ) {
                 if ( Files.isRegularFile(check) && path.endsWith(".pdf") ) {
                     log("load path " + path);
                     document = PDDocument.load(Files.newInputStream(check));
-                    //document = PDDocument.load(check);
                 } else {
                     log("load url " + path);
                     URL curl = new URL(path);
@@ -108,6 +113,11 @@ public class PDFLoader extends AbstractAnalyzer {
     }
 
     @Override
+    public Resource test(Model model, String id) {
+		log("test " + id);
+		return analyze(model, id);
+    }
+
     public void dump(Model model, String id, String fname) {
         Resource rc = findResource(model, id);
         analyze(model, rc, id);
@@ -156,46 +166,53 @@ public class PDFLoader extends AbstractAnalyzer {
   
     public String fulltext(Model model, Resource rc, String id) {
         int start = 0;
-        int x = id.lastIndexOf(".");
+        String path = getPath(model, rc, id, ".pdf");
+        int x = path.lastIndexOf(".");
+		path = x>0?path.substring(0, x) + ".txt" : path;
+
+        if (x>0 && Files.isRegularFile(Paths.get(path))) {
+            //log("reading " + path);
+            return FileUtil.read(path);
+        }
+
         String text = null;
-        String path = null;
-        if (x>0) { 
-            path = id.substring(0, id.lastIndexOf(".")) + ".txt";
-            //File check = new File(path);
-            //text = check.exists()?FileUtil.read(check):null;
-            text = FileUtil.read(path);
+        if (document==null) {
+            analyze(model, rc, id);
         }
-        if (text==null) {
-            if (document==null) {
-                analyze(model, rc, id);
-            }
-            int end = document.getNumberOfPages();
-            log("extract " + end + " pages " + id);
-            try {
-                PDFTextStripper stripper = new PDFTextStripper();
-                //stripper.setForceParsing( true );
-                //stripper.setSortByPosition( true );
-                stripper.setShouldSeparateByBeads( true );
-                stripper.setStartPage(start);
-                stripper.setEndPage(end);
-                stripper.setAddMoreFormatting(true);
-                StringWriter writer = new StringWriter();
-                stripper.writeText(document, writer);
-                text = writer.toString();
-            } catch (IOException e) {
-                log(e);
-                e.printStackTrace();
-            }
-            finally {
-            }
-        }
-        if (text!=null) {
+        int end = document.getNumberOfPages();
+        log("extract " + end + " pages " + id);
+        try {
+            PDFTextStripper stripper = new PDFTextStripper();
+            //stripper.setForceParsing( true );
+            //stripper.setSortByPosition( true );
+            stripper.setShouldSeparateByBeads( true );
+            stripper.setStartPage(start);
+            stripper.setEndPage(end);
+            stripper.setAddMoreFormatting(true);
+            StringWriter writer = new StringWriter();
+            stripper.writeText(document, writer);
+            text = writer.toString();
             text = TextUtil.cleanUTF(text);    
             text = HyphenRemover.dehyphenate(text, id);
             text = TextUtil.sentence(text);
+            log("write " + path);
             FileUtil.write(path, text);
+        } catch (IOException e) {
+            log(e);
+            e.printStackTrace();
+        } finally { 
+            return text;
         }
-        return text;
+    }
+
+    public PDPage getPageOne() {
+        PDDocumentCatalog catalog = document.getDocumentCatalog();
+        PDPageTree root = catalog.getPages();
+        if (root.getCount() == 0) {
+            log("no pages found.");
+            return null;
+        }
+        return root.get(0);
     }
 
     private void write(String filename, PDDocument document) {
@@ -241,9 +258,8 @@ public class PDFLoader extends AbstractAnalyzer {
         decrypt();
         PDDocumentInformation info = document.getDocumentInformation();
 
-        Property title = model.createProperty(dct, "title");
         String ctitle = info.getTitle();
-        String dtitle = rc.getProperty(title).getString();
+        String dtitle = rc.getProperty(DCTerms.title).getString();
 
         SimilarityStrategy st = new JaroWinklerStrategy();
         StringSimilarityService service = new StringSimilarityServiceImpl(st);
@@ -260,9 +276,8 @@ public class PDFLoader extends AbstractAnalyzer {
         if (cauthor == null ) {
             cauthor = info.getCreator();
         }
-        Property author = model.createProperty(dct, "creator");
         Property name = model.createProperty(foaf, "name");
-        String dauthor = rc.getProperty(author)
+        String dauthor = rc.getProperty(DCTerms.creator)
                            .getResource().getProperty(name).getString();
         score = 0.0;
         if (cauthor!=null) {
@@ -274,15 +289,24 @@ public class PDFLoader extends AbstractAnalyzer {
         }
 
 
-        Property subject = model.createProperty(dct, "subject");
-        if (rc.hasProperty(subject)) {
-            String subjects = rc.getProperty(subject).getString();
-            info.setSubject(subjects);
+        if (rc.hasProperty(DCTerms.subject)) {
+		    String subjects = null;
+			StmtIterator si = rc.listProperties(DCTerms.subject);
+            while (si.hasNext()) {
+			    Statement stmt = si.next();
+				if (stmt.getObject().isLiteral()) {
+				    if (subjects==null) subjects = stmt.getString();
+                    else subjects += " " + stmt.getString();
+				    //log( "[" + stmt.getString() + "]");
+				}
+            }
+			if (subjects!=null) {
+                info.setSubject(subjects);
+			}
         }
 
-        Property issued = model.createProperty(dct, "issued");
-        if (rc.hasProperty(issued)) {
-            String iss = rc.getProperty(issued).getString();
+        if (rc.hasProperty(DCTerms.issued)) {
+            String iss = rc.getProperty(DCTerms.issued).getString();
             Calendar date = Calendar.getInstance();
             try {
                 date.setTime(sdf.parse(iss));

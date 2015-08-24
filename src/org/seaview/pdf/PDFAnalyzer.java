@@ -8,6 +8,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.rdf.model.Seq;
 
 import org.jdom.Element;
@@ -29,8 +30,6 @@ public class PDFAnalyzer extends AbstractAnalyzer {
     protected static final String about /* will become rdf:about */
                                         = "http://localhost/refs/";
 
-    private Property references;
-
     private boolean meta;
     private boolean refs;
     private int threshold;
@@ -38,16 +37,24 @@ public class PDFAnalyzer extends AbstractAnalyzer {
     private AbstractExtractor extractor;
     public int count;
 
-    public PDFAnalyzer(String engine, boolean meta, boolean refs, String base) {
+    public PDFAnalyzer(String engine, boolean meta, boolean refs, String ghome)
+    {
         if (engine.equals("cermine")) {
             extractor = new Cermine(meta, refs);
         } else if (engine.equals("grobid")) {
-            extractor = new Grobid(meta, refs, base);
+            extractor = new Grobid(meta, refs, ghome);
         } else {
             extractor = new AbstractExtractor(meta, refs);
         }
         this.meta = meta;
         this.refs = refs;
+        pl = null;
+    }
+
+    public PDFAnalyzer(String engine, boolean meta, boolean refs, 
+                       String ghome, String docbase) {
+        this(engine, meta, refs, ghome);
+        pl = new PDFLoader(docbase);
     }
 
     @Override
@@ -60,18 +67,22 @@ public class PDFAnalyzer extends AbstractAnalyzer {
         //log("create metadata " + title + " references " + refs);
         count = 0;
         extractor.create();
-        pl = new PDFLoader();
+        if (pl==null) {
+            pl = new PDFLoader();
+        }
+        pl.create();
         return this;
     }
 
     @Override
-    public void test(Model model, Resource rc, String id) {
-        log("test: " + id); // dumped to crawl.test
+    public Resource test(Model model, String id) {
+        log("test: " + id); 
+        Resource rc = findResource(model, id);
         pl.create();
         String fname = create(model, rc, id);
         if (fname==null) {
             log("test: no pdf file found for " + rc.getURI());
-            return;
+            return rc;
         }
         extractor.test = true;
         extractor.create(fname);
@@ -79,21 +90,22 @@ public class PDFAnalyzer extends AbstractAnalyzer {
             log("scratch " + fname + " metadata " + rc.getURI());
             extractMetadata(model, rc, fname);
         }
-        if (refs&&(!rc.hasProperty(references))) {
+        if (refs&&(!rc.hasProperty(DCTerms.references))) {
             log("scratch " + fname + " references " + rc.getURI());
             extractReferences(model, rc, fname);
         }
         pl.dispose();
+        return rc;
     }
 
     @Override
     public void analyze(Model model, Resource rc, String fname) {
-        references = model.createProperty(dct, "references");
+        log("analyze: " + fname); // dumped to crawl.test
         if (rc==null) {
             log("fatal: no resource " + fname);
             return;
         }
-        if (refs && (rc.hasProperty(references))) {
+        if (refs && (rc.hasProperty(DCTerms.references))) {
             log("skipped references " + fname);
             //rc.removeAll(references); // does not work
             return;
@@ -109,18 +121,18 @@ public class PDFAnalyzer extends AbstractAnalyzer {
             extractMetadata(model, rc, fname);
         }
 
-        if (refs && (!rc.hasProperty(references))) {
+        if (refs && (!rc.hasProperty(DCTerms.references))) {
             extractReferences(model, rc, fname);
         }
         pl.dispose();
     }
 
-    @Override
-    public void dump(Model model, String id, String fname) {
-        pl.create();
-        pl.dump(model, id, fname);
-        pl.dispose();
-    }
+    //@Override
+    //public void dump(Model model, String id, String fname) {
+    //    pl.create();
+    //    pl.dump(model, id, fname);
+    //    pl.dispose();
+    //}
 
     private String create(Model model, Resource rc, String fname) {
         pl.analyze(model, rc, fname);
@@ -138,30 +150,27 @@ public class PDFAnalyzer extends AbstractAnalyzer {
     private void extractMetadata(Model model, Resource rc, String fname) {
         extractor.extractMetadata(model, rc, fname);
 
-        Property extend = model.createProperty(dct, "extend");
-        if (!rc.hasProperty(extend)) {
-            rc.addProperty(extend, "" + pl.size);
+        if (!rc.hasProperty(DCTerms.extent)) {
+            rc.addProperty(DCTerms.extent, "" + pl.size);
         }
 
-        Property format = model.createProperty(dct, "format");
-        if (!rc.hasProperty(format)) {
+        if (!rc.hasProperty(DCTerms.format) 
+            && rc.hasProperty(RDF.type, DCTerms.BibliographicResource)) {
 			if (pl.size<30) {
-			    rc.addProperty(format, "Article");
+			    rc.addProperty(DCTerms.format, "Article");
 			} else {
-			    rc.addProperty(format, "Monograph");
+			    rc.addProperty(DCTerms.format, "Monograph");
 			}
 		}
 
-        Property title = model.createProperty(dct, "title");
-        if (!rc.hasProperty(title)) {
+        if (!rc.hasProperty(DCTerms.title)) {
             log("setting title from pdf catalog");
 		    if (pl.getTitle()!=null) {
-                rc.addProperty(title, pl.getTitle());
+                rc.addProperty(DCTerms.title, pl.getTitle());
             }
         }
 
-        Property creator = model.createProperty(dct, "creator");
-        if (!rc.hasProperty(creator)) {
+        if (!rc.hasProperty(DCTerms.creator)) {
             log("setting creator from pdf catalog");
 		    if (pl.getAuthor()!=null) {
                 extractor.injectAuthors(model,rc,new String[]{pl.getAuthor()});
@@ -169,11 +178,10 @@ public class PDFAnalyzer extends AbstractAnalyzer {
             }
         }
 
-        Property issued = model.createProperty(dct, "issued");
-        if (!rc.hasProperty(issued)) {
+        if (!rc.hasProperty(DCTerms.issued)) {
             log("setting issue date from pdf catalog");
 		    if (pl.getDate()!=null) {
-                rc.addProperty(issued, pl.getDate());
+                rc.addProperty(DCTerms.issued, pl.getDate());
             }
         }
 

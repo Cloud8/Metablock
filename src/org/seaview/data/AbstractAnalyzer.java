@@ -18,15 +18,20 @@ import java.nio.file.Files;
 
 import java.util.logging.Logger;
 
-/*
- * (Really simple-dumb) abstract analyzer
- *
- */
+/**
+  @license http://www.apache.org/licenses/LICENSE-2.0
+  @author Goetz Hatop
+  @title Abstract Data Analyzer
+  @date 2015-07-01
+*/
 public abstract class AbstractAnalyzer implements Analyzer {
 
-    public static final String ore = "http://www.openarchives.org/ore/terms/";
+    protected static final String ore = "http://www.openarchives.org/ore/terms/";
     protected static final String c4o = "http://purl.org/spar/c4o/";
     protected static final String voidNS = "http://rdfs.org/ns/void#";
+    protected String docbase;
+    protected boolean test = false;
+    protected Property hasDOI;
 
     @Override
     public Analyzer create() {
@@ -41,6 +46,7 @@ public abstract class AbstractAnalyzer implements Analyzer {
     public Resource analyze(Model model, String id) {
         //log("analyze " + rc.getURI() + " [" + id + "]");
         Resource rc = findResource(model, id);
+        hasDOI = model.createProperty(fabio, "hasDOI");
         analyze(model, rc, id);
         return rc;
     }
@@ -53,26 +59,20 @@ public abstract class AbstractAnalyzer implements Analyzer {
 
     @Override
     public Resource test(Model model, String id) {
-        Resource rc = findResource(model, id);
-        test(model, rc, id);
-        return rc;
+        test = true;
+        return analyze(model, id);
     }
 
     @Override
     public void dump(Model model, String id, String fname) {
         Resource rc = findResource(model, id);
         log("dump not available " + rc.getURI() + " " + id);
-        //dump(model, rc, id, fname);
     }
 
     public abstract void analyze(Model model, Resource rc, String id);
 
-    public void test(Model model, Resource rc, String id) {
-        log("test " + rc.getURI() + " " + id);
-    }
-
-    //private void dump(Model model, Resource rc, String id, String outfile) {
-    //    log("dump not available " + rc.getURI() + " " + id);
+    //public void test(Model model, Resource rc, String id) {
+    //    log("test " + rc.getURI() + " " + id);
     //}
 
     protected Resource findResource(Model model, String id) {
@@ -89,7 +89,9 @@ public abstract class AbstractAnalyzer implements Analyzer {
             Resource rcx = ri.nextResource();
 		    String ns = rcx.getPropertyResourceValue(RDF.type).getNameSpace();
 		    String name = rcx.getPropertyResourceValue(RDF.type).getLocalName();
-            if (ns.equals(fabio)) {
+            if (ns==null) {
+                log("ns " + ns + " name " + name);
+            } else if (ns.equals(fabio)) {
 			    // log("findResource " + name + " [" + ns + "]");
                 if (rc==null) {
                     rc = rcx;
@@ -104,7 +106,7 @@ public abstract class AbstractAnalyzer implements Analyzer {
                 if (rcx.hasProperty(agg) && !rc.hasProperty(agg)) {
                     rc = rcx;
                 }
-            } else if (ns.equals(dct) && name.equals("BibliographicResource")) {
+            } else if (ns.equals(DCTerms.NS) && name.equals("BibliographicResource")) {
                 if (rcx.hasProperty(agg)) {
                     rc = rcx;
                 }
@@ -113,31 +115,7 @@ public abstract class AbstractAnalyzer implements Analyzer {
         return rc;
     }
 
-    /**
-    private Resource findOldResource(Model model, String id) {
-        Resource rc = null;
-        if (id.startsWith("http://")) {
-            rc = model.getResource(id);
-        } else {
-            ResIterator ri = model.listSubjectsWithProperty(
-                     model.createProperty(ore, "aggregates"));
-            if (ri.hasNext()) {
-                rc = ri.nextResource();
-            } else {
-                ri = model.listSubjectsWithProperty(
-                     model.createProperty(DCTerms.getURI(), "identifier"));
-                if (ri.hasNext()) {
-                    rc = ri.nextResource();
-                } else {
-                    log("no resource for " + id);
-                }
-            }
-        }
-        return rc;
-    }
-    **/
-
-    public static String getPath(Model mod, Resource rc, 
+    public String getPath(Model mod, Resource rc, 
                                  String id, String suffix) {
         int x = id.lastIndexOf(".");
         if (x>0) {
@@ -149,7 +127,7 @@ public abstract class AbstractAnalyzer implements Analyzer {
         return getPath(mod, rc, suffix);
     }
 
-    public static String getPath(Model mod, Resource rc, String suffix) {
+    public String getPath(Model mod, Resource rc, String suffix) {
         Property rel = mod.createProperty(ore, "aggregates");
         StmtIterator si = rc.listProperties(rel);
 
@@ -172,12 +150,15 @@ public abstract class AbstractAnalyzer implements Analyzer {
         if (path==null) {
             return null;
         }
+        if (path.startsWith("files://")) {
+            return path.substring(8);
+        }
         if (path.startsWith("http://localhost/")) {
             path = path.substring(17);
         }
-        if (path.startsWith("http://archiv.ub.uni-marburg.de/")) {
-            String test = "/srv/archiv/" + path.substring(32);
-            logger.info("test " + test);
+        if (docbase!=null && path.indexOf("/", 9)>0) {
+            String test = docbase + path.substring(path.indexOf("/", 9));
+            //logger.info("test " + test);
             if (Files.isReadable(Paths.get(test))) {
                 return test;
             }

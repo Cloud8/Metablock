@@ -1,11 +1,15 @@
 package org.seaview.main;
 
 import org.seaview.pdf.PDFAnalyzer;
+import org.seaview.pdf.PDFLoader;
 import org.seaview.data.DOIAnalyzer;
 import org.seaview.data.DataAnalyzer;
+import org.seaview.data.OpusAnalyzer;
 import org.seaview.data.FileScanner;
 import org.seaview.data.VoidTransporter;
 import org.seaview.data.ConsoleStorage;
+import org.seaview.data.OpusTransporter;
+import org.seaview.data.DBTransporter;
 import org.seaview.cite.RefAnalyzer;
 import org.seaview.cite.RefContext;
 
@@ -20,6 +24,7 @@ import org.shanghai.solr.SolrTransporter;
 import org.shanghai.util.Language;
 import org.seaview.pdf.PDFScanner;
 
+import java.util.Calendar;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
@@ -50,9 +55,12 @@ public class Crawl extends org.shanghai.crawl.Crawl {
         }
 
         for(String eng: engine.split(" ")) { 
-            if (eng.contains("pdf")) {
+            if (eng.equals("pdf:none")) {
+                crawler.inject(new PDFLoader().create());
+            } else if (eng.contains("pdf")) {
                 String extractor = config.get("pdf.extractor");
-                String base = null;
+                String ghome = null;
+                String base = config.get("opus.docbase");
                 int x = eng.indexOf(":", eng.indexOf("pdf")) + 1;
                 if (x>0) {
                     extractor = eng.substring(x);
@@ -60,7 +68,7 @@ public class Crawl extends org.shanghai.crawl.Crawl {
                 if (extractor==null) {
                     extractor = "cermine";
                 } else if (extractor.equals("grobid")) {
-                    base = config.get("pdf.grobid");
+                    ghome = config.get("pdf.grobid");
                 }
                 log("source: " + source + " target: " + target 
                                + " eng [" + eng + "] ex:" + extractor);
@@ -69,7 +77,7 @@ public class Crawl extends org.shanghai.crawl.Crawl {
                 s = config.get("pdf.references");
                 boolean refs = s==null?false:s.equals("true");
                 crawler.inject(
-                        new PDFAnalyzer(extractor, meta, refs, base).create());
+                new PDFAnalyzer(extractor, meta, refs, ghome, base).create());
             }
             if (eng.contains("doi")) {
                 String p = config.get("doi.prefix");
@@ -105,18 +113,32 @@ public class Crawl extends org.shanghai.crawl.Crawl {
                 crawler.inject(new RefAnalyzer().create());
             }
             if (eng.contains("ctx")) {
-                crawler.inject(new RefContext().create());
+                String base = config.get("opus.docbase");
+                crawler.inject(new RefContext(base).create());
             }
             if (eng.contains("data")) {
                 crawler.inject(new DataAnalyzer().create());
                 //String xslt = config.get("nlp.transformer");
                 //crawler.inject(new DataAnalyzer(xslt).create());
             }
+            if (eng.contains("opus") && !eng.contains("doi")) {
+                String s = config.get("opus.dbhost");
+                String p = config.get("opus.dbase");
+                String u = config.get("opus.dbuser");
+                String v = config.get("opus.dbpass");
+                String up = config.get("urn.prefix");
+                boolean w = config.getBoolean("opus.write");
+                if (eng.equals("opus:none")) {
+                    w = false;
+                }
+                crawler.inject(new OpusAnalyzer(s, p, u, v, up, w).create());
+            }
         }
     }
 
     @Override
     public void createTransporter(String crawl) {
+        //log("create transporter " + crawl);
         if (crawl.contains("files")) {
             source = "files"; // make parent understand
             String suffix = config.get("files.suffix");
@@ -156,6 +178,28 @@ public class Crawl extends org.shanghai.crawl.Crawl {
         } else if (crawl.startsWith("void")) {
             transporter = new VoidTransporter();
 			transporter.create();
+        } else if (crawl.startsWith("opus")) {
+            String s = config.get("opus.dbhost");
+            String p = config.get("opus.dbase");
+            String u = config.get("opus.dbuser");
+            String v = config.get("opus.dbpass");
+            String i = config.get("opus.enum");
+            String d = config.get("opus.dump");
+            String x = config.get("opus.transporter");
+            int days = config.getInt("opus.days");
+            if (crawl.equals("opus:test")) {
+                i = days>=0?config.get("opus.enumd"):i;
+                transporter = new OpusTransporter(s, p, u, v, i, d, x, null, days, true);
+            } else if (crawl.equals("opus:dump")) {
+                String b = config.get("opus.docbase");
+                i = days>=0?config.get("opus.enumd"):i;
+                transporter = new OpusTransporter(s, p, u, v, i, d, x, b, days, true);
+            } else {
+                String si = config.get("opus.series");
+                String sd = config.get("opus.seriesd");
+                transporter = new OpusTransporter(s, p, u, v, i, d, si, sd, x);
+            }
+            transporter.create();
         } else {
             super.createTransporter(crawl);
         }
@@ -165,10 +209,10 @@ public class Crawl extends org.shanghai.crawl.Crawl {
     public MetaCrawl.Storage createStorage(String store) {
         if (store.equals("console")) {
             storage = new ConsoleStorage();
+            storage.create();
         } else {
             storage = super.createStorage(store);
         }
-        storage.create();
         return storage;
     }
 

@@ -48,7 +48,6 @@ public class Grobid extends AbstractExtractor {
     public  int count; 
 
     private static final String about /* will become rdf:about */
-            //= "http://archiv.ub.uni-marburg.de/ubfind/EDS/Search?lookfor=";
                                 = "http://localhost/refs/";
     private static final Pattern urlPattern = Pattern.compile(
         "(?:^|[\\W])((ht|f)tp(s?):\\/\\/|www\\.)"
@@ -134,7 +133,6 @@ public class Grobid extends AbstractExtractor {
                 rc = inject(rc, model, "issued", issued);
             }
             rc = inject(rc, model, "abstract", bi.getAbstract());
-            //List<Keyword> topics = bi.getKeywords();
             if (bi.getKeywords()!=null) {
                 for (Keyword keyword : bi.getKeywords()) {
                     String topic = keyword.getKeyword();
@@ -142,6 +140,11 @@ public class Grobid extends AbstractExtractor {
                 }
             }
             rc = inject(rc, model, "hasDOI", bi.getDOI());
+            //String label = bi.getNumber();
+            //if (label!=null) {
+            //    log("label " + label);
+            //    rc.addProperty(model.createProperty(fabio, "label"), label);
+            //}
         } catch (Exception e) {
             log(e); 
         } finally {
@@ -170,13 +173,14 @@ public class Grobid extends AbstractExtractor {
             count += bdsl.size();
             //log(rc.getURI() + " : " + bdsl.size() + " refs.");
 
-            String concept = dct + "BibliographicResource";
-            Resource rcConcept = mod.createResource(concept);
+            //String concept = dct + "BibliographicResource";
+            //Resource rcConcept = mod.createResource(concept);
             for (BibDataSet bds : bdsl) {
                 BiblioItem bd = bds.getResBib();
                 if (bd==null) {
                     continue;
                 }
+                //log(bd.toString());
                 String raw = TextUtil.cleanUTF(bds.getRawBib());
                 String title = bd.getTitle();
                          //+ bd.getYear()+"-"+bd.getMonth()+"-"+bd.getDay();
@@ -192,7 +196,8 @@ public class Grobid extends AbstractExtractor {
                 if (url==null) {
                      url = uri;
                 }
-                Resource ref = mod.createResource(uri, rcConcept);
+                //Resource ref = mod.createResource(uri, rcConcept);
+                Resource ref = mod.createResource(uri, DCTerms.BibliographicResource);
                 ref = inject(ref, mod, "bibliographicCitation", raw);
                 ref = inject(ref, mod, "title", title);
                 if (uri.startsWith("http://localhost")) {

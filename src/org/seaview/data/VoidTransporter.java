@@ -11,11 +11,15 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.NodeIterator;
+import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collections;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -29,8 +33,6 @@ public class VoidTransporter implements MetaCrawl.Transporter {
 
     protected static final String dct = DCTerms.NS;
     private List<String> parts;
-    //private Model model;
-    Property hasPart;
 
     public VoidTransporter() {
     }
@@ -38,39 +40,29 @@ public class VoidTransporter implements MetaCrawl.Transporter {
     @Override
     public void create() {
         parts = new ArrayList<String>();
-        //model = null;
     }
 
     @Override
     public void dispose() {
         parts.clear();
-        //model = null;
     }
 
     @Override
     public String probe() {
-        return "VoidTransporter probed.";
+        return "probed.";
     }
 
     @Override
     public synchronized Model read(String resource) {
-        Model model = PrefixModel.retrieve(resource);
-        if (model==null) {
-            log("zero " + resource);
-        } else {
-            getParts(model);
-        }
-        return model;
+        return PrefixModel.retrieve(resource);
     }
 
     @Override
     public String[] getIdentifiers(int off, int limit) {
         log("identifiers : " + off + " " + limit + " size " + parts.size());
-        if (parts.size()<=off) {
-            return null;
-        }
         if (parts.size()<off+limit) {
             List<String> subList = parts.subList(off, parts.size());
+            subList.add((String)null);
             return subList.toArray(new String[subList.size()]);
         }
         List<String> subList = parts.subList(off, off + limit);
@@ -84,20 +76,40 @@ public class VoidTransporter implements MetaCrawl.Transporter {
             log("crawl " + resource + " zero size " + parts.size());
             return 0;
         }
+        parts.clear();
+        parts.add(resource);
         getParts(model);
+        Set<String> hs = new HashSet<>();
+		hs.addAll(parts);
+		parts.clear();
+		parts.addAll(hs);
+        Collections.sort(parts);
+        //int ii = 0;
+        //for (String str : parts) {
+        //    log(str + " " + (ii++));
+        //}
         log("index " + resource + " size " + parts.size());
         return parts.size();
     }
 
+    @Override
+    public Model test(String resource) {
+        log("test # " + resource);
+        Model model = PrefixModel.retrieve(resource);
+        return model;
+    }
+
     private void getParts(Model model) {
-        if (hasPart==null) {
-            hasPart = model.createProperty(dct, "hasPart");
-        }
-        NodeIterator ni = model.listObjectsOfProperty(hasPart);
+        NodeIterator ni = model.listObjectsOfProperty(DCTerms.hasPart);
         while(ni.hasNext()) {
             RDFNode node = ni.next();
             if (node.isResource()) {
-                parts.add(node.asResource().getURI());
+                Resource rc = node.asResource();
+                parts.add(rc.getURI());
+                //Model next = PrefixModel.retrieve(rc.getURI());
+                //if (next!=null) {
+                //    getParts(next);
+                //}
             }
         }
     }

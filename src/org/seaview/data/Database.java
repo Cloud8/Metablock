@@ -6,6 +6,8 @@ import com.mysql.jdbc.jdbc2.optional.MysqlDataSource;
 
 import java.util.logging.Logger;
 import java.util.Iterator;
+import java.util.List;
+import java.util.ArrayList;
 
 import java.sql.Connection;
 import java.sql.Statement;
@@ -128,7 +130,7 @@ public class Database {
          //log("res " + res + ": " + query);
        } catch(SQLException ex) {
          warning("Error connecting: " + ex.toString() );
-         log(query);
+         log("[" + query + "]");
        }
       return res;
     }
@@ -171,15 +173,17 @@ public class Database {
     }
     */
 
-    public String[] getColumn(String query, int col, int limit) {
-        String[] result = new String[limit];
+    public List<String> getColumn(String query, int col, int limit) {
+        //String[] result = new String[limit];
+        List<String> results = new ArrayList<String>();
         int count=0;
         try {
             Statement statement = connection.createStatement(
                 ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             ResultSet rs = statement.executeQuery(query);
             while(rs.next()) {
-                result[count] = rs.getString(col);
+                //result[count] = rs.getString(col);
+				results.add(rs.getString(col));
                 count++;
                 if (count>limit)
                     break;
@@ -188,9 +192,9 @@ public class Database {
            log(query);
            log(ex);
        }
-       if (count==0)
-           return null;
-       return result;
+       //if (count==0) return null;
+       return results;
+	   //return results.toArray(new String[results.size()]);
     }
 
     private int countOccurrences(String haystack, char needle)

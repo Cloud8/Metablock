@@ -62,7 +62,15 @@ public class Viewer {
     public Viewer(String fname, String outfile, String xsltFile, boolean debug) 
     {
         this.fname = fname;
+        model = getModel(fname);
         this.outfile = outfile;
+        this.xsltFile = xsltFile;
+        this.debug = debug;
+    }
+
+    /** used by OpusAnalyzer */
+    public Viewer(String xsltFile, boolean debug) 
+    {
         this.xsltFile = xsltFile;
         this.debug = debug;
     }
@@ -72,8 +80,6 @@ public class Viewer {
     }
 
     public void create() {
-        log("create " + outfile + " from " + fname);
-        model = getModel(fname);
 		String xslt = FileUtil.readResource(xsltFile); // rdf2mets.xslt
 		transformer = new XMLTransformer(xslt);
         transformer.create();
@@ -85,7 +91,7 @@ public class Viewer {
 		Resource rc = findResource(model, fname);
 		rc.removeAll(DCTerms.hasFormat);
         log("analyze " + rc.getURI());
-		model = analyze(model, rc, fname);
+		model = analyze(model, rc);
 
 		if (rc.hasProperty(DCTerms.hasFormat)) {
             if (debug) {
@@ -95,6 +101,25 @@ public class Viewer {
 			}
 			String mets = transformer.transform(model);
             FileUtil.write(outfile, mets);
+        }
+    }
+  
+    public void analyze(Model model, Resource rc, Path path, Path out) {
+        log("analyze " + path.toString());
+		rc.removeAll(DCTerms.hasFormat);
+		Resource obj = sequence(model, rc, path, ".tif");
+		if (obj.hasProperty(DCTerms.hasPart)) {
+            rc.addProperty(DCTerms.hasFormat, obj);
+            if (debug) {
+                StringWriter writer = new StringWriter();
+                model.write(writer, "RDF/XML-ABBREV");
+                Path check = path.getParent().resolve("about.abd");
+                log("wrote # " + check.toString());
+                FileUtil.write(check, writer.toString());
+			}
+		    String mets = transformer.transform(model);
+            log("wrote ## " + out.toString());
+            FileUtil.write(out, mets);
         }
     }
 
@@ -124,15 +149,14 @@ public class Viewer {
 		return rc;
     }
 
-    private Model analyze(Model model, Resource rc, String fname) {
-		model = analyzeDir(model, rc, ".");
+    private Model analyze(Model model, Resource rc) {
+        Path path = Paths.get(".");
+		model = analyze(model, rc, path);
 	    return model;
 	}
 
     /* analyze subdirectories named tif or made of regexp */
-    private Model analyzeDir(Model model, Resource rc, String directory) {
-        String regex = "^[0-9][0-9a-z]+$";
-        Path path = Paths.get(directory);
+    private Model analyze(Model model, Resource rc, Path path) {
 		try {
             if (Files.isDirectory(path)) {
                 for (Path sub : Files.newDirectoryStream(path)) {

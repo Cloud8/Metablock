@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.channels.FileChannel;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
@@ -30,6 +31,10 @@ import java.nio.ByteBuffer;
 import java.nio.file.FileSystem;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.FileVisitResult;
+import java.nio.file.DirectoryStream;
 
 import java.util.List;
 import java.util.Properties;
@@ -84,60 +89,7 @@ public class FileUtil {
             }
             return result;
         }
-        //if (file.startsWith("/")) {
-        //}
-        //return read(Paths.get(file));
-        //return null;
     }
-
-    /*
-    private static String oldRead(final String file) {
-        if (file==null)
-            return file;
-        if (file.startsWith("/")) {
-		    String result = null;
-            try {
-                InputStream in = FileUtil.class.getResourceAsStream(file);
-                if (in==null) {
-                    Path path = Paths.get(file);
-				    in = path.getFileSystem().provider().newInputStream(path);
-                }
-                result = read(in);
-                in.close();
-			} catch(IOException e) { log(e.toString()); }
-              finally {
-                if (result==null || result.length()==0) {
-                    logger.info("FileUtil: resource " + file + " not found.");
-                    return read(new FileUtil(), file);
-                }
-                return result;
-            }
-        } else {
-            File check = new File(file);
-            if (check.exists())
-                return read(check);
-        }
-        return null;
-    }
-    */
-
-    /* 
-    public static String read(final File f) {
-        String result = null;
-        try {
-            FileInputStream stream = new FileInputStream(f);
-            FileChannel fc = stream.getChannel();
-            MappedByteBuffer bb = fc.map(
-                              FileChannel.MapMode.READ_ONLY, 0, fc.size());
-            result = Charset.defaultCharset().decode(bb).toString();
-            stream.close();
-        } finally {
-            if (result==null)
-                logger.info("File " + f.getName() + " not readable.");
-            return result;
-        }
-	}
-    */
 
     public static String read(final InputStream is) { 
         String result = null;
@@ -193,9 +145,15 @@ public class FileUtil {
         try {
             URL oracle = new URL(from);
             InputStream is = oracle.openStream();
-			Files.copy(is, Paths.get(to));
+			Files.copy(is, Paths.get(to), StandardCopyOption.REPLACE_EXISTING);
         } catch(MalformedURLException e) { e.printStackTrace(); }
           catch(IOException e) { e.printStackTrace(); }
+    }   
+
+    public static void copy(Path from, Path to) {
+        try {
+			Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+        } catch(IOException e) { e.printStackTrace(); }
     }   
 
     /*
@@ -247,6 +205,52 @@ public class FileUtil {
             return filename;
 
         return filename.substring(0, extensionIndex);
+    }
+
+    public static void copyFiles(String source, String target) {
+        final Path targetPath = Paths.get(target);
+        copyFiles(source, targetPath);
+    }
+
+    public static void copyFiles(String source, final Path targetPath) {
+        final Path sourcePath = Paths.get(source);
+        if (!Files.isDirectory(sourcePath)) {
+		    log("no source directory " + source);
+            return;
+        }
+        try {
+            Files.walkFileTree(sourcePath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(final Path dir,
+                    final BasicFileAttributes attrs) throws IOException {
+                    Files.createDirectories(targetPath.resolve(sourcePath
+                        .relativize(dir)));
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(final Path file,
+                    final BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file,
+                        targetPath.resolve(sourcePath.relativize(file)));
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch(IOException e) { log(e); }
+    }
+
+    public static List<String> listFiles(Path path, String glob) {
+	    List<String> result = new ArrayList<String>();
+        try {
+		    DirectoryStream<Path> paths = Files.newDirectoryStream(path, glob);
+			for(Path sub: paths) {
+			    if (Files.isRegularFile(sub)) {
+			        result.add(path.getFileName() + "/" + sub.getFileName());
+				}
+			}
+			paths.close();
+        } catch(IOException e) { log(e); }
+		return result;
     }
 
     private static String read(Object who, String what) {

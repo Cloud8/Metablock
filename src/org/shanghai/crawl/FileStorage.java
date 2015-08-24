@@ -5,6 +5,7 @@ import org.shanghai.util.FileUtil;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.nio.file.FileAlreadyExistsException;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -35,6 +36,9 @@ public class FileStorage implements MetaCrawl.Storage {
 
     @Override
     public void create() {
+        if (store!=null) {
+            log("store " + store);
+        }
     }
 
     @Override
@@ -53,6 +57,7 @@ public class FileStorage implements MetaCrawl.Storage {
 
     @Override
     public boolean write(Model model, String uri) {
+        log("write " + uri);
         StringWriter writer = new StringWriter();
         boolean b = false;
         count++;
@@ -63,22 +68,16 @@ public class FileStorage implements MetaCrawl.Storage {
             }
             try {
                 model.write(writer, "RDF/XML-ABBREV");
-                //log("write " + fname);
                 FileUtil.write(fname, writer.toString());
+                //log("wrote " + fname);
             } catch(CannotEncodeCharacterException e) { log(e); log(uri); }
             finally {
                 b = true; 
             }
         } else if (Files.isDirectory(Paths.get(store))) {
-            if (!uri.startsWith("http")) {
-                Property id = model.createProperty(dct, "identifier");
-                if (model.listResourcesWithProperty(id).hasNext()) {
-                    Resource rc = model.listResourcesWithProperty(id)
-                                       .nextResource();
-				    uri = rc.getURI();
-                }
-            }
-			uri = uri.substring(7);
+            if (uri.startsWith("http")) {
+			    uri = uri.substring(7);
+            } 
             String path = store;
             String[] parts = uri.substring(uri.indexOf("/")+1).split("/");
             for (String part : parts) {
@@ -88,42 +87,36 @@ public class FileStorage implements MetaCrawl.Storage {
 					path += "/" + part;
                 }
             }
-            String base = path.substring(0, path.lastIndexOf("/"));
-            //if (new File(base).exists()) {
-            //} else if (!new File(base).mkdirs()) {
-            //    log("failed path [" + base + "]");
-            //    return true;
-            //}
-            //if (new File(path).isDirectory()) {
+            //log("path " + path + " " + uri.substring(uri.indexOf("/")+1));
+            String about = uri.contains(".")? "about.rdf" : uri+".rdf";
             if (Files.isDirectory(Paths.get(path))) {
-                //File check = new File(path + "/about.rdf");
-				Path check = Paths.get(path + "/about.rdf");
-                //if (check.exists()) {
+				Path check = Paths.get(path + "/" + about);
 				if (Files.exists(check)) {
-                    //if (!new File(path + "/about.old").exists()) 
-                    //    check.renameTo(new File(path + "/about.old"));
 					try {
 					    Files.move(check, check.resolveSibling("about.old"));
-				    } catch(IOException e) { log(e); }
+				    } catch(FileAlreadyExistsException e) { /* skip */ }
+				      catch(IOException e) { log(e); }
                 }
-                path = path + "/about.rdf";
+                path = path + "/" + about;
             } else if (path.endsWith(".pdf")) {
                 path = path.substring(0, path.lastIndexOf('.')) + ".rdf";
             } else {
 				try {
 			        Path p = Files.createDirectories(Paths.get(path));
 				} catch(IOException e) { log(e); }
-                path += "/about.rdf";
+                path += "/" + about;
             }
-            model.write(writer, "RDF/XML-ABBREV");
+            try {
+                model.write(writer, "RDF/XML-ABBREV");
+                FileUtil.write( path, writer.toString());
+                log("wrote " + path);
+            } catch(BadURIException e) { log(path); log(e); }
             if (count%100==0) {
                 log("write " + uri + " to [" + path + "]");
             }
-            FileUtil.write( path, writer.toString());
-            //log("FileUtil.write( " + path + ")");
             b = true;
         } else {
-            log("Unwilling to perform.");
+            log("Unwilling to perform [" + store + "]");
         }
         return b;
     }

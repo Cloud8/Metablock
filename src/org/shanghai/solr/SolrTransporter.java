@@ -99,6 +99,12 @@ public class SolrTransporter implements MetaCrawl.Transporter {
         return PrefixModel.retrieve(oid);
     }
 
+    @Override
+    public Model test(String resource) {
+        log("test not supported.");
+        return null;
+    }
+
     public Model readFromIndex(String oid) { 
         log("read iri [" + iri + "]" + oid);
         SolrDocument sdoc = solrClient.read(oid);

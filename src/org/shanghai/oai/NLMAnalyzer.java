@@ -16,6 +16,7 @@ import org.xml.sax.SAXException;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDF;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -49,15 +50,15 @@ public class NLMAnalyzer implements Analyzer {
     private int count;
     private HashMap<String,String> hash;
 
-    Property title;
-    Property identifier; // dct
-    Property created;    // dct
-    Property modified;   // dct
+    //Property title;
+    //Property identifier; // dct
+    //Property created;    // dct
+    //Property modified;   // dct
     Property issueId;    // fabio:hasIssueIdentifier -- issue identifier
     //Property number;     // fabio:hasSequenceIdentifier -- issue sequence
     //Property volume;     // fabio:hasVolumeIdentifier -- issue volume
     Property article;  // fabio:hasElectronicArticleIdentifier
-    Property type;       // rdf
+    //Property type;       // rdf
     Property hasURL;     // fabio:hasURL
 
     public NLMAnalyzer(String prefix, String store) {
@@ -83,16 +84,16 @@ public class NLMAnalyzer implements Analyzer {
     }
 
     private void createProperties(Model model) {
-        title = model.createProperty(dct, "title");
-        identifier = model.createProperty(dct, "identifier");
-        created = model.createProperty(dct, "created");
-        modified = model.createProperty(dct, "modified");
+        //title = model.createProperty(dct, "title");
+        //identifier = model.createProperty(dct, "identifier");
+        //created = model.createProperty(dct, "created");
+        //modified = model.createProperty(dct, "modified");
         issueId = model.createProperty(fabio, "hasIssueIdentifier");
         //number = model.createProperty(fabio, "hasSequenceIdentifier");
         //volume = model.createProperty(fabio, "hasVolumeIdentifier");
-        hasURL = model.createProperty(fabio, "hasURL");
-        type = model.createProperty(rdf, "type");
         article = model.createProperty(fabio, "hasElectronicArticleIdentifier");
+        hasURL = model.createProperty(fabio, "hasURL");
+        //type = model.createProperty(rdf, "type");
         //log("analyze " + id);
     }
 
@@ -101,10 +102,10 @@ public class NLMAnalyzer implements Analyzer {
         Resource rc = null;
         Resource rci = null;
         createProperties(model);
-        ResIterator ri = model.listResourcesWithProperty(type);
+        ResIterator ri = model.listResourcesWithProperty(RDF.type);
         while( ri.hasNext() ) {
             Resource object = ri.nextResource();
-            String name = object.getPropertyResourceValue(type).getLocalName();
+            String name = object.getPropertyResourceValue(RDF.type).getLocalName();
             if (name.equals("JournalArticle")) {
                 rc = object;
 		        makeIdentifier(rc);
@@ -135,7 +136,7 @@ public class NLMAnalyzer implements Analyzer {
             count++;
         }
         //archive index files
-        writeIndex(model, rc, id);
+        //writeIndex(model, rc, id);
         //if (b) log(" issue " + id);
         return rc;
     }
@@ -151,10 +152,10 @@ public class NLMAnalyzer implements Analyzer {
         log("test # " + id + " " + store);
         createProperties(model);
         Resource rc = null;
-        ResIterator ri = model.listResourcesWithProperty(type);
+        ResIterator ri = model.listResourcesWithProperty(RDF.type);
         while( ri.hasNext() ) {
             rc = ri.nextResource();
-            String name = rc.getPropertyResourceValue(type).getLocalName();
+            String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
             if (name.equals("JournalArticle")) {
 			    makeIdentifier(rc);
                 language.analyze(model, rc, id);
@@ -170,12 +171,12 @@ public class NLMAnalyzer implements Analyzer {
     }
 
     public void makeIdentifier(Resource rc) {
-        if (rc.hasProperty(identifier) ) {
-            String id = rc.getProperty(identifier).getString();
+        if (rc.hasProperty(DCTerms.identifier) ) {
+            String id = rc.getProperty(DCTerms.identifier).getString();
             if (id==null || id.length()==0) {
-                rc.removeAll(identifier);
+                rc.removeAll(DCTerms.identifier);
 			    id = urn.getUrn(rc.getURI());
-			    rc.addProperty(identifier, id);
+			    rc.addProperty(DCTerms.identifier, id);
             }
             //log("analyzing " + rc.getURI() + "[" + id + "]");
         } else {
@@ -185,7 +186,7 @@ public class NLMAnalyzer implements Analyzer {
                 id = rc.getURI().replaceAll("[^a-zA-Z0-9\\:\\.]","");
             } 
             //log("makeIdentifier " + rc.getURI() + "[" + id + "]");
-			rc.addProperty(identifier, id);
+			rc.addProperty(DCTerms.identifier, id);
         }
     }
 
@@ -244,10 +245,9 @@ public class NLMAnalyzer implements Analyzer {
     /** archive index page to file system */
     private boolean writeIndex(Model model, Resource rc, String fname) {
         String path = fname.substring(0, fname.lastIndexOf("/"));
-        // archive index page
-        if (rc.hasProperty(hasURL)) {
+        if (rc.hasProperty(hasURL) && Files.isDirectory(Paths.get(path))) {
             String url = rc.getProperty(hasURL).getString();
-            //log("write index to " + path + "/index.html");
+            log("write index to " + path + "/index.html");
             FileUtil.copy(url, path + "/index.html");
             return true;
         } else {
@@ -262,12 +262,12 @@ public class NLMAnalyzer implements Analyzer {
 	    if (store==null) {
 		    return false;
 		}
-        if ( rc.hasProperty(identifier) ) {
-            String name = rc.getPropertyResourceValue(type).getLocalName();
+        if ( rc.hasProperty(DCTerms.identifier) ) {
+            String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
             String path = store;
-            String id = rc.getProperty(identifier).getString();
-            if (rc.hasProperty(created)) {
-                path += "/" + rc.getProperty(created).getString();
+            String id = rc.getProperty(DCTerms.identifier).getString();
+            if (rc.hasProperty(DCTerms.created)) {
+                path += "/" + rc.getProperty(DCTerms.created).getString();
             }
             if (rc.hasProperty(issueId)) {
                 path += "/" + rc.getProperty(issueId).getString();

@@ -128,10 +128,6 @@
   <foaf:plan><xsl:value-of select="."/></foaf:plan>
 </xsl:template>
 
-<xsl:template match="nlm:permissions">
-  <xsl:apply-templates select="nlm:copyright-statement"/>
-</xsl:template>
-
 <xsl:template match="nlm:abstract">
   <dct:abstract><xsl:value-of select="." /></dct:abstract>
 </xsl:template>
@@ -149,17 +145,19 @@
   <dct:fulltext><xsl:value-of select="nlm:p" /></dct:fulltext>
 </xsl:template>
 
+<xsl:template match="nlm:permissions">
+  <xsl:apply-templates select="nlm:copyright-statement"/>
+  <xsl:apply-templates select="nlm:license"/>
+</xsl:template>
+
 <xsl:template match="nlm:permissions/nlm:copyright-statement">
- <xsl:choose>
-  <xsl:when test="substring-before(substring-after(.,'href='),' ')!=''">
-   <dct:licence>
-    <xsl:value-of select="substring-before(substring-after(.,'href='),' ')"/>
-   </dct:licence>
-  </xsl:when>
-  <xsl:otherwise>
-   <dct:licence><xsl:value-of select="."/></dct:licence>
-  </xsl:otherwise>
- </xsl:choose>
+   <dct:rights><xsl:value-of select="."/></dct:rights>
+</xsl:template>
+
+<xsl:template match="nlm:permissions/nlm:license">
+  <xsl:if test="@href!=''">
+   <dct:license rdf:resource="{@href}"></dct:license>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="nlm:journal-meta">

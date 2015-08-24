@@ -9,6 +9,7 @@ import org.shanghai.util.PrefixModel;
 import org.seaview.data.AbstractAnalyzer;
 import org.seaview.data.DOI;
 
+import com.hp.hpl.jena.vocabulary.DCTerms;
 import org.apache.jena.riot.system.IRIResolver;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -39,14 +40,14 @@ import java.util.logging.Logger;
 */
 public class RefAnalyzer extends AbstractAnalyzer {
 
-    protected Property references;
-    protected Property bibliographicCitation;
-    protected Property title;
-    protected Property creator;
-    protected Property date;
-    protected Property aggregates;
-    protected Property language;
-    protected Property isReferencedBy;
+    //protected Property references;
+    //protected Property bibliographicCitation;
+    //protected Property title;
+    //protected Property creator;
+    //protected Property date;
+    //protected Property aggregates;
+    //protected Property language;
+    //protected Property isReferencedBy;
 
     private int ref_count = 0; // all references
     private int uri_count = 0; // with external uri
@@ -57,20 +58,6 @@ public class RefAnalyzer extends AbstractAnalyzer {
     private int nop_count = 0; // documents with no references
     private int doc_count = 0; // documents with found references
     private int all_count = 0; // all documents
-
-    private boolean test = false;
-
-    //private Transporter transporter;
-    //private Storage storage;
-
-    //public RefAnalyzer() {}
-
-    //public RefAnalyzer(Transporter transporter, Storage storage) {
-    //    this.transporter = transporter;
-    //    this.storage = storage;
-    //    log("transporter " + transporter.getClass().getName());
-    //    log("storage " + storage.getClass().getName());
-    //}
 
     @Override
     public AbstractAnalyzer create() {
@@ -91,18 +78,18 @@ public class RefAnalyzer extends AbstractAnalyzer {
             log("reference analyze with zero resource [" + id + "]");
             return;
         }
-        references = model.createProperty(dct, "references");
-        bibliographicCitation = model
-                                .createProperty(dct, "bibliographicCitation");
-        title = model.createProperty(dct, "title");
-        creator = model.createProperty(dct, "creator");
-        date = model.createProperty(dct, "date");
-        language = model.createProperty(dct, "language");
-        aggregates = model.createProperty(ore, "aggregates");
-        isReferencedBy = model.createProperty(dct, "isReferencedBy");
-        if (rc.hasProperty(references)) {
+        //references = model.createProperty(dct, "references");
+        //bibliographicCitation = model
+        //                        .createProperty(dct, "bibliographicCitation");
+        //title = model.createProperty(dct, "title");
+        //creator = model.createProperty(dct, "creator");
+        //date = model.createProperty(dct, "date");
+        //language = model.createProperty(dct, "language");
+        //aggregates = model.createProperty(ore, "aggregates");
+        //isReferencedBy = model.createProperty(dct, "isReferencedBy");
+        if (rc.hasProperty(DCTerms.references)) {
             //log("reference analyze " + rc.getURI());
-            Seq seq = rc.getProperty(references).getSeq();
+            Seq seq = rc.getProperty(DCTerms.references).getSeq();
             if (seq!=null && seq.size()>0) {
                 for (int i = 1; i< seq.size(); i++) {
                     try {
@@ -118,13 +105,6 @@ public class RefAnalyzer extends AbstractAnalyzer {
             nop_count++;
         }
         all_count++;
-        //if (test) {
-        //    return;
-        //} else if (storage==null) {
-        //    // no storage to write to
-        //} else {
-        //    // storage.write(model, id);
-        //}
     }
 
     protected void analyzeReference(Model model, Resource rc, Resource obj) {
@@ -139,13 +119,6 @@ public class RefAnalyzer extends AbstractAnalyzer {
             // model.add(model.createStatement(obj, isReferencedBy, rc));
         } else if (uri.contains("doi")) {
             doi_count++;
-            //if (!test) {
-            //    boolean b = testModel(uri);
-            //    if (b) {
-            //        rdf_count++;
-            //        log("linked data uri: " + uri);
-            //    }
-            //}
         } else if (uri.contains("uni-marburg.de")) {
             uri_count++;
             rdf_count++;
@@ -175,7 +148,6 @@ public class RefAnalyzer extends AbstractAnalyzer {
             log(model);
         }
         String uri = DOI.resolve(id);
-        //String uri = "http://archiv.ub.uni-marburg.de/diss/z2015/0047";
         log("resolved " + id + " " + uri); 
         model = PrefixModel.retrieve(uri);
         if (model==null) {
@@ -189,6 +161,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
         return true;
     }
 
+    /*
     @Override
     public Resource test(Model model, String id) {
         Resource rc = findResource(model, id);
@@ -196,6 +169,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
         analyze(model, rc, id);
         return rc;
     }
+    */
 
     /*
     private void updateModel(Model model, String uri, String resource) {
@@ -311,7 +285,7 @@ public class RefAnalyzer extends AbstractAnalyzer {
     private char last = ' ';
     private String cleanRef(Resource rc, Resource obj) {
        String cite = null;
-       String text = obj.getProperty(bibliographicCitation).getString(); 
+       String text = obj.getProperty(DCTerms.bibliographicCitation).getString(); 
        if (text==null) {
            log("zero reference " + obj.getURI());
            return null;
@@ -354,8 +328,8 @@ public class RefAnalyzer extends AbstractAnalyzer {
         }
         text = text.substring(x);
         if (text.length()>0) {
-            obj.removeAll(bibliographicCitation);
-            obj.addProperty(bibliographicCitation, text);
+            obj.removeAll(DCTerms.bibliographicCitation);
+            obj.addProperty(DCTerms.bibliographicCitation, text);
             return text;
         }
         return " ";

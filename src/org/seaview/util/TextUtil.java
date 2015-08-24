@@ -41,11 +41,14 @@ public class TextUtil {
     public static String cleanUTF(String raw) {
         try {
             CharsetDecoder utf8Decoder = Charset.forName("UTF-8").newDecoder();
-            utf8Decoder.onMalformedInput(CodingErrorAction.IGNORE);
-            utf8Decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            //utf8Decoder.onMalformedInput(CodingErrorAction.IGNORE);
+            //utf8Decoder.onUnmappableCharacter(CodingErrorAction.IGNORE);
+            utf8Decoder.onMalformedInput(CodingErrorAction.REPLACE);
+            utf8Decoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
             ByteBuffer bytes = ByteBuffer.wrap(raw.getBytes("UTF-8"));
             CharBuffer parsed = utf8Decoder.decode(bytes);
-            return parsed.toString();
+            //return parsed.toString();
+            return parsed.toString().replaceAll("\\p{C}", " ");
         } catch( UnsupportedEncodingException e) {
             logger.info("Bad UTF8" + e.toString());
         } catch( CharacterCodingException e) {

@@ -113,7 +113,7 @@ public class Main {
 
         if (args[0].startsWith("-urn")) {
             Config config = new Config(configFile).create();
-            URN engine = new URN(config.get("oai.urnPrefix"));
+            URN engine = new URN(config.get("urn.prefix"));
             if (args.length==2) {
                 engine.create();
                 engine.make(args[1]);

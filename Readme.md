@@ -1,6 +1,6 @@
 
 
-  Autobib: Preparations for a Semantic Repository.
+  Autobib: Bibliographic Metadata Synchronizer
 ==================================================
 
   AutoBib (abd) is a metadata framework for bibliograhical data build around 
@@ -13,7 +13,7 @@
   
   - SPARQL service endpoints
   - RDF data files from the filesystem
-  - OAI datasources
+  - OAI datasources with XSLT lifting
   - RDF data files retrieved from the web
 
 ##### RDF data targets:
@@ -59,7 +59,6 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   are rather general, but modelling of bibliographic resources may vary and 
   require modifications.  
 
-%% <!-- See http://journal.code4lib.org/articles/8526 -->
 
   All configurations are done in lib/seaview.ttl
 
