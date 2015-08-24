@@ -62,15 +62,6 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
 
   [<code>abd -crawl *resource*</code>] : index, transform and write resource
 
-##### About
-
-  The autobib program is written in Java and controled by a 
-  knowledge base written down in turtle
-
-  The goal is to have a cronnable tool to drive a RDF based 
-  bibliographic metadata hub with VuFind as a discovery frontend.
-
-
 ### Collaboration
 
   We're *open to pull requests*! If you'd like to collaborate, 
