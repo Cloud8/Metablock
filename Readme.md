@@ -3,56 +3,43 @@
   Autobib: Bibliographic Metadata Synchronizer
 ==================================================
 
-  AutoBib (abd) is a metadata framework for bibliograhical data build around 
-  the RDF data model. 
-  Most basically its a data crawler able to fetch a RDF description from a 
-  data source, analyze the data and write the possibly modified resource 
-  description back to a RDF target.
+  This is a data crawler able to fetch a description from a RDF data source, 
+  analyze the data and write the possibly modified resource description back 
+  to a RDF target.
 
 ##### RDF Data sources:
   
   - SPARQL service endpoints
-  - RDF data files from the filesystem
-<<<<<<< HEAD
+  - RDF data files 
   - OAI datasources with XSLT lifting
-=======
-  - OAI datasources lifted to RDF by XSLT 
->>>>>>> dddcc345197c59648368853e940ba2db7be17128
-  - RDF data files retrieved from the web
 
 ##### RDF data targets:
 
   - Virtuoso RDF storage
   - Jena TDB storage
   - 4store RDF storage
-  - RDF files on the local file system
+  - RDF files 
   - Solr search index as defined by the VuFind discovery system
-  - System console
 
 ##### RDF data analyzers
 
   - Language analyzer: guesses the language of a resource desription
-    from the dcterms abstract or title property
-  - PDF Analyzer: extract bibliographic metadata and references from PDF
+    from dcterms abstract or title property
+  - PDF Analyzer: uses external libraries (grobid, cermine) to extract 
+    bibliographic metadata and references from PDF documents
 
-  - REF Analyzer: extract bibliographic relations like
-    <code>paperA dcterms:references paperB</code>
-
-  - CTX Analyzer: find citation context bibliographic citation
-
-##### Search support : write RDF data to a Solr search index
+##### Indexing : writing RDF data to a Solr search index
 
   To build a solr index from a SPARQL service endpoint,
   three steps are required:
 
-  1. Resource Enumeration: List resources 
+  1. Resource Enumeration: List all resources that should be indexed,
 
-  2. Resource Dump: Query knowledge about a resource,
+  2. Resource Dump: Query everything the triple store knows about a resource,
 
-  3. Resource Tranformation: Transform RDF data to solr index format.
+  3. Resource Tranformation: Transform RDF/XML to solr index format.
 
 
-<<<<<<< HEAD
 Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   The sparql queries and xslt transformations from lib/sparql and lib/xslt
   are rather general, but modelling of bibliographic resources may vary and 
@@ -74,14 +61,11 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   [<code>abd -crawl -test *resource*</code>] : index and transform resource
 
   [<code>abd -crawl *resource*</code>] : index, transform and write resource
-=======
->>>>>>> dddcc345197c59648368853e940ba2db7be17128
 
 ##### About
 
   The autobib program is written in Java and controled by a 
-  knowledge base written down in turtle together with some 
-  command line flags.
+  knowledge base written down in turtle
 
   The goal is to have a cronnable tool to drive a RDF based 
   bibliographic metadata hub with VuFind as a discovery frontend.
