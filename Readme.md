@@ -21,13 +21,6 @@
   - RDF files 
   - Solr search index as defined by the VuFind discovery system
 
-##### RDF data analyzers
-
-  - Language analyzer: guesses the language of a resource desription
-    from dcterms abstract or title property
-  - PDF Analyzer: uses external libraries (grobid, cermine) to extract 
-    bibliographic metadata and references from PDF documents
-
 ##### Indexing : writing RDF data to a Solr search index
 
   To build a solr index from a SPARQL service endpoint,

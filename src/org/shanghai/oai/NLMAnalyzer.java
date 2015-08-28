@@ -121,6 +121,7 @@ public class NLMAnalyzer implements Analyzer {
         if (store==null) { // no writes from here
             // log("analyze " + id + " " + rc.getURI());
         } else if (store.equals("files") && rci!=null) { // help parent ??
+            log("write parent " + id + " " + rc.getURI());
             if (!hash.containsKey(rci.getURI())) {
                 Model sub = getPartOf(rci);
                 b = writeParent(sub, rci, id);
