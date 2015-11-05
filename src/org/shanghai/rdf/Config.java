@@ -1,16 +1,18 @@
 package org.shanghai.rdf;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.rdf.model.NodeIterator;
-import com.hp.hpl.jena.rdf.model.ResIterator;
-import com.hp.hpl.jena.rdf.model.Selector;
-import com.hp.hpl.jena.rdf.model.SimpleSelector;
+import org.shanghai.util.ModelUtil;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.NodeIterator;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.Selector;
+import org.apache.jena.rdf.model.SimpleSelector;
 
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -78,7 +80,7 @@ public class Config {
 
     public Config create(InputStream in) {
 		try {
-            model = ModelFactory.createDefaultModel();
+            model = ModelUtil.createModel();
 		} catch(java.lang.ExceptionInInitializerError e) {
 		    log("Config: " + e.getCause());
             e.printStackTrace();
@@ -124,7 +126,8 @@ public class Config {
         return -1;
     }
 
-    public boolean getBoolean(String name) {
+    //public boolean getBoolean(String name) {
+    public boolean getBool(String name) {
         RDFNode o = getNode(name);
         if (o.isLiteral()) 
             return o.asLiteral().getBoolean();
@@ -367,16 +370,18 @@ public class Config {
         public String set;
         public String archive; 
         public String days;
+        public String test;
         public void show() {
-           log("OAI: " + prefix 
-             + "   : " + days + ": " + transformer + "\n"
-             + "   : " + harvest + "\n" 
-             + "   : " + set + "\n"
-             + "   : " + "republish to " + archive + "\n"
-             + "   : from " + from + " until " + until); 
+           log(" OAI: " + prefix + " days: " + days + ": " + transformer + "\n"
+             + "    : " + harvest + "\n" 
+             + " set: " + set + "\n"
+             + "    : " + "republish to " + archive + "\n"
+             + "    : from " + from + " until " + until); 
         }
         void calcule() {
-            if (from==null) {
+            if (from==null && days==null) {
+                from = "2000-01-01T00:00:00Z";
+            } else if (from==null) {
                 days = days.substring(0, days.indexOf("^^"));
                 from = getBack(Integer.parseInt(days));
             } else {
@@ -410,10 +415,10 @@ public class Config {
     public void test() {
         //getSimpleProperties();
         //getSimpleProperties().list(System.out);
-        //List<OAI> oaiList = getOAIList();
-        //for (OAI oai: getOAIList()) {
-        //     oai.show();
-        //}
+        List<OAI> oaiList = getOAIList();
+        for (OAI oai: getOAIList()) {
+             oai.show();
+        }
         //List<Index> idxList = getIndexList();
         //for (Index idx: idxList) {
         //     idx.show();
@@ -469,28 +474,12 @@ public class Config {
         return st.getObject().toString();
     }
 
-    private void log(Model m) {
-        m.write(System.out, "TTL");
-    }
-
     private void log(String msg) {
         log.info(msg);
     }
 
     private void log(Exception e) {
         log(e.toString());
-    }
-
-    public static void main(String... args) {
-        Config c = new Config("seaview.ttl");
-        c.create();
-        int argc = 0;
-        if (args.length>argc && args[argc].equals("-show")) {
-            c.show();
-        } else if (args.length>argc && args[argc].equals("-test")) {
-            c.test();
-        }
-        c.dispose();
     }
 
 }

@@ -3,7 +3,8 @@
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:dc="http://purl.org/dc/elements/1.1/" 
-     xmlns:dct="http://purl.org/dc/terms/" 
+     xmlns:dcterms="http://purl.org/dc/terms/" 
+     xmlns:dctypes="http://purl.org/dc/dcmitype/"
      xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:skos="http://www.w3.org/2008/05/skos#"
@@ -16,7 +17,6 @@
      xmlns:ddb="http://www.d-nb.de/standards/ddb/" 
      xmlns:dini="http://www.d-nb.de/standards/xmetadissplus/type/" 
      xmlns:gnd="http://d-nb.info/gnd/" 
-     xmlns:ore="http://www.openarchives.org/ore/terms/"
      xsi:schemaLocation="http://www.d-nb.de/standards/xmetadissplus/ http://www.d-nb.de/standards/xmetadissplus/xmetadissplus.xsd"
      version="1.0" >
 
@@ -42,71 +42,71 @@
   <rdf:RDF>
     <xsl:choose>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='doctoralThesis'">
-      <fabio:DoctoralThesis rdf:about="{ddb:identifier}">
+      <fabio:DoctoralThesis rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>DoctoralThesis</dct:type>
+         <dcterms:type>DoctoralThesis</dcterms:type>
       </fabio:DoctoralThesis>
      </xsl:when>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='book'">
-      <fabio:Book rdf:about="{ddb:identifier}">
+      <fabio:Book rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>Book</dct:type>
+         <dcterms:type>Book</dcterms:type>
       </fabio:Book>
      </xsl:when>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='Periodical'">
-      <fabio:Periodical rdf:about="{ddb:identifier}">
+      <fabio:Periodical rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>Periodical</dct:type>
+         <dcterms:type>Periodical</dcterms:type>
       </fabio:Periodical>
      </xsl:when>
      <!-- Volume : Band einer Serie -->
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='bookPart'">
-      <fabio:PeriodicalIssue rdf:about="{ddb:identifier}">
+      <fabio:PeriodicalIssue rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>PeriodicalIssue</dct:type>
+         <dcterms:type>PeriodicalIssue</dcterms:type>
       </fabio:PeriodicalIssue>
      </xsl:when>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='MusicalNotation'">
-      <fabio:MusicalComposition rdf:about="{ddb:identifier}">
+      <fabio:MusicalComposition rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>MusicalNotation</dct:type>
+         <dcterms:type>MusicalNotation</dcterms:type>
       </fabio:MusicalComposition>
      </xsl:when>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='Image'">
-      <fabio:StillImage rdf:about="{ddb:identifier}">
+      <fabio:StillImage rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>Image</dct:type>
+         <dcterms:type>Image</dcterms:type>
       </fabio:StillImage>
      </xsl:when>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='article'">
-      <fabio:Article rdf:about="{ddb:identifier}">
+      <fabio:Article rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>Article</dct:type>
+         <dcterms:type>Article</dcterms:type>
       </fabio:Article>
      </xsl:when>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='bookPart'">
-      <fabio:BookChapter rdf:about="{ddb:identifier}">
+      <fabio:BookChapter rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>BookChapter</dct:type>
+         <dcterms:type>BookChapter</dcterms:type>
       </fabio:BookChapter>
      </xsl:when>
      <xsl:when 
           test="dc:type[@xsi:type='dini:PublType']='contributionToPeriodical'">
-      <fabio:PeriodicalVolume rdf:about="{ddb:identifier}">
+      <fabio:PeriodicalVolume rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>PeriodicalVolume</dct:type>
+         <dcterms:type>PeriodicalVolume</dcterms:type>
       </fabio:PeriodicalVolume>
      </xsl:when>
      <xsl:when test="dc:type[@xsi:type='dini:PublType']='workingPaper'">
-      <fabio:WorkingPaper rdf:about="{ddb:identifier}">
+      <fabio:WorkingPaper rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>WorkingPaper</dct:type>
+         <dcterms:type>WorkingPaper</dcterms:type>
       </fabio:WorkingPaper>
      </xsl:when>
      <xsl:otherwise>
-      <fabio:BibliographicMetadata rdf:about="{ddb:identifier}">
+      <fabio:BibliographicMetadata rdf:about="{ddb:identifier[@ddb:type='URL']}">
          <xsl:call-template name="mad" />
-         <dct:type>BibliographicResource</dct:type>
+         <dcterms:type>BibliographicResource</dcterms:type>
       </fabio:BibliographicMetadata> 
      </xsl:otherwise>
     </xsl:choose>
@@ -117,23 +117,24 @@
       <xsl:apply-templates select="dc:title" />
       <xsl:apply-templates select="dc:creator" />
       <xsl:apply-templates select="dc:subject" />
-      <xsl:apply-templates select="dct:abstract" />
+      <xsl:apply-templates select="dcterms:abstract" />
       <xsl:apply-templates select="dc:publisher" />
       <xsl:apply-templates select="dc:contributor" />
-      <xsl:apply-templates select="dct:dateAccepted" />
-      <xsl:apply-templates select="dct:issued" />
-      <xsl:apply-templates select="dct:modified" />
-      <xsl:apply-templates select="dct:created" />
+      <xsl:apply-templates select="dcterms:dateAccepted" />
+      <xsl:apply-templates select="dcterms:issued" />
+      <xsl:apply-templates select="dcterms:modified" />
+      <xsl:apply-templates select="dcterms:created" />
       <xsl:apply-templates select="dc:identifier" />
       <xsl:apply-templates select="dc:language" />
-      <xsl:apply-templates select="dct:isPartOf" />
+      <xsl:apply-templates select="dcterms:isPartOf" />
       <xsl:apply-templates select="dc:rights" />
       <xsl:apply-templates select="dc:type" />
       <xsl:apply-templates select="ddb:transfer" />
+      <xsl:apply-templates select="ddb:identifier" />
 </xsl:template>
 
 <xsl:template match="dc:title">
-  <dct:title><!--<xsl:copy-of select="@xsi:type"/>-->
+  <dcterms:title><!--<xsl:copy-of select="@xsi:type"/>-->
      <xsl:choose>
         <xsl:when test="@lang=../dc:language"></xsl:when>
         <xsl:when test="@lang='ger'">
@@ -147,15 +148,15 @@
         </xsl:when>
      </xsl:choose>
      <xsl:value-of select="."/>
-  </dct:title>
+  </dcterms:title>
 </xsl:template>
 
 <xsl:template match="dc:creator">
-  <dct:creator>
+  <dcterms:creator>
      <foaf:Person>
        <xsl:apply-templates select="pc:person" />
      </foaf:Person>
-  </dct:creator>
+  </dcterms:creator>
 </xsl:template>
 
 <xsl:template match="pc:person">
@@ -170,24 +171,24 @@
 
 <!-- most general first -->
 <xsl:template match="dc:subject[@xsi:type]">
-   <dct:subject><xsl:value-of select="."/></dct:subject>
+   <dcterms:subject><xsl:value-of select="."/></dcterms:subject>
 </xsl:template>
 
 <xsl:template match="dc:subject[@xsi:type='xMetaDiss:DDC-SG']">
-   <dct:subject><xsl:value-of select="."/></dct:subject>
+   <dcterms:subject><xsl:value-of select="."/></dcterms:subject>
 </xsl:template>
 
 <!-- 2012 ist die SWD in der Gemeinsamen Normdatei (GND) aufgegangen -->
 <xsl:template match="dc:subject[@xsi:type='xMetaDiss:SWD']">
-   <dct:subject><xsl:value-of select="."/></dct:subject>
+   <dcterms:subject><xsl:value-of select="."/></dcterms:subject>
 </xsl:template>
 
 <xsl:template match="dc:subject[@xsi:type='xMetaDiss:noScheme']">
-  <dct:subject><xsl:value-of select="."/></dct:subject>
+  <dcterms:subject><xsl:value-of select="."/></dcterms:subject>
 </xsl:template>
 
-<xsl:template match="dct:abstract">
-  <dct:abstract>
+<xsl:template match="dcterms:abstract">
+  <dcterms:abstract>
      <xsl:attribute name="xml:lang">
       <xsl:choose>
         <xsl:when test="@lang='ger'">de</xsl:when>
@@ -195,7 +196,7 @@
       </xsl:choose>
      </xsl:attribute>
      <xsl:value-of select="."/>
-  </dct:abstract>
+  </dcterms:abstract>
 </xsl:template>
 
 <xsl:template match="dc:publisher">
@@ -203,7 +204,7 @@
 </xsl:template>
 
 <xsl:template match="cc:universityOrInstitution">
-  <dct:publisher>
+  <dcterms:publisher>
    <xsl:choose>
    <xsl:when test="contains(.,'Universität Marburg')">
     <xsl:value-of select="'http://d-nb.info/gnd/2001630-X'"/>
@@ -214,54 +215,54 @@
     </foaf:Organization>
     </xsl:otherwise>
    </xsl:choose>
-  </dct:publisher>
-  <dct:publisher>
+  </dcterms:publisher>
+  <dcterms:publisher>
     <foaf:Organization>
      <foaf:name><xsl:value-of select="cc:department/cc:name" /></foaf:name>
     </foaf:Organization>
-  </dct:publisher>
+  </dcterms:publisher>
 </xsl:template>
 
 <xsl:template match="dc:contributor">
-  <dct:contributor>
+  <dcterms:contributor>
      <xsl:value-of select="pc:person/pc:academicTitle"/>
      <xsl:text> </xsl:text>
      <xsl:value-of select="pc:person/pc:name/pc:foreName"/>
      <xsl:text> </xsl:text>
      <xsl:value-of select="pc:person/pc:name/pc:surName"/>
-  </dct:contributor>
+  </dcterms:contributor>
 </xsl:template>
 
-<xsl:template match="dct:dateAccepted">
-  <dct:dateAccepted><xsl:value-of select="."/></dct:dateAccepted>
+<xsl:template match="dcterms:dateAccepted">
+  <dcterms:dateAccepted><xsl:value-of select="."/></dcterms:dateAccepted>
 </xsl:template>
 
-<xsl:template match="dct:issued">
-  <dct:issued><xsl:value-of select="."/></dct:issued>
+<xsl:template match="dcterms:issued">
+  <dcterms:issued><xsl:value-of select="."/></dcterms:issued>
 </xsl:template>
 
-<xsl:template match="dct:modified">
-  <dct:modified><xsl:value-of select="."/></dct:modified>
+<xsl:template match="dcterms:modified">
+  <dcterms:modified><xsl:value-of select="."/></dcterms:modified>
 </xsl:template>
 
-<xsl:template match="dct:created">
-  <dct:created><xsl:value-of select="."/></dct:created>
+<xsl:template match="dcterms:created">
+  <dcterms:created><xsl:value-of select="."/></dcterms:created>
 </xsl:template>
 
 <xsl:template match="dc:type[@xsi:type='dcterms:DCMIType']">
-  <dct:format><xsl:value-of select="."/></dct:format>
+  <dcterms:format><xsl:value-of select="."/></dcterms:format>
 </xsl:template>
 
 <xsl:template match="dc:type[@xsi:type='dini:PublType']">
-  <dct:type><xsl:value-of select="."/></dct:type>
+  <dcterms:type><xsl:value-of select="."/></dcterms:type>
 </xsl:template>
 
 <xsl:template match="dc:identifier">
-  <dct:identifier><xsl:value-of select="."/></dct:identifier>
+  <dcterms:identifier><xsl:value-of select="."/></dcterms:identifier>
 </xsl:template>
 
 <xsl:template match="dc:language">
-  <dct:language>
+  <dcterms:language>
   <xsl:choose>
     <xsl:when test=".='ger'">de</xsl:when>
     <xsl:when test=".='eng'">en</xsl:when>
@@ -270,26 +271,26 @@
      <xsl:value-of select="text()"/>
     </xsl:otherwise>
   </xsl:choose>
-  </dct:language>
+  </dcterms:language>
 </xsl:template>
 
-<xsl:template match="dct:isPartOf[not(@xsi:type)]">
+<xsl:template match="dcterms:isPartOf[not(@xsi:type)]">
  <xsl:comment>
     <xsl:value-of select="@*" />: <xsl:value-of select="." />
  </xsl:comment>
 </xsl:template>
 
 <!-- hierarchies ?? -->
-<xsl:template match="dct:isPartOf[@xsi:type='ddb:noScheme']">
-  <dct:hasPart><xsl:value-of select="." /></dct:hasPart>
+<xsl:template match="dcterms:isPartOf[@xsi:type='ddb:noScheme']">
+  <dcterms:hasPart><xsl:value-of select="." /></dcterms:hasPart>
 </xsl:template>
 
-<xsl:template match="dct:isPartOf[@xsi:type='dcterms:URI']">
-  <dct:isPartOf rdf:resource="{.}" />
+<xsl:template match="dcterms:isPartOf[@xsi:type='dcterms:URI']">
+  <dcterms:isPartOf rdf:resource="{.}" />
 </xsl:template>
 
-<xsl:template match="dct:isPartOf[@xsi:type='dct:URI']">
-  <dct:isPartOf rdf:resource="{.}" />
+<xsl:template match="dcterms:isPartOf[@xsi:type='dcterms:URI']">
+  <dcterms:isPartOf rdf:resource="{.}" />
 </xsl:template>
 
 <xsl:template match="thesis:degree">
@@ -309,11 +310,28 @@
 </xsl:template>
 
 <xsl:template match="dc:rights">
-  <dct:rights><xsl:value-of select="."/></dct:rights>
+  <dcterms:rights><xsl:value-of select="."/></dcterms:rights>
 </xsl:template>
 
-<xsl:template match="ddb:transfer">
-  <ore:aggregates rdf:resource="{.}"/>
+<xsl:template match="ddb:transfer[@ddb:type='dcterms:URI']">
+  <dcterms:hasPart>
+   <xsl:choose>
+    <xsl:when test="contains(.,'container.zip')">
+      <dctypes:Dataset rdf:about="{.}">
+        <dcterms:format>application/zip</dcterms:format>
+      </dctypes:Dataset>
+    </xsl:when>
+    <xsl:otherwise>
+     <dctypes:Text rdf:about="{.}">
+        <dcterms:format>application/pdf</dcterms:format>
+     </dctypes:Text>
+    </xsl:otherwise>
+   </xsl:choose>
+  </dcterms:hasPart>
+</xsl:template>
+
+<xsl:template match="ddb:identifier[@ddb:type='DOI']">
+  <fabio:hasDOI><xsl:value-of select="."/></fabio:hasDOI>
 </xsl:template>
 
 <xsl:template match="pc:foreName">

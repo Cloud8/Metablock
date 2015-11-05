@@ -1,0 +1,98 @@
+PREFIX  rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX  dcterms:   <http://purl.org/dc/terms/>
+PREFIX  dctypes: <http://purl.org/dc/dcmitype/>
+PREFIX  foaf:  <http://xmlns.com/foaf/0.1/>
+PREFIX  fabio: <http://purl.org/spar/fabio/>
+PREFIX  aiiso: <http://purl.org/vocab/aiiso/schema#>
+PREFIX  frbr: <http://purl.org/vocab/frbr/core#>
+PREFIX  pica: <http://localhost/view/>
+PREFIX  daia: <http://purl.org/ontology/daia/>
+PREFIX  pro: <http://purl.org/spar/pro/>
+PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX  prism: <http://prismstandard.org/namespaces/basic/2.0/>
+PREFIX  cito: <http://purl.org/spar/cito/>
+PREFIX  ore: <http://www.openarchives.org/ore/terms/>
+PREFIX  void: <http://rdfs.org/ns/void#>
+
+## six levels of hierarchy
+construct {
+    <subject> ?b ?c .
+    ?c ?d ?e .
+    ?e ?f ?g .
+    ?g ?h ?i .
+    ?i ?j ?k .
+} where {
+  # GRAPH <http://archiv.ub.uni-marburg.de> {
+    {
+      <subject> ?b ?c .
+      optional {
+        ?c ?d ?e .
+         optional {
+             ?e ?f ?g .
+             optional {
+                 ?g ?h ?i .
+                 optional {
+                     ?i ?j ?k .
+                 }
+             }
+         }
+    }
+    FILTER (?b NOT IN (dcterms:fulltext))
+    FILTER (?b NOT IN (dcterms:hasPart))
+    FILTER (?b NOT IN (dcterms:isPartOf))
+    FILTER (?b NOT IN (dcterms:isReferencedBy))
+    ##FILTER (?b NOT IN (dcterms:references))
+    ##FILTER (?b NOT IN (dcterms:abstract))
+    FILTER (NOT EXISTS { ?c a void:Dataset})
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:isPartOf }
+      optional {
+        ?c ?d ?e .
+        values ?d { dcterms:isPartOf rdf:type dcterms:title dcterms:identifier }
+        optional {
+            ?e ?f ?g .
+            values ?f { rdf:type dcterms:title dcterms:identifier }
+        }
+      }
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:hasPart dcterms:isReferencedBy}
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:hasPart }
+      ?c a dctypes:Text
+      optional {
+        ?c ?d ?e .
+      }
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:hasPart }
+      ?c a dctypes:Collection
+      optional {
+        ?c ?d ?e .
+      }
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:hasPart }
+      ?c a dctypes:Dataset
+      optional {
+        ?c ?d ?e .
+      }
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:hasPart }
+      ?c a dctypes:Image
+      optional {
+        ?c ?d ?e .
+      }
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:hasPart }
+      ?c a dctypes:MovingImage
+      optional {
+        ?c ?d ?e .
+      }
+    }
+  # }
+} 

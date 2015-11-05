@@ -1,13 +1,12 @@
 package org.shanghai.oai;
 
 import org.shanghai.rdf.Config;
-import org.shanghai.crawl.FileStorage;
 import org.shanghai.oai.OAITransporter;
 
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -36,7 +35,7 @@ public class Test {
         String probe = transporter.probe();
         System.out.println("OAI probe: " + probe);
 
-        String identifiers[] = transporter.getIdentifiers(0,4);
+        List<String> identifiers = transporter.getIdentifiers(0,4);
         String test = null;
         for (String id : identifiers) {
             if (test==null)
@@ -46,13 +45,6 @@ public class Test {
         System.out.println();
 
         transporter.test();
-        //if (test!=null) {
-        //    Model model = transporter.read(test);
-        //    if (model!=null) {
-        //        model.write(System.out);
-        //    }
-        //}
-        // transporter.make();
     }
 
     protected int help() {

@@ -1,6 +1,7 @@
 package org.shanghai.crawl;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -17,12 +18,14 @@ public class RDFTransporter extends org.shanghai.rdf.RDFTransporter
     }
 
     @Override 
-    public int crawl(String directory) {
-        return Integer.parseInt(super.probe());
+    public int index(String directory) {
+        return 0; // Integer.parseInt(super.probe());
     }
 
-    public Model test(String resource) {
-        Model model = read(resource);
-        return model;
+    @Override 
+    public Resource test(String resource) {
+        Resource rc = read(resource);
+        return rc;
     }
+
 }

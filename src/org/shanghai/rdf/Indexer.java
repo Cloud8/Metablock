@@ -87,12 +87,17 @@ public class Indexer {
 
     /** test source */
     public void test(String off) {
-        test(Integer.parseInt(off), 12);
+        if (off.matches("\\d+")) {
+            test(Integer.parseInt(off), 12);
+        } else {
+            dump(off);
+        }
     }
 
     /** resource dump */
     public void dump() {
-        String uri = transporter.getIdentifiers(0,1)[0];
+        //String uri = transporter.getIdentifiers(0,1)[0];
+        String uri = transporter.getIdentifiers(0,1).get(0);
         createStorage();
         String rdf = rdfCrawl.read(uri); 
         System.out.println(rdf);
@@ -101,10 +106,11 @@ public class Indexer {
     /** resource dump */
     public void dump(String uri) {
         //createStorage();
-        //log("short dump");
+        log("dump " + uri);
         rdfCrawl = new MetaCrawl(transporter,null,null,null,0);
         rdfCrawl.create();
         String rdf = rdfCrawl.read(uri);
+        rdfCrawl.dispose();
         System.out.println(rdf);
     }
 

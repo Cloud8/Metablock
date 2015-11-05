@@ -1,5 +1,7 @@
 package org.shanghai.rdf;
 
+import org.shanghai.util.ModelUtil;
+
 import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -14,6 +16,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.transform.Source;
@@ -57,18 +61,20 @@ import org.apache.xerces.util.SAXInputSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.rdf.model.ResourceFactory;
-import com.hp.hpl.jena.vocabulary.RDF;
-import com.hp.hpl.jena.rdf.model.RDFReader;
-import com.hp.hpl.jena.rdf.model.RDFWriter;
-import com.hp.hpl.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.rdf.model.RDFReader;
+import org.apache.jena.rdf.model.RDFWriter;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.RDFErrorHandler;
 
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.arp.JenaReader;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdfxml.xmlinput.JenaReader;
+import org.apache.jena.rdfxml.xmlinput.DOM2Model;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -87,14 +93,6 @@ public class XMLTransformer {
     private Map<String,String> params;
 
     public XMLTransformer() {
-        //this.xslt = "<xsl:stylesheet\n"
-        //    + "xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\"\n"
-        //    + "version=\"1.0\">\n"
-        //    + "<xsl:template match=\"@*|node()\" priority=\"-1\">\n"
-        //    + "<xsl:copy>\n"
-        //    + "<xsl:apply-templates select=\"@*|node()\"/></xsl:copy>\n"
-        //    + "</xsl:template>\n"
-        //    + "</xsl:stylesheet>\n";
         stringWriter = new StringWriter();
     }
 
@@ -138,126 +136,147 @@ public class XMLTransformer {
         }
     }
 
-    public boolean empty() {
-        return xslt==null;
-    }
-
     public void setParameter(String name, String value) {
         params.put(name, value);
     }
 
+    // public Resource transform(Resource rc) {
+    //     Model model = rc.getModel();
+    //     String data = asString(model);
+    //     String rdf = _transform(data);
+    //     model = asModel(rdf);
+    //     return model.getResource(rc.getURI());
+    // }
+
     //cheap transformer
-    public String transform( Model mod ) {
-        return transform( asString(mod) );
+    //public String transform( Model model ) {
+    //    return _transform( asString(model) );
+    //}
+
+    //cheap transformer
+    public String transform( Resource rc ) {
+        return _transform( asString(rc) );
     }
 
-    /** GH201501 : used by rdf/MetaCrawl */
-    public String transform( Model mod, String resource ) {
-        return transform( toString(mod, resource) );
+    // public Resource transform(Document doc, String uri) {
+    //     Document rdf = _transformDoc(doc);
+    //     Model model = ModelUtil.createModel();
+    //     try {
+    //         DOM2Model.createD2M(uri, model).load(rdf);
+    //     } catch( SAXParseException e ) { log(e); }
+    //     return model.getResource(uri);
+    // }
+
+    // public Resource transform(Document doc, String uri) {
+    //     String rdf = _transform(doc);
+    //     Model model = asModel(rdf);
+    //     return model.getResource(uri);
+    // }
+
+    public Resource transform(Document doc) {
+        String rdf = _transform(doc);
+        return asResource(rdf);
     }
 
-    public Model transform( Document doc ) {
-        Model model = ModelFactory.createDefaultModel();
-        RDFReader reader = new JenaReader();
+    public Resource transform(String xml) {
+        String rdf = _transform(xml);
+        return asResource(rdf);
+        //if (rdf==null) {
+        //    log("transformed to zero.");
+        //}
+        //Resource rc = asResource(rdf);
+        //if (rc==null) {
+        //    log("[" + rdf + "]");
+        //    log("resource is zero.");
+        //}
+        //return rc;
+    }
+
+    public Resource asResource(String rdf) {
+        int x = rdf.indexOf("rdf:about") + 11;
+        int y = rdf.indexOf("\"", x);
+        if (x<0 || y<0 || y<x) {
+            return null;
+        }
+        String uri = rdf.substring(x, y);
+        //log("about [" + uri + "]");
+        Model model = asModel(rdf);
+        return model.getResource(uri);
+    }
+
+    private String _transform( Document doc ) {
+        String rdf = null;
         try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Transformer transformer = templates.newTransformer();
             for (String name : params.keySet()) {
                 transformer.setParameter(name, params.get(name));
             }
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            Result result = new StreamResult(bos);
+            Result result = new StreamResult(baos);
             transformer.transform( new DOMSource(doc), result);
-            InputStream in = new ByteArrayInputStream(bos.toByteArray());
-            reader.read(model, in, null);
-            bos.close();
-        } catch(UnsupportedEncodingException e) {
-            log(e);
-        } catch(IOException e) {
-            log(e);
+            rdf = new String( baos.toByteArray(), StandardCharsets.UTF_8 );
         } finally {
-            return model;
+            return rdf;
         }
     }
 
-    public String transform(String xmlString) {
+    // private Document _transformDoc( Document doc ) {
+    //     Document out = null;
+    //     try {
+    //         Transformer transformer = templates.newTransformer();
+    //         for (String name : params.keySet()) {
+    //             transformer.setParameter(name, params.get(name));
+    //         }
+    //         DOMResult result = new DOMResult();
+    //         transformer.transform( new DOMSource(doc), result);
+    //         out = (Document) result.getNode();
+    //     } finally {
+    //         return out;
+    //     }
+    // }
+
+    private String _transform(String xml) {
 	    String result = null;
 	    try {
-            StringReader reader = new StringReader(xmlString);
+            StringReader reader = new StringReader(xml);
 		    StringWriter writer = new StringWriter();
-            Transformer transformer = templates.newTransformer();
+            Transformer tr= templates.newTransformer();
             for (String name : params.keySet()) {
-                transformer.setParameter(name, params.get(name));
+                tr.setParameter(name, params.get(name));
             }
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            tr.setOutputProperty(OutputKeys.INDENT, "yes");
+			tr.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             SAXSource src = new SAXSource(new InputSource(reader));
             src.setXMLReader(xr);
-		    transformer.transform( src, // new StreamSource(reader), 
-			                       new StreamResult(writer));
+		    tr.transform( src, new StreamResult(writer));
             result = writer.toString();
         } catch(TransformerException e) { 
-            log(e.toString()); 
+            log(e); 
             result = null;
         } finally {
             return result;
         }
     }
 
-    public String asString(Model model) {
+    /* OpusAnalyzer */
+    public String asString(Resource rc) {
         stringWriter.getBuffer().setLength(0);
-        model = prefix(model);
+        Model model = ModelUtil.prefix(rc.getModel());
         try {
             model.write(stringWriter, "RDF/XML-ABBREV");
         } catch(Exception e) {
-            model.write(System.out,"RDF/XML");
+            model.write(System.out,"RDF/XML-ABBREV");
             e.printStackTrace();
         } finally {
             return stringWriter.toString();
         }
     }
 
-    /** Desire : serialize with topological ordered hierarchies */
-    public String toString(Model model, String resource) {
-        //log("toString " + resource);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        stringWriter.getBuffer().setLength(0);
-        model = prefix(model);
-        try {
-           //force isPartOf hierarchical order
-           //Resource s = null;
-           //RDFNode r = null;
-           //Property p = mod.createProperty(DCTerms.getURI(), "hasPart");
-           //model = model.removeAll(s, p, r);
-           RDFWriter writer = model.getWriter("RDF/XML-ABBREV");
-           //writer.write(model, stringWriter, resource);
-           //writer.write(model, stringWriter, null);
-           writer.write(model, baos, null);
-           //faster
-           writer.setProperty("allowBadURIs","true");
-           //writer.setProperty("relativeURIs","");
-           writer.setProperty("tab","1");
-           //writer.setProperty("blockRules","sectionReification");
-           writer.setProperty("xmlbase", resource);
-		   //writer.setProperty("prettyTypes",
-           //new Resource[] { model.createResource(fabio+":PeriodicalIssue")});
-           //default writer does not sort topological
-           //model.write(stringWriter, "RDF/XML-ABBREV");
-           //only writes rdf description: bad logic.
-           //model.write(stringWriter, "RDF/XML");
-        } catch(Exception e) {
-           //model.write(System.out,"RDF/XML-ABBREV");
-           e.printStackTrace();
-        } finally {
-           String result = null;
-           try {
-               result = baos.toString("UTF-8");
-           } catch(UnsupportedEncodingException e) { log(e); }
-           return result;
-        }
-    }
-
-    public static Model asModel(String rdf) {
-        Model m = ModelFactory.createDefaultModel();
+    private static Model asModel(Document doc) {
+        Model m = ModelUtil.createModel();
         RDFReader reader = new JenaReader();
+        String rdf = asString(doc);
+        //reader.setErrorHandler(new MyRDFErrorHandler(rdf));
         try {
             InputStream in = new ByteArrayInputStream(rdf.getBytes("UTF-8"));
             reader.read(m, in, null);
@@ -271,23 +290,41 @@ public class XMLTransformer {
         }
     }
 
-    public String asString(Document doc) {
+    private static Model asModel(String rdf) {
+        Model m = ModelUtil.createModel();
+        RDFReader reader = new JenaReader();
+        //reader.setErrorHandler(new MyRDFErrorHandler(rdf));
+        try {
+            InputStream in = new ByteArrayInputStream(rdf.getBytes("UTF-8"));
+            reader.read(m, in, null);
+            in.close();
+        } catch(UnsupportedEncodingException e) {
+            log(e);
+        } catch(IOException e) {
+            log(e);
+        } finally {
+            return m;
+        }
+    }
+
+    /* OAITransporter */
+    public static String asString(Document doc) {
         String text = null;
         try {
             DOMSource domSource = new DOMSource(doc);
-            Transformer transformer = factory.newTransformer();
-            for (String name : params.keySet()) {
-                transformer.setParameter(name, params.get(name));
-            }
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
-			transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-			transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-			transformer.setOutputProperty(
+            Transformer tr= factory.newTransformer();
+            //for (String name : params.keySet()) {
+            //    tr.setParameter(name, params.get(name));
+            //}
+			tr.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			tr.setOutputProperty(OutputKeys.METHOD, "xml");
+			tr.setOutputProperty(OutputKeys.INDENT, "yes");
+			tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+			tr.setOutputProperty(
 			            "{http://xml.apache.org/xslt}indent-amount", "2");
             java.io.StringWriter sw = new java.io.StringWriter();
             StreamResult sr = new StreamResult(sw);
-            transformer.transform(domSource, sr);
+            tr.transform(domSource, sr);
             text = sw.toString();
         } //catch(javax.xml.parsers.ParserConfigurationException e) { log(e); }
           catch(javax.xml.transform.TransformerException e) { log(e); }
@@ -309,73 +346,10 @@ public class XMLTransformer {
         }
     }
 
-    private Document asDocument(Model model) {
-        String subject = null;
-        String property = null;
-        String object = null;
-
-	    Document doc=null;	
-		try {
-		    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-		    DocumentBuilder db = dbf.newDocumentBuilder();
-		    doc = db.newDocument();
-		} catch(ParserConfigurationException pce) {
-		    //throw new org.apache.xml.utils.WrappedRuntimeException(pce);
-            log(pce);
-		}	
-		 
-		Element root= doc.createElementNS(RDF.getURI(),"rdf:RDF");
-		root.setAttributeNS("http://www.w3.org/2000/xmlns/", 
-                            "xmlns:rdf",RDF.getURI());
-		StmtIterator iter=model.listStatements(
-		    isEmpty(subject)?null:ResourceFactory.createResource(subject),
-		    isEmpty(property)?null:ResourceFactory.createProperty(property),
-		    isEmpty(object)?null: (isURI(object)?
-            ResourceFactory.createResource(object):model.createLiteral(object))
-		);
-
-		while(iter.hasNext()) {
-		    Statement stmt= iter.nextStatement();
-		    Element S=doc.createElementNS(RDF.getURI(),"rdf:Statement");
-		    root.appendChild(S);
-		    Element f=doc.createElementNS(RDF.getURI(),"rdf:subject");
-		    S.appendChild(f);
-		    f.setAttributeNS(RDF.getURI(),
-                             "rdf:resource",stmt.getSubject().getURI());
-		    f=doc.createElementNS(RDF.getURI(),"rdf:predicate");
-		    S.appendChild(f);
-		    f.setAttributeNS(RDF.getURI(),
-                              "rdf:resource",stmt.getPredicate().getURI());
-		    f=doc.createElementNS(RDF.getURI(),"rdf:object");
-		    S.appendChild(f);
-		    if(stmt.getObject().isLiteral()) {
-		        f.appendChild(
-                    doc.createTextNode(""+stmt.getLiteral().getValue()));
-		    } else {
-		        f.setAttributeNS(RDF.getURI(),
-                   "rdf:resource",stmt.getResource().getURI());
-		    }
-		}
-		iter.close();
-		return doc;
-	}
-
-    private Model prefix(Model model) {
-        model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
-        model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
-        model.setNsPrefix("dct", "http://purl.org/dc/terms/");
-        model.setNsPrefix("fabio", "http://purl.org/spar/fabio/");
-        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
-        model.setNsPrefix("pro", "http://purl.org/spar/pro/");
-        model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
-        return model;
-    }
-
     class MyErrorListener implements ErrorListener {
         public void warning(TransformerException e)
                 throws TransformerException {
-            //show("Warning",e);
+            show("Warning from Listener ",e);
         }
         public void error(TransformerException e)
                 throws TransformerException {
@@ -398,31 +372,49 @@ public class XMLTransformer {
     class MyErrorHandler implements ErrorHandler {
         public void warning(SAXParseException e)
                 throws SAXParseException {
-            //show("Warning",e);
+            show("Warning from ErrorHandler ",e);
         }
         public void error(SAXParseException e)
                 throws SAXParseException {
             show("Error",e);
-            throw(e);
+            //throw(e);
         }
         public void fatalError(SAXParseException e)
                 throws SAXParseException {
             show("Fatal Error",e);
-            e.printStackTrace(System.out);
-            throw(e);
+            //throw(e);
         }
-        private void show(String type,SAXParseException e) {
+        private void show(String type, SAXParseException e) {
             log(type + ":: [" + e.getMessage() + "]");
+            //e.printStackTrace();
         }
     }
 
-	private static boolean isEmpty(String s) {
-	    return s==null || s.isEmpty();
-	}
+    static class MyRDFErrorHandler implements RDFErrorHandler {
+        public MyRDFErrorHandler(String rdf) {
+            super();
+            int x = rdf.indexOf("rdf:about");
+                x = x>0?x:0;
+            int y = rdf.length()>x+100?x+100:rdf.length();
+            //log("x " + x + " y " + y); log(rdf);
+            resource = rdf.substring(x, y);
+        }
 
-	private static boolean isURI(String s) {
-	    return s.startsWith("http://");
-	}
+        static String resource;
+        public void warning(Exception e) {
+            show("Warning from RDFErrorHandler ",e);
+        }
+        public void error(Exception e) {
+            show("Error", e);
+        }
+        public void fatalError(Exception e) {
+            show("Fatal", e);
+        }
+        private void show(String type, Exception e) {
+            log(type + ": [" + resource + "]" + e.getMessage());
+            //e.printStackTrace();
+        }
+    }
 
     private static final Logger logger =
                          Logger.getLogger(XMLTransformer.class.getName());
@@ -432,7 +424,7 @@ public class XMLTransformer {
     }
 
     private static void log(Exception e) {
-        e.printStackTrace(System.out);
+        //e.printStackTrace(System.out);
         logger.log(Level.SEVERE, e.toString());
     }
 

@@ -1,7 +1,7 @@
 package org.shanghai.store;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.query.QueryExecution;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.query.QueryExecution;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0

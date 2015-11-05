@@ -3,7 +3,10 @@ package org.shanghai.rdf;
 import org.shanghai.util.FileUtil;
 import org.shanghai.store.Store;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import java.util.List;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
@@ -85,13 +88,15 @@ public class RDFTransporter implements MetaCrawl.Transporter {
     }
 
     @Override
-    public Model read(String resource) {
-        return reader.read(resource);
+    public Resource read(String resource) {
+        Model model = reader.read(resource);
+        return model.getResource(resource);
     }
 
     @Override
-    public String[] getIdentifiers(int offset, int limit) {
-        return reader.getIdentifiers(indexQuery, offset, limit);
+    public List<String> getIdentifiers(int offset, int limit) {
+        //return reader.getIdentifiers(indexQuery, offset, limit);
+        return Arrays.asList(reader.getIdentifiers(indexQuery, offset, limit));
     }
 
     private static final Logger logger =

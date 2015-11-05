@@ -12,6 +12,8 @@ import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.SolrDocument;
 import java.util.logging.Logger;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -95,8 +97,9 @@ public class SolrClient {
         looping over all results only makes sense for small cores. 
         If sharding is involved, queue up to go insane.
      */
-    public String[] getIdentifiers(final int off, final int limit) {
-        String[] result = new String[limit];
+    public List<String> getIdentifiers(final int off, final int limit) {
+        //String[] result = new String[limit];
+        List<String> result = new ArrayList<String>();
         int found = 0;
         int count = 0;
         int fetchSize = limit;
@@ -122,11 +125,11 @@ public class SolrClient {
                      count++;
                      if (off<count && found<limit) {
                          //result[found] = (String) doc.getFieldValue("id"); 
-                         result[found] = (String) doc.getFieldValue("uri_str"); 
-                         if (result[found].length()==0) {
-                             log(" empty : [" + count + "]");
-                             result[found]=null;
-                         }
+                         result.add((String) doc.getFieldValue("uri_str")); 
+                         //if (result[found].length()==0) {
+                         //    log(" empty : [" + count + "]");
+                         //    result[found]=null;
+                         //}
                          found++;
                      }
                 }

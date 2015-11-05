@@ -1,17 +1,18 @@
 package org.shanghai.oai;
 
-import org.shanghai.crawl.FileTransporter;
+import org.shanghai.data.FileTransporter;
 import org.shanghai.rdf.XMLTransformer;
+import org.shanghai.crawl.MetaCrawl;
 import org.shanghai.util.FileUtil;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.RDFReader;
-import com.hp.hpl.jena.vocabulary.DCTerms;
-import com.hp.hpl.jena.rdf.arp.JenaReader;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.RDFReader;
+import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.rdfxml.xmlinput.JenaReader;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
  * @author Goetz Hatop 
  * @title NLM File Scanner to tansform NLM to RDF
  * @date 2014-01-09
- * @abstract Reads a NLM file and calls xslt transformer to produce RDF
+ * @abstract Reads a NLM file and makes RDF therefrom
  */
 public class NLMScanner implements FileTransporter.Delegate {
 
@@ -62,14 +63,9 @@ public class NLMScanner implements FileTransporter.Delegate {
     }
 
     @Override
-    public Model read(String fname) {
-        //log("read " + fname);
-        Model model = ModelFactory.createDefaultModel();
+    public Resource read(String fname) {
         String xml = FileUtil.read(fname);
-        String rdf = transformer.transform(xml);
-        RDFReader reader = new JenaReader();
-        reader.read(model, new StringReader(rdf), null);        
-        return model;
+        return transformer.transform(xml);
     }
 
     @Override

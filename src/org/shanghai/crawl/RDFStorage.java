@@ -8,13 +8,13 @@ import java.util.logging.Logger;
 import java.io.StringWriter;
 import java.io.IOException;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.vocabulary.DCTerms;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.vocabulary.DCTerms;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
@@ -37,25 +37,25 @@ public class RDFStorage extends RDFReader implements MetaCrawl.Storage {
     }
 
     @Override
-    public boolean test(String resource) {
-        Model test = store.read(resource);
+    public boolean test(Resource rc, String resource) {
+        Model test = store.read(rc.getURI());
         if (test==null)
             return false;
         return true;
     }
 
     @Override
-    public boolean write(Model mod, String id) {
-        return store.write(mod);
+    public boolean write(Resource rc, String id) {
+        return store.write(rc.getModel());
     }
 
-    @Override
-    public boolean update(String id, String field, String value) {
-        Model model = store.read(id);
-        Resource rc = model.getResource(id);
-        rc.addProperty(model.createProperty(DCTerms.getURI(), field), value);
-        return store.write(model);
-    }
+    //@Override
+    //public boolean update(String id, String field, String value) {
+    //    Model model = store.read(id);
+    //    Resource rc = model.getResource(id);
+    //    rc.addProperty(model.createProperty(DCTerms.getURI(), field), value);
+    //    return store.write(rc.getModel());
+    //}
 
     @Override
     public boolean delete(String about) {

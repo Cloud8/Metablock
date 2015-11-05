@@ -4,20 +4,20 @@ import org.shanghai.rdf.XMLTransformer;
 import org.shanghai.solr.SolrClient;
 import org.shanghai.crawl.MetaCrawl;
 import org.shanghai.util.FileUtil;
-import org.shanghai.util.PrefixModel;
+import org.shanghai.util.ModelUtil;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.common.SolrDocument;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.arp.JenaReader;
-import com.hp.hpl.jena.rdf.model.RDFReader;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdfxml.xmlinput.JenaReader;
+import org.apache.jena.rdf.model.RDFReader;
 
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
@@ -45,7 +45,6 @@ import java.util.Collection;
 public class SolrTransporter implements MetaCrawl.Transporter {
 
     protected SolrClient solrClient;
-    private StringWriter writer;
     private XMLTransformer transformer;
     private int count;
     private String iri;
@@ -72,7 +71,6 @@ public class SolrTransporter implements MetaCrawl.Transporter {
     public void create() {
         log("create " + iri);
         solrClient.create();
-        writer = new StringWriter();
         if (transformer!=null)
             transformer.create();
         count = 0;
@@ -81,7 +79,6 @@ public class SolrTransporter implements MetaCrawl.Transporter {
     @Override
     public void dispose() {
         solrClient.dispose();
-        try { writer.close(); } catch(IOException e) {}
         if (transformer!=null)
             transformer.dispose();
     }
@@ -92,64 +89,57 @@ public class SolrTransporter implements MetaCrawl.Transporter {
     }
 
     @Override
-    public Model read(String oid) { 
+    public Resource read(String oid) { 
         if (iri!=null && nsp!=null) {
             return readFromIndex(oid);
         }
-        return PrefixModel.retrieve(oid);
+        return null;
     }
 
     @Override
-    public Model test(String resource) {
+    public Resource test(String resource) {
         log("test not supported.");
         return null;
     }
 
-    public Model readFromIndex(String oid) { 
+    public Resource readFromIndex(String oid) { 
         log("read iri [" + iri + "]" + oid);
         SolrDocument sdoc = solrClient.read(oid);
-        Model model = ModelFactory.createDefaultModel();
-        model.setNsPrefix(nsp,iri);
-        Resource resource = model.createResource(iri + oid);
+        Model model = ModelUtil.createModel();
+        model.setNsPrefix(nsp, iri);
+        Resource rc = model.createResource(iri + oid);
         if (sdoc!=null) {
             for(Map.Entry<String,Object> m : sdoc.entrySet()) {
                 String k = m.getKey();
                 Object v = m.getValue();
                 if ( v instanceof String) {
                     Property p = model.createProperty(iri,k);
-                    resource.addProperty(p,v.toString());
+                    rc.addProperty(p,v.toString());
                 } else if (v instanceof Long) {
                     Property p = model.createProperty(iri,k);
-                    resource.addProperty(p,v.toString());
+                    rc.addProperty(p,v.toString());
                 } else if (v instanceof Collection) {
                     for (Object o: ((Collection)v).toArray()) {
                         Property p = model.createProperty(iri,k);
-                        resource.addProperty(p,o.toString());
+                        rc.addProperty(p,o.toString());
                     }
                 }
             }
         }
-        if (transformer==null) 
-            return model;
-        String str = transformer.transform(model);
-        Model mod = ModelFactory.createDefaultModel();
-        try {
-            InputStream is = new ByteArrayInputStream(str.getBytes("UTF-8"));
-            RDFReader reader = new JenaReader();
-            reader.read(mod, is, null);
-            is.close();
-        } catch(UnsupportedEncodingException e) { log(e); }
-          catch(IOException e) { log(e); }
-        return mod;
+        //if (transformer==null) {
+            return rc;
+        //}
+        //String rdf = transformer.transform(rc);
+        //return transformer.asResource(rdf);
     } 
 
     @Override
-    public int crawl(String query) {
+    public int index(String query) {
         return (int)solrClient.probe(query);
     } 
 
     @Override
-    public String[] getIdentifiers(int off, int limit) {
+    public List<String> getIdentifiers(int off, int limit) {
         return solrClient.getIdentifiers(off, limit);
     } 
 
@@ -162,10 +152,6 @@ public class SolrTransporter implements MetaCrawl.Transporter {
 
     private void log(Exception e) {
         log(e.toString());    
-    }
-
-    private void log(Model mod) {
-        mod.write(System.out, "RDF/XML");
     }
 
 }

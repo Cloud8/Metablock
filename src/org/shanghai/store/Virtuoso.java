@@ -2,18 +2,18 @@ package org.shanghai.store;
 
 import java.util.logging.Logger;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResIterator;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.Statement;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryParseException;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.update.UpdateException;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.update.UpdateException;
 
 import virtuoso.jena.driver.VirtGraph;
 import virtuoso.jena.driver.VirtModel;
@@ -23,7 +23,7 @@ import virtuoso.jena.driver.VirtuosoUpdateFactory;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
+   @author Goetz Hatop 
    @title Virtuoso Storage Driver
    @date 2013-09-19
 */
@@ -89,9 +89,7 @@ public class Virtuoso {
     }
 
     public QueryExecution getExecutor(String sparql) {
-        QueryExecution vqe = 
-                       VirtuosoQueryExecutionFactory.create(sparql, virtmodel);
-        return vqe;
+        return VirtuosoQueryExecutionFactory.create(sparql, virtmodel);
     }
 
     private boolean execute(String action) {

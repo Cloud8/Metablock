@@ -17,10 +17,12 @@ import java.io.UnsupportedEncodingException;
 
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
+import java.io.ByteArrayOutputStream;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.StandardCopyOption;
 import java.nio.channels.FileChannel;
 import java.nio.MappedByteBuffer;
@@ -35,6 +37,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.FileVisitResult;
 import java.nio.file.DirectoryStream;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 
 import java.util.List;
 import java.util.Properties;
@@ -42,11 +46,18 @@ import java.util.logging.Logger;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.text.Normalizer;
+
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.ZoneId;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop 
-   @title Simple Utility Class to wrap Filesystem access
+   @title Utility Class to wrap File access
    @date 2013-01-18
 */
 public class FileUtil {
@@ -121,19 +132,20 @@ public class FileUtil {
     }
 
     public static boolean write(String path, String text) {
-        boolean b = false;
-        try {
-		    b = writeFile(path, text);
-		} catch(IOException e) {
-		  e.printStackTrace();
-		} 
-        return b;
+        return write(Paths.get(path), text);
     }
 
     public static boolean write(Path path, String text) {
         boolean b = false;
         try {
+            text = Normalizer.normalize(text, Normalizer.Form.NFC);
 			Files.write(path, text.getBytes());
+            b = true;
+		} catch(AccessDeniedException e) {
+		  //e.printStackTrace();
+          log(e);
+		} catch(NoSuchFileException e) {
+          log(e);
 		} catch(IOException e) {
 		  e.printStackTrace();
 		} 
@@ -142,10 +154,14 @@ public class FileUtil {
 
     /** copy from URL to Filesystem : should make directories */
     public static void copy(String from, String to) {
+        copy(from, Paths.get(to));
+    }   
+
+    public static void copy(String url, Path path) {
         try {
-            URL oracle = new URL(from);
+            URL oracle = new URL(url);
             InputStream is = oracle.openStream();
-			Files.copy(is, Paths.get(to), StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(is, path, StandardCopyOption.REPLACE_EXISTING);
         } catch(MalformedURLException e) { e.printStackTrace(); }
           catch(IOException e) { e.printStackTrace(); }
     }   
@@ -156,29 +172,13 @@ public class FileUtil {
         } catch(IOException e) { e.printStackTrace(); }
     }   
 
-    /*
-    public static void copy(String from, String to) {
-        try {
-            URL oracle = new URL(from);
-            InputStream is = oracle.openStream();
-            DataOutputStream out = new DataOutputStream(
-                                   new BufferedOutputStream(
-                                   new FileOutputStream(
-                                   new File(to))));
-            int c;
-            while((c = is.read()) != -1) {
-                out.writeByte(c);
-            }
-            out.close();
-            is.close();
-        } catch(MalformedURLException e) { e.printStackTrace(); }
-          catch(IOException e) { e.printStackTrace(); }
-    }   
-    */
-
-    //public boolean isDirectory(String path) {
-    //    return new File(path).isDirectory();
-    //}
+    public static void mkdir(Path path) {
+        if (!Files.exists(path)) {
+            try {
+                Files.createDirectories(path);
+            } catch(IOException e) { log(e); }
+        }
+    }
 
     public static String base(String name) {
         int slash = name.lastIndexOf('/');
@@ -275,7 +275,8 @@ public class FileUtil {
         return FileUtil.read(is);
     }
 
-    private static boolean writeFile(String path, String text) throws IOException {
+    private static boolean writeFile(String path, String text) 
+        throws IOException {
         Writer out = null;
         boolean b = false;
         try {
@@ -291,6 +292,48 @@ public class FileUtil {
         }
     }
 
+    public static boolean touch(Path path, String date) {
+        boolean b = false;
+        if (date==null) {
+            return b;
+        }
+        //log("date [" + date + "]");
+        DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate parsedDate = LocalDate.parse(date, df);
+        LocalDateTime ldt = parsedDate.atStartOfDay();
+        ZonedDateTime zdt = ldt.atZone(ZoneId.of("Europe/Berlin"));
+        long millis = zdt.toInstant().toEpochMilli();
+        FileTime time = FileTime.fromMillis(millis);
+        try {
+            Files.setLastModifiedTime(path, time);
+            //log(path.toString());
+            b = true;
+        } catch(IOException e) { log(e); }
+        return b;
+    }
+
+    public static synchronized ByteArrayOutputStream load(String url) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        InputStream is = null;
+        try {
+            URL oracle = new URL(url);
+            is = oracle.openStream();
+            byte[] chunk = new byte[4096];
+            int n;
+            while ( (n = is.read(chunk)) > 0 ) {
+                baos.write(chunk, 0, n);
+            }
+        } catch(MalformedURLException e) { log(e); }
+          catch(IOException e) { log(e); }
+        finally {
+          if (is != null) {
+              try { is.close(); } catch(IOException e) { log(e); }
+          }
+        }
+        return baos;
+    }
+
+
     private static final Logger logger =
                          Logger.getLogger(FileUtil.class.getName());
 
@@ -299,7 +342,7 @@ public class FileUtil {
     }
 
     private static void log(Exception e) {
-        e.printStackTrace(); 
+        //e.printStackTrace(); 
         log(e.toString());
     }
 

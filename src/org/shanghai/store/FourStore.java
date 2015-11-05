@@ -2,18 +2,18 @@ package org.shanghai.store;
 
 import java.util.logging.Logger;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResIterator;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.Statement;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryParseException;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.update.UpdateException;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryParseException;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.update.UpdateException;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -32,7 +32,7 @@ import java.io.UnsupportedEncodingException;
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop <fb.com/goetz.hatop>
-   @title FourStore Storage Driver
+   @title FourStore Storage Driver (Experimental)
    @date 2014-02-28
 */
 public class FourStore {

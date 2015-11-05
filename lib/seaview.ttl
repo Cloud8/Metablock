@@ -1,75 +1,69 @@
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix dct: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix : <> .
 
-<>  dct:modified "2015-06-12"^^xsd:date .
+## rapper -i turtle -o rdfxml-abbrev void.ttl
+<>  dcterms:modified "2015-07-17"^^xsd:date .
 
-:about dct:title  "Configurator" ;
-       dct:date   "2014-06-06" ;
-       dct:description "A Turtle Adventure" .
+:about dcterms:title  "Configurator" ;
+       dcterms:date   "2015-05-35" ;
+       dcterms:description "A Turtle Adventure" .
 
 :crawl :source :files ;
        :target :solr1 ;
        :test   "data/crawl-test.rdf"^^xsd:string ;
        :count  "600"^^xsd:integer .
-       
+
 :pdf   :extractor "cermine" ; # grobid vs. cermine
-       :grobid   "dlib/grobid-home";
+       :grobid   "/usr/local/home/grobid";
        :metadata "true"^^xsd:boolean ;
        :context "3"^^xsd:integer ;
        :references "true"^^xsd:boolean .
        
 :doi   :prefix "10.5072" ; # test prefix
        :store  "https://test.datacite.org/mds" ;
-       :user   "TIB.TEST" ;
-       :pass   "passwd" ;
+       :user   "TIB.XXXXTEST" ;
+       :pass   "xxxxxxxx" ;
        :quiet  "false"^^xsd:boolean ; ## do not log 
        :transformer "/xslt/rdfDCite.xslt" .
 
-:ojs   :transporter "/xslt/nlm2rdf.xslt" ; 
-       :dbhost "localhost" ;
-       :dbase  "ojs" ;
-       :dbuser "dba" ;
-       :dbpass "zero" .
+:schema :test "/xslt/rdfTest.xslt" ;
+       :urn "urn:nbn:de:xxxxx:0X-" .
 
 :files :suffix ".rdf"^^xsd:string ; # rdf pdf java php ape
        :depth  "4"^^xsd:integer ;
-       :store  "data"^^xsd:string ; # data /srv/archiv dct:relation
+       :store  "data"^^xsd:string ; # /srv/archiv
+       :force  "false"^^xsd:boolean ; ## do (not) overwrite rdf files
        :count  "300"^^xsd:integer . 
 
-:tdb   :store  "/home/data/store/jena.tdb" .
-
-:four  :store  "http://localhost:9000" ;
-       :graph  "archiv" .
+:tdb   :store  "/home/data/store/jena.tdb" ;
+       :probe  "/sparql/seaview-probe.sparql" ;
+       :enum   "/sparql/seaview-index.sparql" ;
+       :dump   "/sparql/seaview-about.sparql" .
 
 :virt  :store  "jdbc:virtuoso://localhost:1111" ;
        :graph  "http://archiv.ub.uni-marburg.de" ;
        :dbuser "dba" ;
-       :dbpass "zero" .
+       :dbpass "xxxxx" ;
+       :sparql "http://localhost:8890/sparql" ;
+       :probe  "/sparql/seaview-probe.sparql" ;
+       :enum   "/sparql/seaview-index.sparql" ;
+       :dump   "/sparql/seaview-about.sparql" .
 
 :solr1 :url   "http://localhost:8080/solr" ;
        :transformer "/xslt/seaview.xslt" ;
        :core  "biblio" .
 
-## first part is standard index, or use indexName switch. 
+:solr2 :url   "http://localhost:8080/solr" ;
+       :transformer "/xslt/references.xslt" ;
+       :core  "biblio" .
+
 :index :hasPart :index01 ;
        :hasPart :index02 .
 
-## Use the sparql service point (or :tdb) for data retrieval,
-## use queries and transformation from the files. 
-## If asked for a -dump, use test file as storage.
-## Transformed records goes to :store 
-:index01 :sparql :tdb ; 
-       :probe  "/sparql/seaview-probe.sparql" ;
-       :enum   "/sparql/seaview-index.sparql" ;
-       :dump   "/sparql/seaview-about.sparql" ;
-       :transformer "/xslt/seaview.xslt" ;
-       :count  "600"^^xsd:integer ;
-       :test   "data/seaview-about.rdf" ;
-       :store  "http://localhost:8080/solr/biblio" .
-
-:index02 :sparql "http://localhost:8890/sparql" ;
+## Use the sparql service point (or :tdb) for data retrieval
+:index01 :sparql "http://http://localhost:8890/sparql" ;
        :probe  "/sparql/seaview-probe.sparql" ;
        :enum   "/sparql/seaview-index.sparql" ;
        :dump   "/sparql/seaview-about.sparql" ;
@@ -78,23 +72,25 @@
        :test   "data/archiv-about.rdf" ;
        :store  "http://localhost:8080/solr/biblio" .
 
-## OAI harvesting 
-:oai   #:hasPart :oai00 ;
-       :hasPart :oai01 ;
-       :urnPrefix "urn:nbn:de:test:00-" .
+:index02 :sparql "http://localhost:9000/sparql/" ;
+       :probe  "/sparql/seaview-probe.sparql" ;
+       :enum   "/sparql/seaview-index.sparql" ;
+       :dump   "/sparql/four-about.sparql" ;
+       :test   "data/four-test.rdf" .
+
+:oai   :hasPart :oai00 ;
+       #:hasPart :oai01 
+       .
 
 ## harvest records from this source not older than some <days>.
 ## from and until will override day settings.
-:oai00 :harvest "http://archiv.ub.uni-marburg.de/ubfind/oai/server" ;
-       :prefix  "rdf" ;
-       :days    "3"^^xsd:integer ;
-       :archive "data" .
+:oai00 :harvest "http://archiv.ub.uni-marburg.de/ubfind/OAI/Server" ;
+       :prefix  "xMetaDissPlus" ;
+       :from    "2015-11-01"^^xsd:date ;
+       :transformer "/xslt/xmdp2rdf.xslt" .
 
 :oai01 :harvest "http://journals.sfu.ca/present/index.php/demojournal/oai" ;
-       :prefix  "nlm" ;
-       :from    "2014-01-01"^^xsd:integer ;
-       :until   "2014-02-28"^^xsd:integer ;
-       :archive "data" ;
-       :transformer "/xslt/nlm2rdf.xslt" .
+       :prefix  "oai_dc" ; # xMetaDissPlus epicur
+       :transformer "/xslt/dc2rdf.xslt" .
 
 #--#-#-#-#-#-#-# end of turtle #-#-#-#-#-#-#-#-#-#

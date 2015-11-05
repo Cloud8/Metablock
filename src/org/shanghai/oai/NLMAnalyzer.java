@@ -4,7 +4,7 @@ import org.shanghai.crawl.MetaCrawl.Analyzer;
 import org.shanghai.oai.URN;
 import org.shanghai.util.FileUtil;
 import org.shanghai.util.Language;
-import org.shanghai.util.PrefixModel;
+import org.shanghai.util.ModelUtil;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -14,20 +14,20 @@ import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.vocabulary.DCTerms;
-import com.hp.hpl.jena.vocabulary.RDF;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.rdf.model.ResIterator;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFNode;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.Path;
-//import java.net.URI;
 import java.io.StringWriter;
 import java.io.StringReader;
 import java.io.IOException;
@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 
 public class NLMAnalyzer implements Analyzer {
 
+    private static final String fabio = "http://purl.org/spar/fabio/";
     private DocumentBuilderFactory docfactory;
 
     private String store;
@@ -50,15 +51,8 @@ public class NLMAnalyzer implements Analyzer {
     private int count;
     private HashMap<String,String> hash;
 
-    //Property title;
-    //Property identifier; // dct
-    //Property created;    // dct
-    //Property modified;   // dct
     Property issueId;    // fabio:hasIssueIdentifier -- issue identifier
-    //Property number;     // fabio:hasSequenceIdentifier -- issue sequence
-    //Property volume;     // fabio:hasVolumeIdentifier -- issue volume
     Property article;  // fabio:hasElectronicArticleIdentifier
-    //Property type;       // rdf
     Property hasURL;     // fabio:hasURL
 
     public NLMAnalyzer(String prefix, String store) {
@@ -74,6 +68,7 @@ public class NLMAnalyzer implements Analyzer {
         language.create();
         count = 0;
         hash = new HashMap<String,String>();
+        log("store " + store + " " + urn);
         return this;
     }
 
@@ -83,95 +78,55 @@ public class NLMAnalyzer implements Analyzer {
         hash.clear();
     }
 
-    private void createProperties(Model model) {
-        //title = model.createProperty(dct, "title");
-        //identifier = model.createProperty(dct, "identifier");
-        //created = model.createProperty(dct, "created");
-        //modified = model.createProperty(dct, "modified");
-        issueId = model.createProperty(fabio, "hasIssueIdentifier");
-        //number = model.createProperty(fabio, "hasSequenceIdentifier");
-        //volume = model.createProperty(fabio, "hasVolumeIdentifier");
-        article = model.createProperty(fabio, "hasElectronicArticleIdentifier");
-        hasURL = model.createProperty(fabio, "hasURL");
-        //type = model.createProperty(rdf, "type");
-        //log("analyze " + id);
-    }
-
     @Override
-    public Resource analyze(Model model, String id) {
-        Resource rc = null;
-        Resource rci = null;
-        createProperties(model);
-        ResIterator ri = model.listResourcesWithProperty(RDF.type);
-        while( ri.hasNext() ) {
-            Resource object = ri.nextResource();
-            String name = object.getPropertyResourceValue(RDF.type).getLocalName();
-            if (name.equals("JournalArticle")) {
-                rc = object;
-		        makeIdentifier(rc);
-                language.analyze(model, rc, id);
-            } else if (name.equals("JournalIssue")) {
-                rci = object;
-		        makeIdentifier(rci);
-            } else if (name.equals("Journal")) {
-		        makeIdentifier(object);
+    public Resource analyze(Resource rc, String id) {
+        Resource sub = null;
+        createProperties(rc.getModel());
+        String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
+        if (name.equals("JournalArticle")) {
+		    makeIdentifier(rc);
+            language.analyze(rc, id);
+        }
+        StmtIterator si = rc.listProperties(DCTerms.isPartOf);
+        while( si.hasNext() ) {
+            RDFNode node = si.nextStatement().getObject();
+            if (node.isResource()) {
+                Resource obj = node.asResource();
+                name = obj.getPropertyResourceValue(RDF.type).getLocalName();
+                if (name.equals("JournalIssue")) {
+		            makeIdentifier(obj);
+                    sub = getPartOf(obj);
+                    sub.addProperty(DCTerms.hasPart, rc);
+                }
             }
         }
         boolean b = false;
         if (store==null) { // no writes from here
             // log("analyze " + id + " " + rc.getURI());
-        } else if (store.equals("files") && rci!=null) { // help parent ??
-            log("write parent " + id + " " + rc.getURI());
-            if (!hash.containsKey(rci.getURI())) {
-                Model sub = getPartOf(rci);
-                b = writeParent(sub, rci, id);
-                hash.put(rci.getURI(), rci.getURI());
-            }
         } else { 
-	        b = writeModel(model, rc, store); // write articel
-            if (b && rci!=null && !hash.containsKey(rci.getURI())) {
-                Model sub = getPartOf(rci);
-                b = writeModel(sub, rci, store); // write issue
-                hash.put(rci.getURI(), rci.getURI());
+	        b = writeModel(rc, store); // write article
+            if (b && sub!=null && !hash.containsKey(sub.getURI())) {
+                b = writeModel(sub, store); // write issue
+                if (b) hash.put(sub.getURI(), sub.getURI());
             }
             count++;
         }
-        //archive index files
-        //writeIndex(model, rc, id);
-        //if (b) log(" issue " + id);
         return rc;
     }
 
     @Override
-    public boolean test() {
-        log("test: " + this.getClass().getName());
-        return true;
-    }
-
-    @Override
-    public Resource test(Model model, String id) {
+    public Resource test(Resource rc, String id) {
         log("test # " + id + " " + store);
-        createProperties(model);
-        Resource rc = null;
-        ResIterator ri = model.listResourcesWithProperty(RDF.type);
-        while( ri.hasNext() ) {
-            rc = ri.nextResource();
-            String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
-            if (name.equals("JournalArticle")) {
-			    makeIdentifier(rc);
-                language.analyze(model, rc, id);
-                break;
-            }
-        }
         return rc;
     }
 
-    @Override
-    public void dump(Model model, String id, String fname) {
-        log("dump not implemented");
+    private void createProperties(Model model) {
+        issueId = model.createProperty(fabio, "hasIssueIdentifier");
+        article = model.createProperty(fabio, "hasElectronicArticleIdentifier");
+        hasURL = model.createProperty(fabio, "hasURL");
     }
 
-    public void makeIdentifier(Resource rc) {
+    private void makeIdentifier(Resource rc) {
         if (rc.hasProperty(DCTerms.identifier) ) {
             String id = rc.getProperty(DCTerms.identifier).getString();
             if (id==null || id.length()==0) {
@@ -185,62 +140,35 @@ public class NLMAnalyzer implements Analyzer {
             if (id==null) {
                 log("URN failed : " + rc.getURI() + " " + id);
                 id = rc.getURI().replaceAll("[^a-zA-Z0-9\\:\\.]","");
-            } 
-            //log("makeIdentifier " + rc.getURI() + "[" + id + "]");
-			rc.addProperty(DCTerms.identifier, id);
-        }
-    }
-
-    //@deprectated
-    private boolean checkTime(String path) {
-        String dir = path.substring(0,path.lastIndexOf("/"));
-        String file = path.substring(path.lastIndexOf("/")+1);
-        return checkTime(dir, file);
-    }
-
-    private boolean checkTime(String dir, String file) {
-        boolean write = false;
-        Path path = Paths.get(dir, file);
-        //File check = new File(path);
-        //if (path.exists()) {
-        if (Files.exists(path)) { 
-            try {
-                //int days = (int)((System.currentTimeMillis() 
-                //           - check.lastModified())/(1000*60*60*24));
-                int modified = (int)((System.currentTimeMillis() 
-                    - Files.getLastModifiedTime(path).toMillis())/(1000*60));
-                         //- path.lastModified())/(1000*60));
-			    if (modified > 2) {
-                    write = true;
-                    // log("write " + path + " " + modified);
-                }
-            } catch(IOException e) { log(e); }
-        } else {
-           write = true;
-        }
-        return write;
-    }
-
-    /** write issue resource description */
-    private boolean writeParent(Model model, Resource rc, String resource) {
-        //if ( (new File(resource)).exists() ) { // archive issue
-            String path = null;
-            if (resource.lastIndexOf("/")>0) {
-                path = resource.substring(0, resource.lastIndexOf("/"));
-                path = path.substring(0, path.lastIndexOf("/"));
-              //path = path.substring(0, path.lastIndexOf("/")) + "/about.rdf";
             } else {
-                return false;
+                //log("makeIdentifier " + rc.getURI() + " [" + id + "]");
+			    rc.addProperty(DCTerms.identifier, id);
             }
-            if (checkTime(path, "about.rdf")) {
-                log("write " + path);
-                StringWriter writer = new StringWriter();
-                model.write(writer, "RDF/XML-ABBREV");
-                FileUtil.write(path, writer.toString());
-                return true;
+        }
+    }
+
+    // return a copy of the isPartOf Resource and set identifiers
+    private Resource getPartOf(Resource rc) {
+        Model model = ModelUtil.createModel();
+        StmtIterator si = rc.listProperties();
+        while( si.hasNext() ) {
+            Statement stmt = si.nextStatement();
+            if (stmt.getPredicate().getLocalName().equals("isPartOf")) {
+                makeIdentifier(stmt.getResource());
+                //log("make identifier " + stmt.getResource().getURI() 
+                //     + " " + stmt.getResource().getProperty(
+                //             DCTerms.identifier).getString());
             }
-        //}
-        return false;
+            model.add(stmt);
+            if (stmt.getObject().isResource()) {
+                Resource obj = stmt.getObject().asResource();
+                StmtIterator sub = obj.listProperties();
+                while( sub.hasNext() ) {
+                    model.add(sub.nextStatement());
+                }
+            }
+        }
+        return model.getResource(rc.getURI());
     }
 
     /** archive index page to file system */
@@ -258,10 +186,10 @@ public class NLMAnalyzer implements Analyzer {
     }
 
     /** write model files to file system */
-    private boolean writeModel(Model model, Resource rc, String store) {
+    private boolean writeModel(Resource rc, String store) {
         boolean write = false;
 	    if (store==null) {
-		    return false;
+		    return write;
 		}
         if ( rc.hasProperty(DCTerms.identifier) ) {
             String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
@@ -272,50 +200,23 @@ public class NLMAnalyzer implements Analyzer {
             }
             if (rc.hasProperty(issueId)) {
                 path += "/" + rc.getProperty(issueId).getString();
-                //log("issue " + rc.getProperty(issueId).getString());
-                //if (!new File(path).exists()) {
-                //    new File(path).mkdirs();
-                //}
             }
             if (rc.hasProperty(article)) {
                 path += "/" + rc.getProperty(article).getString();
-                //log("number " + rc.getProperty(article).getString());
             } 
-            //log("writeModel to " + path);
             if (name.equals("JournalIssue")) {
-                write = checkTime(path, "about.rdf");
                 path += "/about.rdf";
             } else if (name.equals("JournalArticle")) {
                 path += "/" + rc.getProperty(article).getString()+".rdf";
-                write = true;
             }
-            if (write) {
-                StringWriter writer = new StringWriter();
-                model.write(writer, "RDF/XML-ABBREV");
-                write = FileUtil.write(path, writer.toString());
-                if (write) log("write " + name + " : " + path );
-            }
+            StringWriter writer = new StringWriter();
+            rc.getModel().write(writer, "RDF/XML-ABBREV");
+            write = FileUtil.write(path, writer.toString());
+            //log("write to " + path);
         } else {
             log("complicated [" + rc.getURI() + "]");
         }
         return write;
-    }
-
-    private Model getPartOf(Resource rc) {
-        Model model = PrefixModel.create();
-        StmtIterator si = rc.listProperties();
-        while( si.hasNext() ) {
-            Statement stmt = si.nextStatement();
-            model.add(stmt);
-            if (stmt.getObject().isResource()) {
-                StmtIterator sub = stmt.getObject()
-                                       .asResource().listProperties();
-                while( sub.hasNext() ) {
-                    model.add(sub.nextStatement());
-                }
-            }
-        }
-        return model;
     }
 
     private void log(Exception e) {

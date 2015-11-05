@@ -1,6 +1,8 @@
 package org.shanghai.crawl;
 
-import org.shanghai.store.Store;
+import org.shanghai.util.FileUtil;
+import org.shanghai.rdf.XMLTransformer;
+import org.shanghai.data.FileTransporter;
 
 import java.nio.file.Paths;
 import java.nio.file.Path;
@@ -10,29 +12,28 @@ import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.util.logging.Logger;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFReader;
-import com.hp.hpl.jena.rdf.arp.JenaReader;
-import com.hp.hpl.jena.rdf.model.RDFErrorHandler;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
    @author Goetz Hatop
-   @title Scanner for RDF data
+   @title Scanner for RDF data files
    @date 2013-02-21
 */
 public class TrivialScanner implements FileTransporter.Delegate {
 
-    private String current = "";
+    private XMLTransformer tr;
 
     public FileTransporter.Delegate create() {
+        tr = new XMLTransformer();
+        tr.create();
         return this;
     }
 
-    public void dispose() {}
-
-    public void setDirectory(String dir) {}
+    public void dispose() {
+        tr.dispose();
+    }
 
     public boolean canRead(String fname) {
         if (fname.endsWith(".rdf")) {
@@ -41,79 +42,8 @@ public class TrivialScanner implements FileTransporter.Delegate {
         return false;
     }
 
-    class TrivialErrorHandler implements RDFErrorHandler {
-        public void error(Exception e) {
-            log(current + " : " + e);
-        }
-        public void fatalError(Exception e) {
-            e.printStackTrace();
-        }
-        public void warning(Exception e) {
-        }
+    public Resource read(String file) {
+        String rdf = FileUtil.read(file);
+        return tr.asResource(rdf); 
     }
-
-    /*
-    public Model read(String file) {
-        InputStream in = null;
-        Model m = null;
-        try {
-            in = new FileInputStream(file);
-            //in = new FileInputStream(new File(file));
-			//in=Paths.get(file).getFileSystem().provider().newInputStream(path);
-            m = ModelFactory.createDefaultModel();
-            RDFReader reader = new JenaReader(); 
-            reader.setErrorHandler(new TrivialErrorHandler());
-            reader.read(m, in, null);
-        } catch(FileNotFoundException e) { 
-            log(file); log(e);
-        } catch(IOException e) { 
-            log(file); log(e); 
-        } finally {
-            if (in!=null) try {
-                in.close();
-            } catch(Exception e) { log(e); }
-            return m;
-        }
-    }
-    */
-
-    public Model read(String file) {
-        InputStream in = null;
-        Model m = null;
-        try {
-            //InputStream in = new FileInputStream(new File(file));
-            Path path = Paths.get(file);
-			in = path.getFileSystem().provider().newInputStream(path);
-            m = ModelFactory.createDefaultModel();
-            RDFReader reader = new JenaReader(); 
-            reader.setErrorHandler(new TrivialErrorHandler());
-            reader.read(m, in, null);
-        } catch(FileNotFoundException e) { 
-            log(file); log(e);
-        } catch(IOException e) { 
-            log(file); log(e); 
-        } catch(Exception e) { 
-            e.printStackTrace(); 
-            log(file);  
-        } finally {
-            if (in!=null) try {
-                in.close();
-            } catch(Exception e) { log(e); }
-            return m;
-        }
-    }
-
-    private static final Logger logger =
-                         Logger.getLogger(FileTransporter.class.getName());
-
-    private void log(String msg) {
-        logger.info(msg);
-    }
-
-    private void log(Exception e) {
-        //log(e.toString());
-        e.printStackTrace();
-        //System.exit(0);
-    }
-
 }

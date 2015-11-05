@@ -11,7 +11,7 @@ import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.client.solrj.util.ClientUtils;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
 
 import java.util.logging.Logger;
 import java.util.Map;
@@ -39,16 +39,7 @@ public class SolrPost {
     }
 
     public void create() {
-        if (solr.startsWith("http://")) {
-            server = new HttpSolrServer(solr);
-        } //else if (solr.startsWith("/")) {
-          //  String solrDir = solr.substring(0,solr.lastIndexOf("/"));
-          //  String core = solr.substring(solr.lastIndexOf("/")+1);
-          //  log("solr emb " + solrDir + " core " + core);
-          //  CoreContainer container = new CoreContainer(solrDir);
-          //  container.load(solrDir, new File("solr.xml"));
-          //  server = new EmbeddedSolrServer( container, core);
-        //}
+        server = new HttpSolrServer(solr);
     }
 
     public void dispose() {

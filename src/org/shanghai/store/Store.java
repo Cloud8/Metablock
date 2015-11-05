@@ -1,30 +1,31 @@
 package org.shanghai.store;
 
-import org.shanghai.util.PrefixModel;
+import org.shanghai.util.ModelUtil;
 
 import java.util.logging.Logger;
 import java.net.URL;
 import java.io.StringReader;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.RDFReader;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.vocabulary.DCTerms;
-import com.hp.hpl.jena.rdf.arp.JenaReader;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.RDFReader;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.rdfxml.xmlinput.JenaReader;
+import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.riot.RiotException;
 
-import com.hp.hpl.jena.query.Query;
-import com.hp.hpl.jena.query.QueryExecution;
-import com.hp.hpl.jena.query.QueryExecutionFactory;
-import com.hp.hpl.jena.query.QueryFactory;
-import com.hp.hpl.jena.query.QuerySolution;
-import com.hp.hpl.jena.query.ResultSet;
-import com.hp.hpl.jena.query.QueryParseException;
+import org.apache.jena.query.Query;
+import org.apache.jena.query.QueryExecution;
+import org.apache.jena.query.QueryExecutionFactory;
+import org.apache.jena.query.QueryFactory;
+import org.apache.jena.query.QuerySolution;
+import org.apache.jena.query.ResultSet;
+import org.apache.jena.query.QueryParseException;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -96,7 +97,7 @@ public class Store {
             return false;
         }
         StringReader in = new StringReader(rdf);
-        Model mod = ModelFactory.createDefaultModel();
+        Model mod = ModelUtil.createModel();
         RDFReader reader = new JenaReader(); 
         reader.read(mod, in, null);
         in.close();
@@ -112,10 +113,14 @@ public class Store {
     }
 
     public Model read(String resource) {
-        Model m = getModel(resource);
-        return PrefixModel.prefix(m);
-        //return m;
-        //return sort(m, resource);
+        Model model = null;
+        try {
+            model = getModel(resource);
+            model = ModelUtil.prefix(model);
+        } catch (RiotException e) { 
+            log(e); log(resource); 
+        }
+        return model;
     }
 
     public boolean update(Model mod) {
@@ -213,37 +218,6 @@ public class Store {
         }
         return null;
     }
-
-    /** obsolete : topological sort */
-    /**
-    private static final String dct = DCTerms.getURI();
-    private static final String prism =
-                         "http://prismstandard.org/namespaces/basic/2.0/";
-    private static final String fabio = "http://purl.org/spar/fabio/";
-    private static final String foaf = "http://xmlns.com/foaf/0.1/";
-    private static final String aiiso = "http://purl.org/vocab/aiiso/schema#";
-    private static final String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-    private Model sort(Model m, String resource) {
-        //return m; 
-        Model model = ModelFactory.createDefaultModel();
-        Resource rc = m.getResource(resource);
-        RDFNode node = null;
-        Property prop = null;
-        StmtIterator si = m.listStatements(rc, prop, node);
-        while( si.hasNext() ) {
-            Statement stmt = si.nextStatement();
-            model.add(stmt);
-            if (stmt.getObject().isResource()) {
-                StmtIterator sub = stmt.getObject()
-                                       .asResource().listProperties();
-                while( sub.hasNext() ) {
-                    model.add(sub.nextStatement());
-                }
-            }
-        }
-        return model;
-    }
-    **/
 
     private static final Logger logger =
                          Logger.getLogger(Store.class.getName());

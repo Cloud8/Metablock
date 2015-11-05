@@ -1,12 +1,12 @@
 package org.shanghai.util;
 
 import org.shanghai.crawl.MetaCrawl.Analyzer;
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.ResIterator;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.vocabulary.DCTerms;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResIterator;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.vocabulary.DCTerms;
 
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
@@ -21,12 +21,7 @@ import java.nio.file.Files;
  */
 public class Language implements Analyzer {
 
-    private static final String dct = DCTerms.getURI();
     private Detector detector;
-
-    private Property language;
-    private Property abstract_;
-    private Property title;
     private boolean loaded = false;
     private String path;
 
@@ -54,62 +49,27 @@ public class Language implements Analyzer {
     public void dispose() {
     }
 
-    private void createProperties(Model model) {
-        if (abstract_==null) {
-            abstract_ = model.createProperty(dct, "abstract");
-        }
-        if (title==null) {
-            title = model.createProperty(dct, "title");
-        }
-        if (language==null) {
-            language = model.createProperty(dct, "language");
-        }
-    }
-
     @Override
-    public Resource analyze(Model model, String id) {
-        Resource rc = null;
-        createProperties(model);
-        ResIterator ri = model.listResourcesWithProperty(title);
-        if (ri.hasNext() ) {
-            rc = model.listResourcesWithProperty(title).nextResource();
-            analyze(model, rc, id);
-        }
-        return rc;
-    }
-
-    @Override
-    public boolean test() {
-        log("test: " + this.getClass().getName() + " detect from " + path);
-        return true;
-    }
-
-    @Override
-    public Resource test(Model model, String id) {
-        return analyze(model, id);
-    }
-
-    @Override
-    public void dump(Model model, String id, String fname) {
-        log("dump not implemented");
-    }
-
-    public Resource analyze(Model model, Resource rc, String id) {
-        createProperties(model);
-        if (rc.hasProperty(language)) {
+    public Resource analyze(Resource rc, String id) {
+        if (rc.hasProperty(DCTerms.language)) {
             return rc;
         }
         String text = null;
-        if (rc.hasProperty(abstract_)) {
-            text = rc.getProperty(abstract_).getLiteral().getString();
-        } else if (rc.hasProperty(title)) {
-            text = rc.getProperty(title).getLiteral().getString();
+        if (rc.hasProperty(DCTerms.abstract_)) {
+            text = rc.getProperty(DCTerms.abstract_).getLiteral().getString();
+        } else if (rc.hasProperty(DCTerms.title)) {
+            text = rc.getProperty(DCTerms.title).getLiteral().getString();
         }
-        analyzeText(model, rc, text);
+        analyzeText(rc, text);
         return rc;
     }
 
-    private void analyzeText(Model model, Resource rc, String text) {
+    @Override
+    public Resource test(Resource rc, String id) {
+        return analyze(rc, id);
+    }
+
+    private void analyzeText(Resource rc, String text) {
         String lang = null;
         try {
             detector = DetectorFactory.create();
@@ -122,10 +82,10 @@ public class Language implements Analyzer {
                 return ;
             }
             if (lang.equals("de") || lang.equals("en") || lang.equals("fr")) {
-                rc.addProperty(language, lang);
+                rc.addProperty(DCTerms.language, lang);
             } else {
                 log("detected language " + lang + " " + rc.getURI());
-                rc.addProperty(language, "de");
+                rc.addProperty(DCTerms.language, "de");
             }
             //detector.dispose();
         } catch(LangDetectException e) { 
@@ -145,11 +105,6 @@ public class Language implements Analyzer {
 
     protected void log(Exception e) {
         logger.info(e.toString());
-        //e.printStackTrace();
-    }
-
-    private void log(Model mod) {
-        mod.write(System.out, "RDF/XML");
     }
 
 }

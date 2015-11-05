@@ -32,12 +32,13 @@ public class Main {
     }
 
     protected static int help() {
-        org.shanghai.rdf.Main.help();
+        //org.shanghai.rdf.Main.help();
         String usage = "\n" 
-               + "   -crawl [directories|oai] to storage\n"
+               + "   -crawl -s source -t target -e engine\n"
+               // [directories|oai] to storage\n"
                + "          -probe check setup\n"
-               + "          -test [directory] test files\n"
-               + "          -dump [resource] out of store\n"
+               + "          -test [resource] test resource\n"
+               // + "          -dump [resource] out of store\n"
                + "          -post [resource] to storage\n"
                + "          -del [resource] from storage\n"
                + "          -destroy : destroy storage.\n"
@@ -50,18 +51,13 @@ public class Main {
         //for (String s : args) System.out.print(s + " ");
         //System.out.println(" ["+args.length+"]");
         if (args.length==0) {
-            org.shanghai.rdf.Main.help();
+            help();
             return;
         }
 
-        if (args[0].startsWith("-conf")) {
-            if (1<args.length) {
-                configFile = args[1];
-                args = Config.shorter(Config.shorter(args));
-            } else {
-                Config config = new Config(configFile).create();
-                config.test();
-            }
+        if (args[0].startsWith("-help")) {
+            help();
+            return;
         }
 
         if (args[0].startsWith("-index")) {
@@ -113,7 +109,7 @@ public class Main {
 
         if (args[0].startsWith("-urn")) {
             Config config = new Config(configFile).create();
-            URN engine = new URN(config.get("urn.prefix"));
+            URN engine = new URN(config.get("schema.urn"));
             if (args.length==2) {
                 engine.create();
                 engine.make(args[1]);

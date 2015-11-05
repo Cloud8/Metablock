@@ -4,7 +4,8 @@ import org.shanghai.rdf.MetaCrawl;
 import org.shanghai.rdf.XMLTransformer;
 import org.shanghai.rdf.SolrPost;
 import org.shanghai.util.FileUtil;
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -18,8 +19,8 @@ import java.io.StringWriter;
 public class SolrStorage implements MetaCrawl.Storage {
 
     protected SolrPost solrPost;
+    protected XMLTransformer transformer;
     private String xsltFile;
-    private XMLTransformer transformer;
     private StringWriter writer;
     private int count;
 
@@ -59,21 +60,15 @@ public class SolrStorage implements MetaCrawl.Storage {
     //} 
 
     @Override
-    public synchronized boolean write(Model mod, String resource) {
-        String xml = transformer.transform(mod, resource);
-        //writer.getBuffer().setLength(0);
-        //mod.write(writer, "RDF/JSON");
-        //String a = xml.substring(0, xml.indexOf("</doc>"));
-        //String b = "<field name=\"json_str\">" +writer.toString()+"</field>";
-        //String c = xml.substring(xml.indexOf("</doc>"));
-        //return solrPost.post(a + b + c);
+    public synchronized boolean write(Resource rc, String resource) {
+        String xml = transformer.transform(rc);
         return solrPost.post(xml);
     } 
 
-    @Override
-    public boolean update(String id, String field, String value) {
-        return solrPost.update(id, field, value);
-    }
+    //@Override
+    //public boolean update(String id, String field, String value) {
+    //    return solrPost.update(id, field, value);
+    //}
 
     @Override
     public void destroy() {

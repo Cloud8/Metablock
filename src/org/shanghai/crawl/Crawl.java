@@ -1,12 +1,18 @@
 package org.shanghai.crawl;
 
+import org.shanghai.data.FileTransporter;
+import org.shanghai.data.FileStorage;
 import org.shanghai.rdf.Config;
-import org.shanghai.crawl.SolrStorage;
+import org.shanghai.solr.SolrStorage;
 import org.shanghai.crawl.MetaCrawl;
 import org.shanghai.crawl.RDFStorage;
-import org.shanghai.crawl.FileTransporter;
 import org.shanghai.oai.OAITransporter;
 import org.shanghai.oai.NLMAnalyzer;
+import org.shanghai.data.FileTransporter;
+import org.shanghai.data.VoidTransporter;
+import org.shanghai.data.ConsoleStorage;
+import org.shanghai.data.SourceScanner;
+import org.shanghai.data.EmptyStorage;
 
 import java.util.logging.Logger;
 
@@ -83,7 +89,7 @@ public class Crawl {
             crawler.create();
         }
         if (engine!=null && engine.contains("nlm")) {
-            String prefix = config.get("urn.prefix");
+            String prefix = config.get("schema.urn");
             String directory = null;
             if (source.equals("oai")) { // write model files to oai archve
                 directory = config.getOAIList().get(oai_counter).archive;
@@ -102,21 +108,32 @@ public class Crawl {
     public void createTransporter(String crawl) {
         if (crawl.contains("files")) {
             String suffix = config.get("files.suffix");
+            if (crawl.contains(":")) {
+                suffix = "." + crawl.substring(crawl.indexOf(":")+1);
+            }
             int depth = config.getInt("files.depth");
             int logC = config.getInt("files.count");
             fc = new FileTransporter(suffix,depth,logC);
             fc.create(); 
-            transporter = fc.inject(new TrivialScanner().create());
-            //log("createTransporter [" + crawl + "]");
+            if (suffix.contains(".java")||suffix.contains(".php")) {
+                fc.inject(new SourceScanner().create());
+            } else {
+                fc.inject(new TrivialScanner().create());
+            }
+            transporter = fc;
+            log("createTransporter [" + crawl + "]");
         } else if ("oai".equals(crawl)) {
             Config.OAI settings = config.getOAIList().get(0);
             transporter = new OAITransporter(settings);
             transporter.create();
+        } else if (crawl.equals("void")) {
+            transporter = new VoidTransporter();
+			transporter.create();
         } else {
             String store = config.get(crawl+".sparql");
-            if (store!=null && store.equals("tdb")) {
-                store = config.get("tdb.store");
-                log("tdb store " + store);
+            if (crawl.equals("tdb")) {
+                store = crawl;
+                log("tdb transporter " + store);
             }
             String probe = config.get(crawl+".probe");
             if (probe==null) {
@@ -166,16 +183,25 @@ public class Crawl {
         } else if (store.startsWith("files")) {
             String directory = config.get("files.store");
             if (source.equals("oai")) { // write model files to oai archive
-                directory = config.getOAIList().get(oai_counter).archive;
+                String archive = config.getOAIList().get(oai_counter).archive;
+                if (archive!=null) {
+                    directory = config.getOAIList().get(oai_counter).archive;
+                }
             } 
+            boolean force = config.getBool("files.force");
             if (store.contains(":")) {
                 directory = store.substring(store.indexOf(":")+1);
+                if (store.equals("files:data")) {
+                    force = true;
+                }
             }
-            storage = new FileStorage(directory);
+            storage = new FileStorage(directory, force);
             storage.create();
-            log("createStorage [files:" + directory + "]");
         } else if ("empty".equals(store)) {
             storage = new EmptyStorage();
+            storage.create();
+        } else if (store.equals("console")) {
+            storage = new ConsoleStorage();
             storage.create();
         } else {
             log("No storage! [" + store + "]");
@@ -201,8 +227,10 @@ public class Crawl {
     }
 
     public void test(String resource) {
-        log("test # " + resource + " " + target);
         createCrawler();
+        //int found = crawler.index(resource);
+        //log("found # " + found + " " + resource);
+        //log("test # " + resource + " " + target);
         crawler.test(resource);
         crawler.dispose();
     }
@@ -322,7 +350,7 @@ public class Crawl {
                 } else {
                     oai_counter = i; // use right setting
                     createCrawler();
-                    crawl();
+                    crawler.crawl();
                 }
                 transporter.dispose();
             }
@@ -330,19 +358,12 @@ public class Crawl {
     }
 
     private void crawl(String resource) {
-        //log("crawl # " + resource);
-        if (source.equals("files")) {
-            int found = crawler.index(resource);
-            crawl();
-        } else if (source.equals("void")) {
-            int found = crawler.index(resource);
-            if (found==0) {
-                crawler.crawl(resource);
-            } else {
-                crawl();
-            }
+        int found = crawler.index(resource);
+        if (found==0) {
+            found = crawler.crawl(resource);
+            log("crawl #" + found + " " + resource);
         } else {
-            int b = crawler.crawl(resource);
+            found = crawler.crawl();
         }
     }
 

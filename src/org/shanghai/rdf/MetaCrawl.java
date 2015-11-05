@@ -4,7 +4,9 @@ import org.shanghai.util.FileUtil;
 
 import java.io.IOException;
 import java.util.logging.Logger;
-import com.hp.hpl.jena.rdf.model.Model;
+import java.util.List;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 import java.io.StringReader;
 
 /**
@@ -20,8 +22,8 @@ public class MetaCrawl {
         public void create();
         public void dispose();
         public String probe();
-        public Model read(String resource);
-        public String[] getIdentifiers(int off, int limit);
+        public Resource read(String resource);
+        public List<String> getIdentifiers(int off, int limit);
     }
 
     /** write to there */
@@ -29,8 +31,7 @@ public class MetaCrawl {
         public void create();
         public void dispose();
         public boolean delete(String resource);
-        public boolean write(Model mod, String resource);
-        public boolean update(String id, String field, String value);
+        public boolean write(Resource rc, String resource);
         public void destroy();
     }
 
@@ -84,7 +85,7 @@ public class MetaCrawl {
         return indexSlow(offset, limit);
     }
 
-/* //reduce write operations
+/*  -- not fast.
     private boolean indexFast(int offset, int limit) {
         boolean result = true;
         String[] identifiers = transporter.getIdentifiers(offset,limit);
@@ -133,16 +134,17 @@ public class MetaCrawl {
 
     private boolean indexSlow(int offset, int limit) {
         boolean result = true;
-        String[] identifiers = transporter.getIdentifiers(offset,limit);
+        //String[] identifiers = transporter.getIdentifiers(offset,limit);
+        List<String> identifiers = transporter.getIdentifiers(offset,limit);
         for (String id : identifiers) {
              if (id==null) {
                  return false;
              }
-             Model mod = transporter.read(id);
-             if (mod==null) {//if server sends garbage, dont care.
+             Resource rc = transporter.read(id);
+             if (rc==null) {//if server sends garbage, dont care.
                  continue;
              }
-             result=storage.write(mod, id);
+             result=storage.write(rc, id);
              if(!result) {
                  log("problem: " + id);
                  dump(id);
@@ -156,22 +158,22 @@ public class MetaCrawl {
     }
 
     public String read(String resource) {
-        Model mod = transporter.read(resource);
-        String rdf = xmlTransformer.toString(mod, resource);
-        return rdf;
+        Resource rc = transporter.read(resource);
+        return xmlTransformer.asString(rc);
     }
 
     public void post(String resource) {
-        Model mod = transporter.read(resource);
-        if (mod==null) {
+        Resource rc = transporter.read(resource);
+        if (rc==null) {
             log("cant post " + resource);
         } else {
-            storage.write(mod, resource);
+            storage.write(rc, resource);
         }
     }
 
     public void test() {
-        String[] identifiers = transporter.getIdentifiers(0,7);
+        //String[] identifiers = transporter.getIdentifiers(0,7);
+        List<String> identifiers = transporter.getIdentifiers(0,7);
         String resource = null;
         for (String id : identifiers) {
              if (id==null)

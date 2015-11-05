@@ -1,36 +1,8 @@
 package org.shanghai.oai;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-
+import java.lang.StringBuffer;
 import java.util.HashMap;
 import java.util.Map;
-import java.lang.StringBuffer;
-
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerConfigurationException;
-
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.Transformer;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Node;
-import org.w3c.dom.Element;
-import org.w3c.dom.Text;
-
-import org.shanghai.util.FileUtil;
-import org.shanghai.rdf.Config;
-import org.shanghai.rdf.XMLTransformer;
 
 /**
     (c) reserved.
@@ -69,8 +41,11 @@ public class URN {
             src = src.replace("es/","es");
             src = src.replace("ed/","ed");
             src = src.replace("/","-");
+            src = src.replace(" ","");
+            //log(prefix + src);
             urn = getUrnCheck(prefix + src);
         }
+        //log(raw + " # " + urn);
         return urn;
     }
   
@@ -124,18 +99,18 @@ public class URN {
     private String getUrnCheck(String raw) {
         if (map==null)
             createMap();
-  	  String result = null;
-  	  StringBuffer buf = new StringBuffer();
+  	    String result = null;
+  	    StringBuffer buf = new StringBuffer();
         String newURN = "";
         int sum = 0;
         for (int i = 0; i < raw.length(); i++) {
-              String ch = raw.substring(i,i+1).toLowerCase();
+            String ch = raw.substring(i,i+1).toLowerCase();
   			buf.append(map.get(ch));
         }
         for (int i = 0; i < buf.length(); i++) {
-              int x = Integer.parseInt(buf.substring(i,i+1));
+            int x = Integer.parseInt(buf.substring(i,i+1));
   			int prod = x * (i+1);
-              sum += prod;
+            sum += prod;
         }
         int last = Integer.parseInt(buf.substring(buf.length()-1));
         float quot = sum / last;
@@ -193,6 +168,10 @@ public class URN {
             System.out.println(urn);
         }
         */
+    }
+
+    public String toString() {
+        return prefix;
     }
   
     private void log(String msg) {

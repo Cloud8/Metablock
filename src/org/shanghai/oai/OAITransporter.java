@@ -15,7 +15,8 @@ import org.w3c.dom.Text;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.hp.hpl.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
@@ -28,14 +29,22 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.OutputKeys;
 
 import java.lang.NoSuchFieldException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.IOException;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.FileAlreadyExistsException;
+
+import java.text.Normalizer;
 
 /*
  see https://github.com/openpreserve/OAIHarvester2/blob/master/src/main/java/ORG/oclc/oai/harvester2/verb/HarvesterVerb.java
@@ -52,6 +61,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
     private int count=0;
     private String from;
     private String until;
+    private String testFile;
 
     public OAITransporter(Config.OAI settings) {
         this.settings = settings;
@@ -64,8 +74,16 @@ public class OAITransporter implements MetaCrawl.Transporter {
         docfactory.setNamespaceAware(true);
         factory = TransformerFactory.newInstance();
 
-        from = settings.from   + "T00:00:00Z";
-        until = settings.until + "T23:59:59Z";
+        if (settings.from.contains("T") && settings.from.contains("T")) {
+            from = settings.from;
+        } else {
+            from = settings.from   + "T00:00:00Z";
+        }
+        if (settings.until.contains("T") && settings.until.contains("T")) {
+            until = settings.until;
+        } else {
+            until = settings.until + "T23:59:59Z";
+        }
         if (settings.transformer!=null) {
             String xslt = FileUtil.readResource(settings.transformer); 
             if (xslt==null) {
@@ -78,6 +96,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 //}
             }
         }
+        testFile = settings.test==null?"data/test.xml":settings.test;
         log("harvest " + settings.harvest + " : " + from + " : " + until 
             + " : " + settings.prefix + " # " + settings.set);
     }
@@ -109,7 +128,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
     }
 
     @Override
-    public String[] getIdentifiers(int off, int limit) {
+    public List<String> getIdentifiers(int off, int limit) {
         String[] result = new String[limit];
         int found=0;
         int skip=0;
@@ -125,7 +144,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 log("no Identifiers");
                 return null;
             }
-          //log("response [" + listIdentifiers.getDocument().toString() + "]");
+            //log("[" + listIdentifiers.getDocument().toString() + "]");
             //if (listIdentifiers.getDocument().getTextContent()==null) {
             //    log("empty response, no Identifiers");
             //    return null;
@@ -147,7 +166,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 Document doc = db.parse(is);
                 doc.getDocumentElement().normalize();
                 NodeList nodes = doc.getElementsByTagName("identifier");
-                log("found " + nodes.getLength() + " identifiers " + limit);
+                //log("found " + nodes.getLength() + " identifiers " + limit);
                 for (int i=0; i<nodes.getLength(); i++) {
                     if (skip<off) {
                         skip++;
@@ -173,32 +192,45 @@ public class OAITransporter implements MetaCrawl.Transporter {
                 } else {
                     //log("nothing found.");
                 }
-                return result2;
+                //return result2;
+                return Arrays.asList(result2);
             }
-            return result;
+            //return result;
+            return Arrays.asList(result);
         }
     }
 
     @Override 
-    public int crawl(String source) {
-        //return getIdentifiers(0,99).length;
+    public int index(String source) {
         return 0;
     }
 
     @Override 
-    public Model test(String resource) {
+    public Resource test(String resource) {
         String raw = getRecord(resource);
         if (raw==null) {
             return null;
         }
-        FileUtil.write("data/test.xml", raw);
         String xml = getMetadata(raw);
-        Model model = XMLTransformer.asModel(xml);
-        return model;
+        if (xml==null) {
+            log("test : no data for " + resource);
+            FileUtil.write(testFile, raw);
+            return null;
+        } else {
+            FileUtil.write(testFile, xml);
+        }
+
+        Resource rc = null;
+        if (transformer!=null) {
+            rc = transformer.transform(xml);    
+        } else if ("rdf".equals(settings.prefix)) {
+            rc = new XMLTransformer().asResource(xml);
+        }
+        return rc;
     }
 
     @Override
-    public Model read(String identifier) {
+    public Resource read(String identifier) {
         //log("read " + identifier);
         String raw = getRecord(identifier);
         if (raw==null) {
@@ -218,16 +250,13 @@ public class OAITransporter implements MetaCrawl.Transporter {
             archive(identifier, xml);
         }
 
-        Model model = null;
-        String rdf = null;
+        Resource rc = null;
         if (transformer!=null) {
-            rdf = transformer.transform(xml);
-            model = transformer.asModel(rdf);
+            rc = transformer.transform(xml);    
         } else if ("rdf".equals(settings.prefix)) {
-            rdf = xml;
-            model = XMLTransformer.asModel(xml);
+            rc = new XMLTransformer().asResource(xml);
         }
-        return model;
+        return rc;
     }
 
     private String getRecord(String identifier) {
@@ -236,9 +265,12 @@ public class OAITransporter implements MetaCrawl.Transporter {
             GetRecord record = new GetRecord(
                                settings.harvest, identifier, settings.prefix);
             result = new String(record.toString().getBytes("UTF-8"));
+            result = Normalizer.normalize(result, Normalizer.Form.NFC);
+        } catch (MalformedURLException e) { 
+                log(identifier + " " + e.toString()); 
         } catch (IOException e) { 
             if (e.toString().contains("403")) {
-                log(e.toString()); 
+                log(identifier + " " + e.toString()); 
             } else {
                 log(e); 
             }
@@ -282,52 +314,82 @@ public class OAITransporter implements MetaCrawl.Transporter {
         Document meta = db.newDocument();
         Node root = meta.importNode(head, true);
         meta.appendChild(root);
-        return toString(meta);
+        return XMLTransformer.asString(meta);
     }
 
     private String archive(String identifier, String xml) {
-        String path = settings.archive;
+        Path path = Paths.get(settings.archive);
         if ("nlm".equals(settings.prefix)) {
-            writeData(path, xml);
-        } else if (path!=null) {
-            path = path + "/" + identifier.replaceAll("/",":") + ".xml";
-            log("archive to " + path);
+            String res = writeData(path, xml);
+            if (res==null) {
+                log("failed " + path + " " + identifier);
+            } else {
+                //log(nlm.toString());
+                log("wrote " + identifier + " " + res);
+            }
+        } else {
+            //path = path.resolve(identifier.replaceAll("/",":") + ".xml");
+            path = path.resolve(identifier.substring(
+                                identifier.lastIndexOf(":")+1) + ".xml");
+            //log("archive to " + path.toString());
             FileUtil.write(path, xml);
         }
-        return path;
+
+        String date = null;
+        if ("xMetaDissPlus".equals(settings.prefix)) {
+            int x = xml.indexOf("<dcterms:issued");
+                x = xml.indexOf(">", x) +1;
+            int y = xml.indexOf("</dcterms:issued>", x);
+            date = xml.substring(x, y).trim();
+        } else if ("rdf".equals(settings.prefix)) {
+            int x = xml.indexOf("<dct:issued");
+                x = xml.indexOf(">", x) +1;
+            int y = xml.indexOf("</dct:issued>", x);
+            date = xml.substring(x, y).trim();
+        } else if ("oai_dc".equals(settings.prefix)) {
+            int x = xml.indexOf("<dc:date");
+                x = xml.indexOf(">", x) +1;
+            int y = xml.indexOf("</dc:date>", x);
+            date = xml.substring(x, y).trim();
+            x = date.indexOf("T");
+            date=x<0?date:date.substring(0,x);
+            //log("date ["+date+"]");
+        }
+        FileUtil.touch(path, date);
+        return path.toString();
     }
 
-    private String writeData(String path, String xml) {
-        if (path==null) {
-            return null;
-        }
-
+    private String writeData(Path path, String xml) {
+        boolean b = false;
         NLM nlm = new NLM(xml);
         //log(nlm.toString());
-        if (nlm.year!=null)
-            path += "/" + nlm.year;
-        if (nlm.issueId!=null)
-            path += "/" + nlm.issueId;
-        if (nlm.articleId!=null)
-            path += "/" + nlm.articleId;
-        //File check = new File(path);
-        //if (!check.exists())
-        //    if (!new File(path).mkdirs())
-        //        return path;
-        if (nlm.url!=null) {
-            FileUtil.copy(nlm.url, path + "/index.html");
-            String from = nlm.url.replace("view", "viewFile"); // OJS
-            //log("read [" + from + "]");
-            FileUtil.copy(from, path + "/" + nlm.articleId + ".pdf");
+        if (nlm.year!=null) {
+            path = path.resolve(nlm.year);
+            FileUtil.mkdir(path);
+        }
+        if (nlm.issueId!=null) {
+            path = path.resolve(nlm.issueId);
+            FileUtil.mkdir(path);
         }
         if (nlm.articleId!=null) {
-            FileUtil.write(path + "/" + nlm.articleId + ".nlm", xml);
-            log("wrote " + path + "/" + nlm.articleId + ".nlm");
-        } else {
-            //log(nlm.toString());
-            log("failed " + path + "/" + nlm.articleId + ".nlm");
+            path = path.resolve(nlm.articleId);
+            FileUtil.mkdir(path);
         }
-        return path;
+        if (nlm.url!=null) {
+            //FileUtil.copy(nlm.url, path + "/index.html");
+            FileUtil.copy(nlm.url, path.resolve("index.html"));
+            String from = nlm.url.replace("view", "viewFile"); // OJS
+            //log("read [" + from + "]");
+            //FileUtil.copy(from, path + "/" + nlm.articleId + ".pdf");
+            FileUtil.copy(from, path.resolve(nlm.articleId+".pdf"));
+        }
+        if (nlm.articleId==null) {
+            return null;
+        } else {
+            //FileUtil.write(path + "/" + nlm.articleId + ".nlm", xml);
+            FileUtil.write(path.resolve(nlm.articleId+".nlm"), xml);
+            return path.toString();
+        }
     }
 
     public class NLM {
@@ -394,8 +456,8 @@ public class OAITransporter implements MetaCrawl.Transporter {
         log("transformer " + settings.transformer); 
         log("from: "  + from);
         log("until: " + until);
-        String[] ids = getIdentifiers(0,7);
-        log("found " + ids.length + " identifiers");
+        List<String> ids = getIdentifiers(0,7);
+        log("found " + ids.size() + " identifiers");
         
         for (String s: ids) {
             log(s);
@@ -421,22 +483,6 @@ public class OAITransporter implements MetaCrawl.Transporter {
     private void log(Exception e) {
         log(e.toString());
         try { throw(e); } catch(Exception ex) { ex.printStackTrace(); }
-    }
-
-    public static String toString(Document doc) {
-        try {
-            StringWriter sw = new StringWriter();
-            Transformer transformer = factory.newTransformer();
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION,"no");
-            transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            transformer.transform(new DOMSource(doc), new StreamResult(sw));
-            return sw.toString();
-        } catch (Exception ex) {
-            throw new RuntimeException("Error converting to String", ex);
-        }
     }
 
 }

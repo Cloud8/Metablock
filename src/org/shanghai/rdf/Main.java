@@ -11,13 +11,13 @@ import java.util.logging.Logger;
 public class Main {
  
     protected Config config;
-    private static String configFile = "lib/seaview.ttl";
+    private String configFile;
     private Indexer indexer;
 
     private Main() {
     }
     
-    public Main(String s) {
+    private Main(String s) {
         configFile = s;
     }
 
@@ -129,15 +129,16 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        String configFile = "lib/seaview.ttl";
+        Main myself = null;
         if (args.length>1 && args[0].startsWith("-conf")) {
             if (1<args.length) {
-                configFile = args[1];
+                myself = new Main(args[1]);
                 args = Config.shorter(Config.shorter(args));
             } 
-            System.out.println("configured by " + configFile);
+            System.out.println("configured by " + args[1]);
+        } else {
+            myself = new Main("lib/seaview.ttl");
         }
-        Main myself = new Main(configFile);
         myself.index(args);
     }
 
