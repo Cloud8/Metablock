@@ -52,14 +52,14 @@ public class TextUtil {
             result = Normalizer.normalize(result, Normalizer.Form.NFC); 
             return result;
         } catch( UnsupportedEncodingException e) {
-            logger.info("Bad UTF8" + e.toString());
+            throw new AssertionError("UTF-8 is unknown");
         } catch( CharacterCodingException e) {
             logger.info("Dirty UTF8 " + e.toString());
         }
         return "";
     }
 
-    /** Formats text as one sentence per line */
+    /** Formats text as one sentence per line. Much too simple. */
     public static String sentence(String text) {
         StringBuilder sb = new StringBuilder();
         Matcher matcher = re.matcher(text);

@@ -53,10 +53,6 @@ public class Database {
         this.dbpass = db[3];
     }
 
-    //public Database() {
-    //    this("localhost", "biblog", "scott", "tiger"); // test case
-    //}
-
     public Database(DataSource dataSource) {
         this.dataSource = dataSource;        
     }

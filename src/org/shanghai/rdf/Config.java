@@ -371,6 +371,7 @@ public class Config {
         public String archive; 
         public String days;
         public String test;
+        public String urn_prefix;
         public void show() {
            log(" OAI: " + prefix + " days: " + days + ": " + transformer + "\n"
              + "    : " + harvest + "\n" 

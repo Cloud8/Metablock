@@ -25,6 +25,7 @@
   - Language analyzer: guesses the language of a resource desription
     from dcterms abstract or title property
 
+  - Reference analysis: soon to come.
 
 ##### Indexing : writing RDF data to a Solr search index
 

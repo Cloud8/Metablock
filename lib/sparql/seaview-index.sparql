@@ -1,23 +1,26 @@
 
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX fabio: <http://purl.org/spar/fabio/>
 
-# resource enumeration : every subject, but no blank nodes
+# resource enumeration : every subject, no blank nodes
 select distinct ?subject 
 # FROM NAMED <http://archiv.ub.uni-marburg.de>
 where {
   # GRAPH <http://archiv.ub.uni-marburg.de> {
     ?subject ?p ?o .
-    ?subject dct:identifier ?o .
-    FILTER (!isBlank(?subject)) .
-    ## FILTER (regex(?dct:issued,'^2014-07') .
+    ?subject dcterms:identifier ?o .
+    FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de')
+    ## FILTER (!isBlank(?subject)) .
+    ## ?subject a fabio:DoctoralThesis .
+    ## FILTER (regex(?dcterms:issued,'^2014-07') .
     ## FILTER (?date > "<date>") .
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/diss/z2015')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/es')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ed')
-    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ep/0003')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ep/0003/2015')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/eb')
+    ## FILTER strstarts(str(?subject),'http://purl.org/spar/fabio/')
   # }
 }
 ## ORDER BY DESC(?subject)

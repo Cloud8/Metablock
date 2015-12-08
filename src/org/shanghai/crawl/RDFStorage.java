@@ -37,7 +37,7 @@ public class RDFStorage extends RDFReader implements MetaCrawl.Storage {
     }
 
     @Override
-    public boolean test(Resource rc, String resource) {
+    public boolean test(Resource rc) {
         Model test = store.read(rc.getURI());
         if (test==null)
             return false;
@@ -45,17 +45,9 @@ public class RDFStorage extends RDFReader implements MetaCrawl.Storage {
     }
 
     @Override
-    public boolean write(Resource rc, String id) {
+    public boolean write(Resource rc) {
         return store.write(rc.getModel());
     }
-
-    //@Override
-    //public boolean update(String id, String field, String value) {
-    //    Model model = store.read(id);
-    //    Resource rc = model.getResource(id);
-    //    rc.addProperty(model.createProperty(DCTerms.getURI(), field), value);
-    //    return store.write(rc.getModel());
-    //}
 
     @Override
     public boolean delete(String about) {

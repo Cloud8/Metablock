@@ -31,7 +31,7 @@ public class MetaCrawl {
         public void create();
         public void dispose();
         public boolean delete(String resource);
-        public boolean write(Resource rc, String resource);
+        public boolean write(Resource rc);
         public void destroy();
     }
 
@@ -144,7 +144,7 @@ public class MetaCrawl {
              if (rc==null) {//if server sends garbage, dont care.
                  continue;
              }
-             result=storage.write(rc, id);
+             result=storage.write(rc);
              if(!result) {
                  log("problem: " + id);
                  dump(id);
@@ -167,7 +167,7 @@ public class MetaCrawl {
         if (rc==null) {
             log("cant post " + resource);
         } else {
-            storage.write(rc, resource);
+            storage.write(rc);
         }
     }
 

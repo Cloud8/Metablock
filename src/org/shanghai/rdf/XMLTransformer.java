@@ -66,7 +66,6 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.rdf.model.RDFReader;
 import org.apache.jena.rdf.model.RDFWriter;
 import org.apache.jena.rdf.model.RDFNode;
@@ -94,6 +93,7 @@ public class XMLTransformer {
 
     public XMLTransformer() {
         stringWriter = new StringWriter();
+        params = new HashMap<String,String>();
     }
 
     public XMLTransformer(String xslt) {
@@ -104,8 +104,8 @@ public class XMLTransformer {
     public void create() {
         factory = ((SAXTransformerFactory) TransformerFactory.newInstance());
         factory.setErrorListener(new MyErrorListener());
-        params = new HashMap<String,String>();
         if (xslt==null) {
+            templates = null;
             return;
         }
         try {
@@ -175,6 +175,8 @@ public class XMLTransformer {
 
     public Resource transform(Document doc) {
         String rdf = _transform(doc);
+        if (rdf==null)
+            return null;
         return asResource(rdf);
     }
 
@@ -193,12 +195,12 @@ public class XMLTransformer {
     }
 
     public Resource asResource(String rdf) {
-        int x = rdf.indexOf("rdf:about") + 11;
-        int y = rdf.indexOf("\"", x);
+        int x = rdf.indexOf("rdf:about");
+        int y = rdf.indexOf("\"", x+11);
         if (x<0 || y<0 || y<x) {
             return null;
         }
-        String uri = rdf.substring(x, y);
+        String uri = rdf.substring(x+11, y);
         //log("about [" + uri + "]");
         Model model = asModel(rdf);
         return model.getResource(uri);
@@ -240,7 +242,7 @@ public class XMLTransformer {
 	    try {
             StringReader reader = new StringReader(xml);
 		    StringWriter writer = new StringWriter();
-            Transformer tr= templates.newTransformer();
+            Transformer tr = templates.newTransformer();
             for (String name : params.keySet()) {
                 tr.setParameter(name, params.get(name));
             }
@@ -282,7 +284,7 @@ public class XMLTransformer {
             reader.read(m, in, null);
             in.close();
         } catch(UnsupportedEncodingException e) {
-            log(e);
+            throw new AssertionError("UTF-8 is unknown");
         } catch(IOException e) {
             log(e);
         } finally {

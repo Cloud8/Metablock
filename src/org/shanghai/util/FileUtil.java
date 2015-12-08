@@ -13,7 +13,6 @@ import java.io.Writer;
 import java.io.BufferedWriter;
 import java.io.BufferedReader;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
@@ -142,7 +141,6 @@ public class FileUtil {
 			Files.write(path, text.getBytes());
             b = true;
 		} catch(AccessDeniedException e) {
-		  //e.printStackTrace();
           log(e);
 		} catch(NoSuchFileException e) {
           log(e);
@@ -162,6 +160,7 @@ public class FileUtil {
             URL oracle = new URL(url);
             InputStream is = oracle.openStream();
 			Files.copy(is, path, StandardCopyOption.REPLACE_EXISTING);
+            is.close();
         } catch(MalformedURLException e) { e.printStackTrace(); }
           catch(IOException e) { e.printStackTrace(); }
     }   

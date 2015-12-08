@@ -15,10 +15,10 @@ import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.rdf.model.Property;
 
 /**
-    @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop 
-    @title The Meta Crawler
-    @date 2013-02-23
+  @license http://www.apache.org/licenses/LICENSE-2.0
+  @author Goetz Hatop 
+  @title The Meta Crawler
+  @date 2013-02-23
 */
 public class MetaCrawl {
 
@@ -38,8 +38,8 @@ public class MetaCrawl {
         public void create();
         public void dispose();
         public boolean delete(String resource);
-        public boolean write(Resource rc, String resource);
-        public boolean test(Resource rc, String resource);
+        public boolean write(Resource rc);
+        public boolean test(Resource rc);
         public void destroy();
     }
 
@@ -47,8 +47,9 @@ public class MetaCrawl {
     public interface Analyzer {
         public Analyzer create();
         public void dispose();
-        public Resource analyze(Resource rc, String id);
-        public Resource test(Resource rc, String id);
+        public String probe();
+        public Resource analyze(Resource rc);
+        public Resource test(Resource rc);
     }
 
     protected Transporter transporter;
@@ -112,40 +113,44 @@ public class MetaCrawl {
     }
 
     public String probe() {
+        if (transporter==null) {
+            String result = "";
+            for (Analyzer a : analyzers) result += a.probe();
+            return result;
+        }
         return(transporter.getClass().getName() + ": " + transporter.probe());
     }
 
     public void test() {
-        for (String id : transporter.getIdentifiers(0,3)) {
+        for (String id : transporter.getIdentifiers(0,5)) {
             if (id!=null) log("test " + id);
-            for (Analyzer a : analyzers) a.test(transporter.read(id), id);
+            for (Analyzer a : analyzers) a.test(transporter.read(id));
         }
     }
 
-    public Resource test(String resource) {
+    public void test(String resource) {
         log("test # " + resource);
         Resource rc = transporter.test(resource);
         if (rc==null) {
             logger.severe("no model found " + resource);
-            return null;
+            return;
         }
         for (Analyzer a : analyzers) {
-            //log("test: " + a.getClass().getName() + " " + resource); 
-            rc = a.test(rc, resource);
+            rc = a.test(rc);
         }
-        dump(rc);
-        boolean b = storage==null?false:storage.test(rc, resource);
-        return rc;
+        boolean b = storage==null?false:storage.test(rc);
+        if (!b) dump(rc);
     }
 
-    private Resource test(Resource rc, String resource) {
+    private Resource test(Resource rc) {
+        log("test ## " + rc.getURI());
         if (analyzers.size()>0) {
             for (Analyzer a : analyzers) {
-                 rc = a.test(rc, resource);
+                 rc = a.test(rc);
             }
         } else {
             log("no analyzer to test.");
-            rc = transporter.test(resource);
+            boolean b = storage.test(rc);
         }
         return rc;
     }
@@ -178,7 +183,7 @@ public class MetaCrawl {
             log("zero model transporter " + id);
             return count;
         }
-        rc = test?test(rc, id):analyze(rc, id);
+        rc = test?test(rc):analyze(rc);
         if(test&&count==0) dump(rc);
         if(test || storage==null) ; // log(id);
         else {
@@ -186,7 +191,7 @@ public class MetaCrawl {
                 log("delete " + rc.getURI());
                 storage.delete(id);
             }
-            b=storage.write(rc, id);
+            b=storage.write(rc);
         }
         if(b) count++; //count storage success
         else {
@@ -225,7 +230,7 @@ public class MetaCrawl {
 
     private int crawl(int chunkSize) {
         int i = 0;
-        //log("crawl chunkSize " + chunkSize);
+        log("crawl chunkSize " + chunkSize);
         for (boolean b=true; b; b=crawl((i-1)*chunkSize, chunkSize)) {
              i++;
         }
@@ -240,8 +245,10 @@ public class MetaCrawl {
         for (String id : identifiers) {
              if (id==null)
                  return false;
-             if (logC!=0&&count%logC==0)
-                 log("id " + id + " crawl " + count);
+             if (logC!=0&&count%logC==0) {
+                 end = System.currentTimeMillis();
+                 log(id + " #" + count + " " + (end - start)/1000 + " sec.");
+             }
              x += crawl(id);
         }
         return (x>0); 
@@ -254,11 +261,10 @@ public class MetaCrawl {
         }
         Resource rc = transporter.read(resource);
         if (!create) storage.delete(resource);
-        storage.write(rc, resource);
+        storage.write(rc);
     }
 
     public void dump() {
-        //dump(transporter.getIdentifiers(0,1)[0]);
         dump(transporter.getIdentifiers(0,1).get(0));
     }
 
@@ -287,6 +293,7 @@ public class MetaCrawl {
     }
 
     public void dump(String id, String fn) {
+        log("dump " + id + " : " + fn);
         Resource rc = null;
         if (test) {
             rc = transporter.test(id);
@@ -295,7 +302,7 @@ public class MetaCrawl {
         }
         if (test) {
             for (Analyzer a : analyzers) {
-                 a.test(rc, fn);
+                 a.test(rc);
             }
         } 
         if (fn.endsWith(".rdf")) {
@@ -325,9 +332,14 @@ public class MetaCrawl {
         return storage.delete(resource);
     }
 
-    protected Resource analyze(Resource rc, String id) {
+    private Resource analyze(Resource rc) {
+        if (rc==null) {
+            throw new AssertionError("zero resource.");
+            //log("zero resource.");
+            //return rc;
+        }
         for (Analyzer a : analyzers) {
-            rc = a.analyze(rc, id);
+            rc = a.analyze(rc);
         }
         return rc;
     }

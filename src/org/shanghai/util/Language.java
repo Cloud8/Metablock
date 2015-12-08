@@ -50,7 +50,12 @@ public class Language implements Analyzer {
     }
 
     @Override
-    public Resource analyze(Resource rc, String id) {
+    public String probe() {
+        return " " + path;
+    }
+
+    @Override
+    public Resource analyze(Resource rc) {
         if (rc.hasProperty(DCTerms.language)) {
             return rc;
         }
@@ -65,8 +70,8 @@ public class Language implements Analyzer {
     }
 
     @Override
-    public Resource test(Resource rc, String id) {
-        return analyze(rc, id);
+    public Resource test(Resource rc) {
+        return analyze(rc);
     }
 
     private void analyzeText(Resource rc, String text) {

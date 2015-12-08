@@ -67,7 +67,7 @@ public class FileTransporter implements MetaCrawl.Transporter {
 
     @Override
     public String probe() {
-        return FileTransporter.class.getName();
+        return FileTransporter.class.getSimpleName();
     }
 
     @Override
@@ -109,7 +109,7 @@ public class FileTransporter implements MetaCrawl.Transporter {
         }
         level = 0;
         crawl(path, depth);
-        // log("index " + resource + " " + identifiers.size());
+        log("index " + path + " " + identifiers.size());
         return identifiers.size();
     }
 
@@ -181,12 +181,10 @@ public class FileTransporter implements MetaCrawl.Transporter {
                 identifiers.add(path.toString());
                 count++;
             } else {
-                log(d.getClass().getName() + " can not read " + path.toString());
                 b = false;
             }
         }
         if (b&&logC!=0&&count%logC==0) {
-            //log(count + ": " + f.getAbsolutePath() +" ["+ level +"]");
             log(count + ": " + path.toString() +" ["+ level +"]");
         }
     }

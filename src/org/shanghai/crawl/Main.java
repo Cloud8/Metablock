@@ -2,7 +2,7 @@ package org.shanghai.crawl;
 
 import org.shanghai.rdf.Config;
 import org.shanghai.rdf.Indexer;
-import org.shanghai.oai.URN;
+import org.shanghai.ojs.URN;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0

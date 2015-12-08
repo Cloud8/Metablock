@@ -2,6 +2,7 @@
 <xsl:stylesheet
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:dcterms="http://purl.org/dc/terms/"
      xmlns:dctypes="http://purl.org/dc/dcmitype/"
      xmlns:nlm="http://dtd.nlm.nih.gov/publishing/2.3"
@@ -22,7 +23,8 @@
 <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
 <xsl:strip-space elements="*"/>
 
-<xsl:variable name="base" select="nlm:article/nlm:front/nlm:article-meta"/>
+<xsl:param name="server" select="'http://example.com/'"/>
+<xsl:param name="base" select="nlm:article/nlm:front/nlm:article-meta"/>
 <xsl:param name="year" 
      select="$base/nlm:pub-date[@pub-type='collection']/nlm:year"/>
 <xsl:param name="seq" select="$base/nlm:issue-id[@pub-id-type='other']"/>
@@ -34,7 +36,7 @@
 
 <xsl:template match="nlm:article">
  <xsl:param name="uri" 
-      select="substring-before($base/nlm:self-uri[1]/@xlink:href,'/article')"/>
+      select="concat($server, nlm:front/nlm:journal-meta/nlm:journal-id)"/>
  <rdf:RDF>
    <fabio:JournalArticle rdf:about="{concat($uri,'/',$year,'/',$seq,'/',$aid)}">
     <xsl:apply-templates select="nlm:front/nlm:journal-meta">
@@ -48,9 +50,10 @@
 </xsl:template>
 
 <xsl:template match="nlm:article-meta">
-    <xsl:param name="uri" />
+    <xsl:param name="uri"/>
     <dcterms:type><xsl:value-of select="'article'"/></dcterms:type>
     <xsl:apply-templates select="nlm:title-group/nlm:article-title"/>
+    <xsl:apply-templates select="nlm:title-group/nlm:trans-title"/>
     <xsl:apply-templates select="nlm:contrib-group">
         <xsl:with-param name="uri" select="$uri"/>
     </xsl:apply-templates>
@@ -78,15 +81,23 @@
 </xsl:template>
 
 <xsl:template match="nlm:self-uri[@content-type='application/pdf'][@xlink:href]">
+  <fabio:hasURL><xsl:value-of select="@xlink:href"/></fabio:hasURL>
   <dcterms:hasPart>
-    <dctypes:Text rdf:about="{@xlink:href}">
-      <dcterms:format><xsl:value-of select="@content-type"/></dcterms:format>
+    <dctypes:Text rdf:about="{concat(substring-before(@xlink:href,
+                   'view'), 'download',substring-after(@xlink:href,'view'))}">
+       <dcterms:format><dcterms:MediaTypeOrExtent>
+         <rdfs:label><xsl:value-of select="@content-type"/></rdfs:label>
+       </dcterms:MediaTypeOrExtent></dcterms:format>
     </dctypes:Text>
   </dcterms:hasPart>
 </xsl:template>
 
 <xsl:template match="nlm:title-group/nlm:article-title">
   <dcterms:title><xsl:value-of select="."/></dcterms:title>
+</xsl:template>
+
+<xsl:template match="nlm:title-group/nlm:trans-title">
+  <dcterms:language><xsl:value-of select="@xml:lang"/></dcterms:language>
 </xsl:template>
 
 <xsl:template match="nlm:article-categories">
@@ -98,7 +109,9 @@
 </xsl:template>
 
 <xsl:template match="nlm:article-categories/nlm:subj-group/nlm:subject">
-  <dcterms:subject><xsl:value-of select="."/></dcterms:subject>
+  <dcterms:subject><skos:Concept>
+    <rdfs:label><xsl:value-of select="."/></rdfs:label>
+   </skos:Concept></dcterms:subject>
 </xsl:template>
 
 <xsl:template match="nlm:contrib-group">
@@ -253,6 +266,8 @@
   <fabio:hasElectronicArticleIdentifier>
     <xsl:value-of select="."/>
   </fabio:hasElectronicArticleIdentifier>
+  <fabio:hasIdentifier><xsl:value-of select="concat('ojs:',.)"/>
+  </fabio:hasIdentifier>
 </xsl:template>
 
 <xsl:template match="nlm:article-meta/nlm:issue-title">
@@ -282,7 +297,9 @@
 </xsl:template>
 
 <xsl:template match="nlm:kwd[text()!='']">
-  <dcterms:subject><xsl:value-of select="."/></dcterms:subject>
+  <dcterms:subject><skos:Concept>
+     <rdfs:label><xsl:value-of select="."/></rdfs:label>
+  </skos:Concept></dcterms:subject>
 </xsl:template>
 
 <xsl:template match="text()"/>

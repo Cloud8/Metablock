@@ -40,17 +40,17 @@ public class DBTransporter implements MetaCrawl.Transporter {
 
     public Database database;
     public Document document;
+    public XMLTransformer transformer = null;
+    public String index; // select query to enumerate items
 
     private String table;
-    private String idxQuery;
     private String dumpQuery;
-    private XMLTransformer transformer = null;
     private String identifier;
     private DocumentBuilderFactory factory;
 
     private DBTransporter(String[] db, String[] idx) {
         database = new Database(db);
-        idxQuery = FileUtil.readResource(idx[0]);
+        index = FileUtil.readResource(idx[0]).trim();
         dumpQuery = FileUtil.readResource(idx[1]);
         String x = idx[2];
         if (x==null) {
@@ -66,10 +66,10 @@ public class DBTransporter implements MetaCrawl.Transporter {
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, 0-days);
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-            idxQuery = idxQuery.replace("<date>", df.format(cal.getTime()));
+            index = index.replace("<date>", df.format(cal.getTime()));
             //if (b) log(df.format(cal.getTime()));
             //if (days>0) {
-            //    log(idxQuery);
+            //    log(index);
             //}
         }
     }
@@ -77,7 +77,7 @@ public class DBTransporter implements MetaCrawl.Transporter {
     @Override
     public void create() {
         database.create();
-        table = table(idxQuery);
+        table = table(index);
         //log("guessed table [" + table + "]");
         if (transformer!=null)
             transformer.create();
@@ -125,9 +125,15 @@ public class DBTransporter implements MetaCrawl.Transporter {
     //}
 
     @Override
-    public List<String> getIdentifiers(int off, int limit) {
-        String query = idxQuery + " limit " + off +"," + limit;
-        return database.getColumn(query, limit);
+    public List<String> getIdentifiers(int off, int count) {
+        String query = index.replace("<offset>",Integer.toString(off))
+                            .replace("<count>",Integer.toString(count));
+        List<String> res = database.getColumn(query, count);
+        if (res.size()<count) {
+            res.add((String)null);
+        }
+        //log(query + " # " + res.size());
+        return res;
     }
 
     @Override
@@ -139,7 +145,7 @@ public class DBTransporter implements MetaCrawl.Transporter {
 
     @Override
     public Resource test(String resource) {
-        log(idxQuery);
+        //log(index);
         return read(resource);
     }
 

@@ -49,6 +49,24 @@ public class VoidTransporter implements MetaCrawl.Transporter {
     }
 
     @Override
+    public int index(String uri) {
+        Resource rc = read(uri);
+        parts.clear();
+        //parts.add(uri);
+        getParts(rc);
+        Set<String> hs = new HashSet<>();
+		hs.addAll(parts);
+		parts.clear();
+		parts.addAll(hs);
+        Collections.sort(parts);
+        //int ii = 0; for (String str : parts) {
+        //    log(str + " " + (ii++));
+        //}
+        log("index " + uri + " size " + parts.size());
+        return parts.size();
+    }
+
+    @Override
     public synchronized Resource read(String uri) {
         Model model = ModelUtil.createModel().read(uri);
         if (model==null) {
@@ -70,24 +88,6 @@ public class VoidTransporter implements MetaCrawl.Transporter {
         List<String> subList = parts.subList(off, off + limit);
         //return subList.toArray(new String[subList.size()]);
         return subList;
-    }
-
-    @Override
-    public int index(String uri) {
-        Resource rc = read(uri);
-        parts.clear();
-        //parts.add(uri);
-        getParts(rc);
-        Set<String> hs = new HashSet<>();
-		hs.addAll(parts);
-		parts.clear();
-		parts.addAll(hs);
-        Collections.sort(parts);
-        //int ii = 0; for (String str : parts) {
-        //    log(str + " " + (ii++));
-        //}
-        log("index " + uri + " size " + parts.size());
-        return parts.size();
     }
 
     @Override

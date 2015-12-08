@@ -17,9 +17,9 @@ public class SolrStorage extends org.shanghai.rdf.SolrStorage
     }
 
     @Override
-    public boolean test(Resource rc, String resource) {
+    public boolean test(Resource rc) {
         log("test # " + rc.getURI());
-        return super.write(rc, resource);
+        return super.write(rc);
         //String xml = transformer.transform(rc.getModel(), resource);
         //String rdf = transformer.asString(model);
         //String json = JSONML.toJSONArray(new XMLTokener(rdf)).toString();

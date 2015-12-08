@@ -52,23 +52,11 @@ public class SolrStorage implements MetaCrawl.Storage {
         return solrPost.delete(resource);
     } 
 
-    //@Override
-    //public synchronized boolean post(String rdf) {
-    //    String xml = transformer.transform(rdf);
-    //    boolean b = solrPost.post(xml);
-    //    return b;
-    //} 
-
     @Override
-    public synchronized boolean write(Resource rc, String resource) {
+    public synchronized boolean write(Resource rc) {
         String xml = transformer.transform(rc);
         return solrPost.post(xml);
     } 
-
-    //@Override
-    //public boolean update(String id, String field, String value) {
-    //    return solrPost.update(id, field, value);
-    //}
 
     @Override
     public void destroy() {
