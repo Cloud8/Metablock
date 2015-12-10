@@ -165,7 +165,6 @@ public class DBTransporter implements MetaCrawl.Transporter {
             ResultSet rs = database.getResult(query);
             if (rs==null) {
                 log("[" + query + "]");
-                //continue;
             } else try {
                 if (rs.isBeforeFirst()) { //if (rs.first())
                     Element results = document.createElement("resultset");
@@ -178,6 +177,7 @@ public class DBTransporter implements MetaCrawl.Transporter {
                         results.appendChild(row);
                         for (int ii = 1; ii <= colCount; ii++) {
                            String columnName = meta.getColumnName(ii);
+                           //log(columnName);
                            //Object value = rs.getObject(ii);
                            String value = rs.getString(ii);
 					       if (value!=null && value.toString().length()>0) {
@@ -189,6 +189,8 @@ public class DBTransporter implements MetaCrawl.Transporter {
 					       }
                         }
                     }
+                } else {
+                    // log("[" + query + "]");
                 }
             } catch(SQLException e) { log(e); }
         }

@@ -362,12 +362,12 @@ public class XMLTransformer {
                 throws TransformerException {
             show("Fatal Error",e);
             throw(e);
+            //e.printStackTrace();
         }
         private void show(String type,TransformerException e) {
             log(type + "## " + e.getMessage());
             if(e.getLocationAsString() != null)
                 log(e.getLocationAsString());
-            e.printStackTrace();
         }
     }
 

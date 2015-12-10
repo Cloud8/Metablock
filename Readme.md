@@ -25,7 +25,8 @@
   - Language analyzer: guesses the language of a resource desription
     from dcterms abstract or title property
 
-  - Reference analysis: soon to come.
+  - Coming soon: Reference analysis: use external libraries to extract 
+    bibliographic references from PDF documents
 
 ##### Indexing : writing RDF data to a Solr search index
 

@@ -12,6 +12,11 @@ import org.shanghai.data.FileTransporter;
 import org.shanghai.data.VoidTransporter;
 import org.shanghai.data.SourceScanner;
 import org.shanghai.data.DumpStorage;
+import org.shanghai.data.PDFScanner;
+import org.shanghai.ojs.OJSTransporter;
+import org.shanghai.ojs.NLMScanner;
+import org.shanghai.data.SourceScanner;
+import org.shanghai.data.FileScanner;
 
 import java.util.logging.Logger;
 
@@ -87,40 +92,43 @@ public class Crawl {
             crawler = new MetaCrawl(transporter,storage,testFile,logC,create);
             crawler.create();
         }
-        //if (engine!=null && engine.contains("nlm")) {
-        //    String prefix = config.get("schema.urn");
-        //    String directory = null;
-        //    if (source.equals("oai")) { // write model files to oai archve
-        //        directory = config.getOAIList().get(oai_counter).archive;
-        //    } else if (target.startsWith("files")) { // help file target 
-        //        if (target.contains(":")) {
-        //            directory = target.substring(target.indexOf(":")+1);
-        //        } else {
-        //            directory = target;
-        //        }
-        //    }
-        //    crawler.inject(new NLMAnalyzer(prefix, directory).create());
-        //    log("injected NLMAnalyzer for [" + directory+ "]");
-        //}
     }
 
     public void createTransporter(String crawl) {
         if (crawl.contains("files")) {
+            source = "files"; // make parent understand
             String suffix = config.get("files.suffix");
             if (crawl.contains(":")) {
                 suffix = "." + crawl.substring(crawl.indexOf(":")+1);
             }
+            log("file transporter for [" + suffix + "]");
             int depth = config.getInt("files.depth");
             int logC = config.getInt("files.count");
             fc = new FileTransporter(suffix,depth,logC);
-            fc.create(); 
+            fc.create();
             if (suffix.contains(".java")||suffix.contains(".php")) {
                 fc.inject(new SourceScanner().create());
-            } else {
+            }
+            if (suffix.contains(".pdf")) {
+                fc.inject(new PDFScanner().create());
+            }
+            //if (suffix.contains(".epub")) {
+            //    fc.inject(new EpubScanner().create());
+            //}
+            if (suffix.contains(".rdf") || suffix.contains(".abd")) {
                 fc.inject(new TrivialScanner().create());
             }
+            if (suffix.contains(".nlm")) {
+                String server = config.get("ojs.server");
+                String xslt = config.get("files.nlm");
+                String schema = config.get("schema.urn");
+                fc.inject(new NLMScanner(server, xslt, schema).create());
+                log("injected NLMScanner " + xslt);
+            }
+            if (suffix.contains(".txt")) {
+                fc.inject(new FileScanner().create());
+            }
             transporter = fc;
-            log("createTransporter [" + crawl + "]");
         } else if ("oai".equals(crawl)) {
             Config.OAI settings = config.getOAIList().get(0);
             settings.urn_prefix = config.get("schema.urn");
@@ -132,6 +140,16 @@ public class Crawl {
         } else if (crawl.equals("empty")) {
             transporter = new EmptyTransporter();
 			transporter.create();
+        } else if (crawl.startsWith("ojs")) {
+            String[] db = {
+                     config.get("ojs.dbhost"), config.get("ojs.dbase"),
+                     config.get("ojs.dbuser"), config.get("ojs.dbpass")};
+            String[] idx = { config.get("ojs.enum"), config.get("ojs.dump"),
+                     config.get("ojs.transporter") };
+            String[] srv = { config.get("ojs.server"),
+                     config.get("ojs.docbase"), config.get("schema.urn")};
+            transporter = new OJSTransporter(db, idx, srv);
+            transporter.create();
         } else {
             String store = config.get(crawl+".sparql");
             if (crawl.equals("tdb")) {

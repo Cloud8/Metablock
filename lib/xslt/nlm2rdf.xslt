@@ -15,18 +15,16 @@
 
 <!--
   /** @license http://www.apache.org/licenses/LICENSE-2.0
-    * @author Goetz Hatop
     * @title NLM to RDF Transformer
     * @date 2014-06-05
    **/ -->
 
 <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
-<xsl:strip-space elements="*"/>
 
 <xsl:param name="server" select="'http://example.com/'"/>
 <xsl:param name="base" select="nlm:article/nlm:front/nlm:article-meta"/>
 <xsl:param name="year" 
-     select="$base/nlm:pub-date[@pub-type='collection']/nlm:year"/>
+         select="$base/nlm:pub-date[@pub-type='collection']/nlm:year"/>
 <xsl:param name="seq" select="$base/nlm:issue-id[@pub-id-type='other']"/>
 <xsl:param name="aid" select="$base/nlm:article-id[@pub-id-type='other']"/>
 
@@ -164,10 +162,9 @@
 <xsl:template match="nlm:publisher">
  <xsl:param name="uri"/>
  <dcterms:publisher>
-   <foaf:Organization 
-     rdf:about="{concat($uri,'/aut/',translate(.,' ,[].','_'))}">
+ <foaf:Organization rdf:about="{concat($uri,'/aut/',translate(.,' ,[].','_'))}">
       <foaf:name><xsl:value-of select="." /></foaf:name>
-   </foaf:Organization>
+  </foaf:Organization>
  </dcterms:publisher>
 </xsl:template>
 
@@ -247,34 +244,31 @@
   </fabio:hasVolumeIdentifier>
 </xsl:template>
 
-<!-- the internal ojs issue identifier -->
+<!-- internal ojs issue identifier -->
 <xsl:template match="nlm:article-meta/nlm:issue-id">
   <fabio:hasIssueIdentifier>
     <xsl:value-of select="."/>
-  </fabio:hasIssueIdentifier>
+ </fabio:hasIssueIdentifier>
 </xsl:template>
 
-<!-- the issue sequence number -->
+<!-- issue sequence number -->
 <xsl:template match="nlm:article-meta/nlm:issue[@seq]">
   <fabio:hasSequenceIdentifier>
     <xsl:value-of select="."/>
-  </fabio:hasSequenceIdentifier>
+ </fabio:hasSequenceIdentifier>
 </xsl:template>
 
-<!-- the internal article identifier -->
+<!-- internal article identifier -->
 <xsl:template match="nlm:article-meta/nlm:article-id[@pub-id-type='other']">
-  <fabio:hasElectronicArticleIdentifier>
-    <xsl:value-of select="."/>
-  </fabio:hasElectronicArticleIdentifier>
-  <fabio:hasIdentifier><xsl:value-of select="concat('ojs:',.)"/>
-  </fabio:hasIdentifier>
+  <fabio:hasIdentifier>
+    <xsl:value-of select="concat('ojs:',.)"/>
+ </fabio:hasIdentifier>
 </xsl:template>
 
 <xsl:template match="nlm:article-meta/nlm:issue-title">
-  <fabio:hasSubtitle><xsl:value-of select="."/></fabio:hasSubtitle>
+  <dcterms:title><xsl:value-of select="."/></dcterms:title>
 </xsl:template>
 
-<!-- the doi set from ojs -->
 <xsl:template match="nlm:article-meta/nlm:article-id[@pub-id-type='doi']">
   <fabio:hasDOI><xsl:value-of select="."/></fabio:hasDOI>
 </xsl:template>
@@ -288,8 +282,9 @@
 </xsl:template>
 
 <xsl:template match="nlm:pub-date[@pub-type='epub']">
-  <dcterms:modified><xsl:value-of select="nlm:year"/>-<xsl:value-of select="nlm:month"/>-<xsl:value-of select="nlm:day"/></dcterms:modified>
-  <dcterms:issued><xsl:value-of select="../nlm:pub-date[@pub-type='collection']/nlm:year"/>-<xsl:value-of select="nlm:month"/>-<xsl:value-of select="nlm:day"/></dcterms:issued>
+ <dcterms:issued>
+    <xsl:value-of select="concat(nlm:year,'-',nlm:month,'-',nlm:day)"/>
+ </dcterms:issued>
 </xsl:template>
 
 <xsl:template match="nlm:kwd-group">
