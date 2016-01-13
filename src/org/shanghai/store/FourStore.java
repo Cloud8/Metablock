@@ -327,7 +327,6 @@ public class FourStore {
     public static void main(String[] args) {
         FourStore main = new FourStore();
         main.create();
-        //main.probe();
 
         String rdf = "<?xml version=\"1.0\"?>"
         + "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\""
@@ -337,16 +336,15 @@ public class FourStore {
         + " <si:author>Lo Fidelity Allstars</si:author>"
         + " </rdf:Description>"
         + "</rdf:RDF>";
-        //main.write(rdf);
+        main.write(rdf);
 
         String rdf2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
         + "<rdf:RDF xmlns:dct=\"http://purl.org/dc/terms/\""
         + " xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\""
         + " <rdf:Description rdf:about=\"http://localhost/pdfa.pdf\">"
         + " <dct:subject>Geographie</dct:subject>"
-        + " <dct:creator>Träger-Wallküry, Bärbel</dct:creator>"
+        + " <dct:creator>Hi Fidelity Valkyri</dct:creator>"
         + " <dct:title>Analysis of Summers in Central Europe</dct:title>"
-        + " <rdf:type rdf:resource=\"http://purl.org/spar/fabio/DoctoralThesis\"/>"
         + " </rdf:Description>"
         + " </rdf:RDF>";
         main.write(rdf2);

@@ -110,7 +110,7 @@ public class Crawl {
                 fc.inject(new SourceScanner().create());
             }
             if (suffix.contains(".pdf")) {
-                fc.inject(new PDFScanner().create());
+                fc.inject(new PDFScanner(target.startsWith(source)).create());
             }
             //if (suffix.contains(".epub")) {
             //    fc.inject(new EpubScanner().create());
@@ -201,7 +201,7 @@ public class Crawl {
             storage = new SolrStorage(solr,transformer);
             storage.create();
         } else if (store.startsWith("files")) {
-            String directory = config.get("files.store");
+            String directory = config.get("files.docbase");
             if (source.equals("oai")) { // write model files to oai archive
                 String archive = config.getOAIList().get(oai_counter).archive;
                 if (archive!=null) {
@@ -259,7 +259,7 @@ public class Crawl {
         } else {
             crawler.test(transporter.getIdentifiers(0,1).get(0));
         }
-        crawler.dispose();
+        //crawler.dispose();
     }
 
     public void test(String from, String until) {

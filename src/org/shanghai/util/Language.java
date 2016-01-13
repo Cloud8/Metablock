@@ -80,8 +80,6 @@ public class Language implements Analyzer {
             detector = DetectorFactory.create();
             detector.append(text);
             lang = detector.detect();
-            //log("language for " + rc.getURI() + " " + lang);
-            //rc.removeAll(language);
             if (lang==null) {
                 log("no language for " + rc.getURI());
                 return ;
@@ -92,7 +90,6 @@ public class Language implements Analyzer {
                 log("detected language " + lang + " " + rc.getURI());
                 rc.addProperty(DCTerms.language, "de");
             }
-            //detector.dispose();
         } catch(LangDetectException e) { 
             lang = null;
             log(e + " : [" + rc.getURI() + "] " + text); 

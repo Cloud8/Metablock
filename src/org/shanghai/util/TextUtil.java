@@ -89,4 +89,18 @@ public class TextUtil {
         return sb.toString();
     }
 
+    /** create an local identifier */
+    public static String createURI(String title) {
+        String uri = title.replaceAll("[^a-zA-Z0-9]","").toLowerCase();
+        int x = uri.length()>254?254:uri.length();
+        return "http://localhost/ref/" + uri.substring(0,x);
+    }
+
+    /**
+     * Calculates the similarity (a number within 0 and 1) between two strings.
+     */
+    public static double similarity(String s1, String s2) {
+        return JaroWinkler.similarity(s1, s2);
+    }
+
 }

@@ -134,6 +134,20 @@ public class FileUtil {
         return write(Paths.get(path), text);
     }
 
+    public static boolean write(String path, byte[] bytes) {
+        boolean b = true;
+        try {
+            //FileOutputStream fos = new FileOutputStream(path);
+            //fos.write(bytes);
+            //fos.close();
+            Files.write(Paths.get(path), bytes);
+        } catch(IOException e) {
+            log(e.getMessage());
+        } finally {
+            return b;
+        }
+    }
+
     public static boolean write(Path path, String text) {
         boolean b = false;
         try {
@@ -179,10 +193,20 @@ public class FileUtil {
         }
     }
 
-    public static String base(String name) {
+    public static String dirname(String name) {
         int slash = name.lastIndexOf('/');
         return (slash == -1) ? name : name.substring(0, slash);
-        //String extension = (dot == -1) ? "" : name.substring(dot+1);
+    }
+
+    public static String basename(String name) {
+        int slash = name.lastIndexOf('/');
+        return (slash == -1) ? name : name.substring(slash+1);
+    }
+
+    public static String basename(String name, String suffix) {
+        int dot = name.lastIndexOf(suffix);
+        name = (dot == -1) ? name : name.substring(0, dot);
+        return basename(name);
     }
 
     public static String removeExtension(String s) {

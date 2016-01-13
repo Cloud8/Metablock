@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -23,11 +24,10 @@ import java.nio.file.Files;
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
     @author Goetz Hatop
-    @title Create nice prefixed Model and some other utilities
+    @title Create nicely prefixed Model and some other utilities
     @date 2015-05-12
 */
 public final class ModelUtil {
-
 
     public static Model createModel() {
         Model model = ModelFactory.createDefaultModel();
@@ -46,6 +46,8 @@ public final class ModelUtil {
         model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
         model.setNsPrefix("void", "http://rdfs.org/ns/void#");
         model.setNsPrefix("c4o", "http://purl.org/spar/c4o/");
+        model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.1/");
+        model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
         return model;
     }
 
@@ -81,6 +83,20 @@ public final class ModelUtil {
 		    e.printStackTrace();
             log(e); 
           }
+    }
+
+    public static Resource read(String file) {
+        String rdf = FileUtil.read(file);
+        int x = rdf.indexOf("rdf:about");
+        int y = rdf.indexOf("\"", x+11);
+        if (x<0 || y<0 || y<x) {
+            return null;
+        }
+        String uri = rdf.substring(x+11, y);
+        Model model = createModel();
+        RDFDataMgr.read(model, new StringReader(rdf), 
+                       (String)null, RDFLanguages.RDFXML);
+        return model.getResource(uri);
     }
 
     public static void removeProperties(Resource rc) {

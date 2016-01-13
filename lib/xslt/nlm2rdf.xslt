@@ -50,8 +50,7 @@
 <xsl:template match="nlm:article-meta">
     <xsl:param name="uri"/>
     <dcterms:type><xsl:value-of select="'article'"/></dcterms:type>
-    <xsl:apply-templates select="nlm:title-group/nlm:article-title"/>
-    <xsl:apply-templates select="nlm:title-group/nlm:trans-title"/>
+    <xsl:apply-templates select="nlm:title-group"/>
     <xsl:apply-templates select="nlm:contrib-group">
         <xsl:with-param name="uri" select="$uri"/>
     </xsl:apply-templates>
@@ -90,11 +89,16 @@
   </dcterms:hasPart>
 </xsl:template>
 
-<xsl:template match="nlm:title-group/nlm:article-title">
+<xsl:template match="nlm:article-meta/nlm:title-group">
+  <xsl:apply-templates select="nlm:article-title"/>
+  <xsl:apply-templates select="nlm:trans-title"/>
+</xsl:template>
+
+<xsl:template match="nlm:article-meta/nlm:title-group/nlm:article-title">
   <dcterms:title><xsl:value-of select="."/></dcterms:title>
 </xsl:template>
 
-<xsl:template match="nlm:title-group/nlm:trans-title">
+<xsl:template match="nlm:article-meta/nlm:title-group/nlm:trans-title">
   <dcterms:language><xsl:value-of select="@xml:lang"/></dcterms:language>
 </xsl:template>
 

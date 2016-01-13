@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
 Main-Class: com.simontuffs.onejar.Boot
 Class-Path: lib/*
-One-Jar-Main-Class: org.seaview.main.Main
+One-Jar-Main-Class: org.seaview.cite.Main
 One-Jar-Expand: expand,doc

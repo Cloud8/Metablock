@@ -18,7 +18,7 @@
   - Virtuoso RDF storage
   - Jena TDB storage
   - RDF data files 
-  - Solr search index as defined by VuFind 
+  - Solr search index with XSLT transformation
 
 ##### RDF data analyzers
 

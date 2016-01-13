@@ -29,9 +29,6 @@
         <xsl:value-of select="concat(' ', normalize-space(text()))"/>
     </xsl:for-each></field>
     <field name="recordtype">opus</field>
-    <field name="id"><xsl:value-of 
-            select="translate(substring-after(substring-after(@rdf:about,'//'),'/'),'/',':')"/>
-    </field>
     <xsl:apply-templates select="dct:*"/>
     <xsl:apply-templates select="foaf:img"/>
     <xsl:apply-templates select="fabio:hasDOI"/>
@@ -66,28 +63,24 @@
  </doc>
 </xsl:template>
 
-<xsl:template match="fabio:*/dct:identifier">
+<xsl:template match="fabio:*/dct:identifier[starts-with(text(),'urn:')]">
   <field name="id">
    <xsl:call-template name="identity">
     <xsl:with-param name="id" select="."/>
    </xsl:call-template>
   </field>
-  <xsl:if test="starts-with(., 'urn:')">
-    <field name="urn_str"><xsl:value-of select="."/></field>
-  </xsl:if>
+  <field name="urn_str"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <xsl:template name="identity">
   <xsl:param name="id"/>
-  <xsl:choose>
-   <xsl:when test="starts-with($id,'urn:nbn')">
-        <xsl:value-of select="substring($id,0,string-length($id))" />
-   </xsl:when>
-   <xsl:otherwise><xsl:value-of select="$id" /></xsl:otherwise>
-  </xsl:choose>
+  <xsl:value-of select="substring($id,0,string-length($id))" />
 </xsl:template>
 
 <xsl:template match="dct:BibliographicResource/dct:identifier">
+  <field name="id"><xsl:value-of  select="."/></field>
+  <!-- select="translate(substring-after(
+       substring-after(@rdf:about,'//'),'/'),'/',':')"/> -->
 </xsl:template>
 
 <!-- TITLE -->
@@ -269,8 +262,15 @@
    <xsl:when test=".='lt'">Latin</xsl:when>
    <xsl:when test=".='es'">Spanish</xsl:when>
    <xsl:when test=".='it'">Italian</xsl:when>
+   <xsl:when test=".='ja'">Japanese</xsl:when>
    <xsl:when test=".='nl'">Dutch</xsl:when>
+   <xsl:when test=".='ru'">Russia</xsl:when>
    <xsl:when test=".='na'">Papua</xsl:when>
+   <xsl:when test=".='bi'">Multiple</xsl:when>
+   <xsl:when test=".='ar'">Arabic</xsl:when>
+   <xsl:when test=".='el'">Greek</xsl:when>
+   <xsl:when test=".='he'">Hebrew</xsl:when>
+   <xsl:when test=".='zu'">Undetermined</xsl:when>
    <xsl:when test=".='java'">Java</xsl:when>
    <xsl:when test=".='php'">PHP</xsl:when>
    <xsl:otherwise><xsl:value-of select="."/></xsl:otherwise>
@@ -320,6 +320,12 @@
 
 <xsl:template match="dct:BibliographicResource/dct:type">
   <field name="format"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dct:BibliographicResource/dct:type[@rdf:resource]">
+  <field name="format">
+    <xsl:value-of select="substring-after(@rdf:resource,'/fabio/')"/>
+  </field>
 </xsl:template>
 
 <!-- dini publication types -->

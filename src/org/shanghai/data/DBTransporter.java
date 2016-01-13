@@ -162,11 +162,18 @@ public class DBTransporter implements MetaCrawl.Transporter {
         document.appendChild(root);
         String[] queries = dumpQuery.replace("<oid>",oid).split(";");
         for (String query : queries) {
+            String s = query.replaceAll("--.*?\n","").replaceAll("--.*?$","");
+            if (s.trim().length()==0) {
+			    // only comment query is hard to stop otherwise
+			    continue;
+            } else {
+			    // log("query [" + query + "]");
+            }
             ResultSet rs = database.getResult(query);
-            if (rs==null) {
+            if (rs==null) { // never happens
                 log("[" + query + "]");
             } else try {
-                if (rs.isBeforeFirst()) { //if (rs.first())
+                if (rs.isBeforeFirst()) { 
                     Element results = document.createElement("resultset");
 			        results.setAttribute("table", table(query));
                     root.appendChild(results);

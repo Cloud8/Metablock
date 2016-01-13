@@ -8,32 +8,29 @@ CLASS := $(patsubst src/%.java,lib/%.class,$(FILES))
 CPATH := lib:$(subst $() $(),:,$(wildcard lib/*.jar))
 JOPTS := -encoding UTF8
 
-.PHONY: deploy
-
 lib/%.class: src/%.java
 	@echo $<
 	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
-default: lib/autobib.jar
+default: lib/seaview.jar
 
 compile: $(CLASS) 
 
-lib/autobib.jar: $(CLASS) lib/seaview.ttl
+lib/seaview.jar: $(CLASS) lib/seaview.ttl
 	jar cf $@ -C lib org 
 
-autobib.jar: lib/autobib.jar lib/xslt lib/sparql lib/Manifest.txt
+metablock.jar: lib/seaview.jar lib/xslt lib/sparql lib/Manifest.txt
 	jar cfm $@ lib/Manifest.txt 
 	jar uf $@ -C lib com -C lib xslt -C lib sparql lib/seaview.ttl
 	jar uf $@ lib/languages
 	jar uf $@ lib/*.jar 
 	cd lib; jar uf ../$@ *.properties
 
-fat: autobib.jar
-	@#java -Done-jar.verbose -jar autobib.jar
-	java -jar autobib.jar
+fat: metablock.jar
+	java -jar metablock.jar
 
 test: 
-	@java -cp lib:lib/* org.shanghai.rdf.Main
+	@java -cp lib:lib/* org.seaview.cite.Main
 
 check:
 	@echo CPATH: $(CPATH)
@@ -43,8 +40,8 @@ clean:
 	@rm -f $(CLASS)
 	@rm -rf lib/org
 	@rm -rf lib/com
-	@rm -f autobib.jar
+	@rm -f metablock.jar
 
-cleaner:
-	@rm -f lib/autobib.jar
+cleaner: clean
+	@rm -f lib/seaview.jar
 

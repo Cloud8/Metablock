@@ -121,7 +121,7 @@ public class FileTransporter implements MetaCrawl.Transporter {
         Resource rc = null;
         for(Delegate d: delegates) {
             if (d.canRead(resource)) {
-                log(d.getClass().getName() + " can read " + resource);
+                log(d.getClass().getSimpleName() + " can read " + resource);
                 rc = d.read(resource);
             } else {
                 log(d.getClass().getName() + " can not read " + resource);
