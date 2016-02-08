@@ -3,6 +3,7 @@
   Metablock: Semantic Publishing Tools 
 =========================================
 
+
   [Metablock](http://cloud8.github.io/Metablock) reads RDF data and 
   writes a possibly modified resource description back to a RDF target.
 
@@ -56,10 +57,5 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   - Coming soon: Reference analysis: use external libraries to extract 
     bibliographical references from PDF documents
 
-%% ### Collaboration
-%% 
-%% We're *open to pull requests*! If you'd like to collaborate, offer feedback, 
-%% know better english or better code, feel free to make use of the issues 
-%% section on this github repository.
 
 ____________________________________________________________________________
