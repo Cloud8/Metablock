@@ -162,7 +162,8 @@ public class MetaCrawl {
         List<String> ids = transporter.getIdentifiers(x,y);
         log("found " + ids.size()  + " items "); 
         for (String id : ids) {
-            test(id);
+            // test(id);
+            log(id);
         }
     }
 
@@ -241,8 +242,9 @@ public class MetaCrawl {
     private boolean crawl(int offset, int limit) {
         int x = 0;
         List<String> identifiers = transporter.getIdentifiers(offset,limit);
-        if (identifiers==null)
+        if (identifiers==null) {
             return false;
+        }
         for (String id : identifiers) {
              if (id==null)
                  return false;
@@ -345,14 +347,14 @@ public class MetaCrawl {
         return rc;
     }
 
-    private static final Logger logger =
+    private final Logger logger =
                          Logger.getLogger(MetaCrawl.class.getName());
 
-    public static void log(String msg) {
+    private void log(String msg) {
         logger.info(msg);
     }
 
-    protected void log(Exception e) {
+    private void log(Exception e) {
         log(e.toString());
         e.printStackTrace(System.out);
     }

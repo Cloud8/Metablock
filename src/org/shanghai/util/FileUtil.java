@@ -131,6 +131,9 @@ public class FileUtil {
     }
 
     public static boolean write(String path, String text) {
+        if (path==null) {
+            return false;
+        }
         return write(Paths.get(path), text);
     }
 

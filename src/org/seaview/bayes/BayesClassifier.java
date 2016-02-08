@@ -15,9 +15,10 @@ import java.io.Serializable;
  * The Bayes classifier implements a naive Bayes approach to classifying 
  * a given set of features: 
  * classify(feat1,...,featN) = argmax(P(cat)*PROD(P(featI|cat)
- * @license MIT https://github.com/ptnplanet/Java-Naive-Bayes-Classifier
  *
- * @see http://en.wikipedia.org/wiki/Naive_Bayes_classifier
+ * see http://en.wikipedia.org/wiki/Naive_Bayes_classifier
+ *
+ * @license MIT https://github.com/ptnplanet/Java-Naive-Bayes-Classifier
  *
  * @param <T> The feature class.
  * @param <K> The category class.

@@ -30,7 +30,9 @@ public class URN {
     /** return urn prefixed as configured and and suffixed by control number */
     public String getUrn(String raw) {
         String urn = null;
-        if (raw.startsWith("urn:")) {
+        if (prefix==null) {
+            return null;
+        } else if (raw.startsWith("urn:")) {
             urn = getUrnCheck(raw);
         } else if (raw.startsWith("http://")) {
             String src = raw.substring(raw.indexOf("//")+2);

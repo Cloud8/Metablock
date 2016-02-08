@@ -61,13 +61,22 @@ public class Store {
         }
     }
 
-    /** four store support */
+    /** four store support 
+     * @param uri String identifier
+     * @param kb String knowledgebase
+     * @param name String 
+     */
     public Store(String uri, String kb, String name) {
         this.tripleStore = new TripleStore(uri, kb, name);
         tdb = true;
     }
 
-    /** virtuoso write support */
+    /** virtuoso write support 
+     * @param uri String identifier
+     * @param graph String 
+     * @param dbuser String 
+     * @param dbpass String 
+     */
     public Store(String uri, String graph, String dbuser, String dbpass) {
         this.tripleStore = new TripleStore(uri,graph,dbuser,dbpass);
         tdb = true;

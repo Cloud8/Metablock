@@ -52,8 +52,18 @@ import java.nio.file.FileAlreadyExistsException;
 
 import java.text.Normalizer;
 
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
+import javax.net.ssl.SSLSession;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+
 /**
-  * @title OAI client to replace oai.OAITransporter a some time
+  * @title OAI Transporter
   * @date 2015-11-21
   * @author Krystoff Nieszczęście
   */
@@ -99,10 +109,10 @@ public class OAITransporter implements MetaCrawl.Transporter {
             transformer = new XMLTransformer(xslt);
             transformer.create();
         }
-        testFile = settings.test==null?"data/test.xml":settings.test;
+        testFile = settings.test;
         urn.create();
-        log("harvest " + settings.harvest + " : " + from + " : " + until 
-            + " : " + settings.prefix + " # " + settings.set);
+        //log("harvest " + settings.harvest + " : " + from + " : " + until 
+        //    + " : " + settings.prefix + " # " + settings.set);
     }
 
     @Override
@@ -113,7 +123,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
 
     @Override
     public String probe() {
-        String result = "failed.";
+        String result = "probe failed.";
         try {
             DocumentBuilder db = docfactory.newDocumentBuilder();
             result = new Identify(settings.harvest).toString();
@@ -226,6 +236,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
         } else {
             rc = transformer.transform(xml);    
         }
+        // make DCTerms.identifier
         rc = NLMScanner.analyze(rc, urn);
         return rc;
     }
@@ -248,6 +259,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
         } else {
             rc = transformer.transform(xml);    
         }
+        // make DCTerms.identifier
         rc = NLMScanner.analyze(rc, urn);
         if (dump) { // write xml file
             dump(rc, xml);
@@ -323,6 +335,49 @@ public class OAITransporter implements MetaCrawl.Transporter {
         FileUtil.mkdir(path.getParent());
         FileUtil.write(path, xml);
         FileUtil.touch(path, date);
+    }
+
+    static {
+        disableSslVerification();
+    }
+
+    private static void disableSslVerification() {
+        try
+        {
+            // Create a trust manager that does not validate certificate chains
+            TrustManager[] trustAllCerts = new TrustManager[] {
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+                    public void checkClientTrusted(
+                        X509Certificate[] certs, String authType) {
+                    }
+                    public void checkServerTrusted(
+                        X509Certificate[] certs, String authType) {
+                    }
+                }
+            };
+
+            // Install the all-trusting trust manager
+            SSLContext sc = SSLContext.getInstance("SSL");
+            sc.init(null, trustAllCerts, new java.security.SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+            // Create all-trusting host name verifier
+            HostnameVerifier allHostsValid = new HostnameVerifier() {
+                public boolean verify(String hostname, SSLSession session) {
+                    return true;
+                }
+            };
+
+            // Install the all-trusting host verifier
+            HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
     }
 
     private static final Logger logger =

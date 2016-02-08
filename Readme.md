@@ -1,10 +1,12 @@
 
 
-  Metablock: Preparations for a Semantic Publishing Repository 
-================================================================
+  Metablock: Semantic Publishing Tools 
+=========================================
 
-  Metablock reads RDF data and writes a possibly modified resource
-  description back to a RDF target.
+%% http://cloud8.github.io/Metablock
+
+  [Metablock](http://cloud8.github.io/Metablock) reads RDF data and 
+  writes a possibly modified resource description back to a RDF target.
 
 ##### RDF Data sources:
   
@@ -20,17 +22,9 @@
   - RDF data files 
   - Solr search index with XSLT transformation
 
-##### RDF data analyzers
+##### Indexing : write RDF data to a Solr search index
 
-  - Language analyzer: guesses the language of a resource desription
-    from dcterms abstract or title property
-
-  - Coming soon: Reference analysis: use external libraries to extract 
-    bibliographic references from PDF documents
-
-##### Indexing : writing RDF data to a Solr search index
-
-  To build a solr index from a SPARQL service endpoint,
+  To build a Solr search index from a SPARQL service endpoint,
   three steps are required:
 
   1. Resource Enumeration: List all resources that should be indexed,
@@ -44,8 +38,7 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   The sparql queries and xslt transformations used so far are rather general, 
   but modelling of bibliographic resources may vary and require modification.  
 
-
-  All configurations are done in lib/seaview.ttl
+  All configurations are done in turtle (see lib/seaview.ttl)
 
 ##### RDF Transporter Test
 
@@ -57,10 +50,18 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
 
   [<code>abd -crawl *resource*</code>] : index, transform and write resource
 
-### Collaboration
+##### RDF model analyzers
 
-  We're *open to pull requests*! If you'd like to collaborate, offer feedback, 
-  know better english or better code, feel free to make use of the issues 
-  section on this github repository.
+  - Language analyzer: guesses the language of a resource desription
+    from dcterms abstract or dcterms title property
+
+  - Coming soon: Reference analysis: use external libraries to extract 
+    bibliographical references from PDF documents
+
+%% ### Collaboration
+%% 
+%% We're *open to pull requests*! If you'd like to collaborate, offer feedback, 
+%% know better english or better code, feel free to make use of the issues 
+%% section on this github repository.
 
 ____________________________________________________________________________

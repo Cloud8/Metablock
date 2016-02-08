@@ -26,8 +26,8 @@ import java.util.logging.Logger;
 */
 public class FileScanner implements FileTransporter.Delegate {
 
-    protected static final String iri = "http://localhost";
     protected String docbase; 
+    protected String iri = "http://localhost/aut";
 
     public FileScanner() {
         this.docbase = System.getProperty("user.home");
@@ -44,16 +44,10 @@ public class FileScanner implements FileTransporter.Delegate {
 
     @Override
     public Resource read(String fname) {
-        String uri = null;
         if (fname.startsWith(docbase)) {
             fname = fname.substring(docbase.length()+1);
-        }
-        if (fname.startsWith("Dropbox")) {
-            uri = iri + "/" + fname;
-        } else {
-            uri = Paths.get(fname).toUri().toString();
-        }
-        //log("read [" + docbase + "] " + fname + " " + uri);
+        } 
+        String uri = "file://" + fname;
         Model model = ModelUtil.createModel();
         Resource rc = model.createResource(uri, DCTerms.BibliographicResource); 
         fname = fname.replace("/",":");

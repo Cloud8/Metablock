@@ -31,10 +31,8 @@ import java.util.logging.Logger;
  */
 public class PDFAnalyzer implements MetaCrawl.Analyzer {
 
-    protected static final int MONOSIZE = 33; // pages considered mono
+    protected static final int MONOSIZE = 99; // pages considered mono
     protected static final int MONOTHRESHOLD = 29; // minimum # references
-    protected static final String about /* will become rdf:about */
-                                        = "http://localhost/refs/";
 
     private boolean meta;
     private boolean refs;
@@ -112,47 +110,34 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
             log("scratch references " + rc.getURI());
             extractReferences(rc, fname);
         }
-        // makeTEI(rc); -- may be later
+        makeTEI(rc); 
         return rc;
     }
 
     @Override
     public Resource analyze(Resource rc) {
-        log("analyze: " + rc.getURI()); // dumped to crawl.test
-        if (rc==null) {
-            log("fatal: zero resource.");
-            return rc;
-        }
         if (refs && (rc.hasProperty(DCTerms.references))) {
             remove(rc, DCTerms.references);
             log("removed references " + rc.getURI());
-            //return rc;
         }
-        String maltreated = create(rc);
-        if (maltreated==null) {
+        String fname = create(rc);
+        if (fname==null) {
             log("fatal: no pdf file found for " + rc.getURI());
             return rc;
         }
 
-        extractor.create(maltreated);
+        extractor.create(fname);
         if (meta) {
-            extractMetadata(rc, maltreated);
+            extractMetadata(rc, fname);
         }
 
-        if (refs && (!rc.hasProperty(DCTerms.references))) {
-            extractReferences(rc, maltreated);
-            if (rc.hasProperty(DCTerms.references)) {
-                RDFNode node = rc.getProperty(DCTerms.references).getObject();
-                if (node.isResource()) {
-                    Resource provenance = rc.getModel().createResource(DCTerms.ProvenanceStatement);
-                    provenance.addProperty(RDFS.label, extractor.getClass().getSimpleName());
-                    rc.getProperty(DCTerms.references).getResource().addProperty(DCTerms.provenance, provenance);
-                }
-            }
+        if (refs) {
+            extractReferences(rc, fname);
         }
 
         cover.analyze(rc);
         language.analyze(rc);
+        makeTEI(rc); 
 
         return rc;
     }
@@ -165,8 +150,10 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         threshold = 0;
         if (pl.size > MONOSIZE) {
             threshold = MONOTHRESHOLD;
+            return pl.maltreat(3, 0.70); // pages 0-3 and 30 % from the tail 
+        } else {
+            return pl.getPath(rc);
         }
-        return pl.maltreat(3, 0.70); // pages 0-3 and 30 % from the tail 
     }
 
     private void extractMetadata(Resource rc, String fname) {
@@ -182,10 +169,9 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
 		}
 
         if (!rc.hasProperty(DCTerms.extent)) {
-            Resource extent = rc.getModel().createResource(
-                                                  DCTerms.SizeOrDuration);
-            extent.addProperty(RDF.value, pl.size + " pages.");
-            rc.addProperty(DCTerms.extent, extent);
+            Resource ex = rc.getModel().createResource(DCTerms.SizeOrDuration);
+            ex.addProperty(RDF.value, pl.size + " pages.");
+            rc.addProperty(DCTerms.extent, ex);
         }
 
         if (!rc.hasProperty(DCTerms.title)) {
@@ -209,10 +195,32 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
             rc.addProperty(DCTerms.created, pl.getDate().substring(0,4));
         }
 
+        if (!rc.hasProperty(DCTerms.abstract_)) {
+            if (extractor.getClass().getSimpleName().equals("Grobid")) {
+                log("trying secondary abstract extractor");
+                Cermine cermine = new Cermine(true, false);
+                cermine.create();
+                cermine.create(fname);
+                cermine.extractMetadata(rc, fname);
+                cermine.dispose();
+            }
+        }
     }
 
     private void extractReferences(Resource rc, String fname) {
+        if (rc.hasProperty(DCTerms.references)) {
+		    return;
+        }
+
         extractor.extractReferences(rc, fname, threshold);
+        if (rc.hasProperty(DCTerms.references)) {
+            RDFNode node = rc.getProperty(DCTerms.references).getObject();
+            if (node.isResource()) {
+                Resource provenance = rc.getModel().createResource(DCTerms.ProvenanceStatement);
+                provenance.addProperty(RDFS.label, extractor.getClass().getSimpleName());
+                rc.getProperty(DCTerms.references).getResource().addProperty(DCTerms.provenance, provenance);
+            }
+        }
     }
 
     private void remove(Resource rc, Property prop) {
@@ -263,8 +271,8 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         if (content==null) {
             log("no TEI from: " + extractor.getClass().getSimpleName());
         } else {
-            log("tei path: " + tei);
             FileUtil.write(tei, content);
+            log("wrote tei: " + tei);
         }
     }
 

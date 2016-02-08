@@ -7,7 +7,7 @@
 <>  dcterms:modified "2015-07-17"^^xsd:date .
 
 :about dcterms:title  "Configurator" ;
-       dcterms:date   "2015-05-35" ;
+       dcterms:date   "2016-02-08" ;
        dcterms:description "A Turtle Adventure" .
 
 :crawl :source :files ;
@@ -62,7 +62,7 @@
 :index :hasPart :index01 ;
        :hasPart :index02 .
 
-## Use the sparql service point (or :tdb) for data retrieval
+## Use sparql service (or :tdb) for data retrieval
 :index01 :sparql "http://http://localhost:8890/sparql" ;
        :probe  "/sparql/seaview-probe.sparql" ;
        :enum   "/sparql/seaview-index.sparql" ;
@@ -79,15 +79,14 @@
        :test   "data/four-test.rdf" .
 
 :oai   :hasPart :oai00 ;
-       #:hasPart :oai01 
+       :hasPart :oai01 
        .
 
-## harvest records from this source not older than some <days>.
-## from and until will override day settings.
+## harvest records from OAI data source
 :oai00 :harvest "http://archiv.ub.uni-marburg.de/ubfind/OAI/Server" ;
-       :prefix  "xMetaDissPlus" ;
-       :from    "2015-11-01"^^xsd:date ;
-       :transformer "/xslt/xmdp2rdf.xslt" .
+       :prefix  "rdf" ;
+       :from    "2016-02-01"^^xsd:date ;
+       :transformer "/xslt/rdf2rdf.xslt" .
 
 :oai01 :harvest "http://journals.sfu.ca/present/index.php/demojournal/oai" ;
        :prefix  "oai_dc" ; # xMetaDissPlus epicur

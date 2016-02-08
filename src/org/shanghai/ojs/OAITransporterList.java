@@ -23,24 +23,19 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.Types;
-import java.sql.SQLException;
 import java.util.logging.Logger;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.ArrayList;
-import java.net.URLEncoder;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.io.UnsupportedEncodingException;
-
+/*
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+*/
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -52,6 +47,11 @@ public class OAITransporterList implements MetaCrawl.Transporter {
 
     private List<Config.OAI> config;
     private List<MetaCrawl.Transporter> oais;
+    private int index;
+    private int mark;
+    private int count;
+    //private List<String> results = new ArrayList<String>();
+    private Map<String,Integer> map = new HashMap<String,Integer>();
 
     public OAITransporterList(List<Config.OAI> config) {
         this.config =  config;
@@ -59,6 +59,7 @@ public class OAITransporterList implements MetaCrawl.Transporter {
 
     @Override
     public void create() {
+        index = 0;
 	    oais = new ArrayList<MetaCrawl.Transporter>();
         for (Config.OAI conf : config) {
 		    MetaCrawl.Transporter oai = new OAITransporter(conf);
@@ -82,23 +83,50 @@ public class OAITransporterList implements MetaCrawl.Transporter {
 
     @Override
     public String probe() {
-        return this.getClass().getSimpleName();
+        StringBuilder sb = new StringBuilder();
+		sb.append(this.getClass().getSimpleName());
+		sb.append(":");
+        for (MetaCrawl.Transporter oai : oais) {
+		    sb.append("\n    ");
+		    sb.append(oai.probe());
+        }
+        return sb.toString();
     }
 
     @Override
     public Resource read(String oid) {
-        Resource rc = null;
-        return rc;
+        log(map.get(oid) + " " + oid);
+        return oais.get(map.get(oid)).read(oid);
     }
 
     @Override
     public List<String> getIdentifiers(int off, int limit) {
-        return new ArrayList<String>();
+        map.clear();
+        for (String id : oais.get(index).getIdentifiers(off, limit)) {
+            map.put(id, index);
+        }
+        if (map.size() < limit && index < oais.size()-1) {
+            index++;
+            log("switch " + index + "/" + oais.size() 
+                          + " " + oais.get(index).probe());
+            mark = map.size();
+            map.remove(mark-1); // remove zero marker
+            for (String id : oais.get(index).getIdentifiers(off, limit)) {
+                map.put(id, index);
+            }
+        }
+        List<String> list = new ArrayList<String>(map.keySet());
+        return list; // map.keySet();
     }
 
     @Override
     public Resource test(String oid) {
-        return null;
+        if (index==0) {
+            return oais.get(index).test(oid);
+        } else {
+            log(oid + " " + map.get(oid));
+            return null;
+        }
     }
 
     private static final Logger logger =

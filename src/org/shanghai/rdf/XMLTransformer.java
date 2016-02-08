@@ -366,6 +366,7 @@ public class XMLTransformer {
         }
         private void show(String type,TransformerException e) {
             log(type + "## " + e.getMessage());
+            e.printStackTrace();
             if(e.getLocationAsString() != null)
                 log(e.getLocationAsString());
         }

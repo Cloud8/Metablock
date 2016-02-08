@@ -31,7 +31,7 @@ import java.io.UnsupportedEncodingException;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
+   @author Goetz Hatop 
    @title FourStore Storage Driver (Experimental)
    @date 2014-02-28
 */

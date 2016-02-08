@@ -285,8 +285,8 @@ public abstract class Classifier<T, K> implements IFeatureProbability<T, K>, Ser
      * <code>0.5</code>. The probability defaults to the overall feature
      * probability.
      *
-     * @see de.daslaboratorium.machinelearning.classifier.Classifier#featureProbability(Object, Object)
-     * @see de.daslaboratorium.machinelearning.classifier.Classifier#featureWeighedAverage(Object, Object, IFeatureProbability, float, float)
+     * see de.daslaboratorium.machinelearning.classifier.Classifier#featureProbability(Object, Object)
+     * see de.daslaboratorium.machinelearning.classifier.Classifier#featureWeighedAverage(Object, Object, IFeatureProbability, float, float)
      *
      * @param feature The feature, which probability to calculate.
      * @param category The category.
@@ -302,7 +302,7 @@ public abstract class Classifier<T, K> implements IFeatureProbability<T, K>, Ser
      * overall weight of <code>1.0</code>, an assumed probability of
      * <code>0.5</code> and the given object to use for probability calculation.
      *
-     * @see de.daslaboratorium.machinelearning.classifier.Classifier#featureWeighedAverage(Object, Object, IFeatureProbability, float, float)
+     * see de.daslaboratorium.machinelearning.classifier.Classifier#featureWeighedAverage(Object, Object, IFeatureProbability, float, float)
      *
      * @param feature The feature, which probability to calculate.
      * @param category The category.
@@ -320,7 +320,7 @@ public abstract class Classifier<T, K> implements IFeatureProbability<T, K>, Ser
      * the given weight and an assumed probability of <code>0.5</code> and the
      * given object to use for probability calculation.
      *
-     * @see de.daslaboratorium.machinelearning.classifier.Classifier#featureWeighedAverage(Object, Object, IFeatureProbability, float, float)
+     * see de.daslaboratorium.machinelearning.classifier.Classifier#featureWeighedAverage(Object, Object, IFeatureProbability, float, float)
      *
      * @param feature The feature, which probability to calculate.
      * @param category The category.

@@ -144,10 +144,10 @@ public class PDFLoader implements Analyzer {
     public Resource test(Resource rc) {
         Path path = getPath(docbase, rc, ".pdf");
         if (Files.isRegularFile(path) && path.toString().endsWith(".pdf")) {
-            log("would load " + path);
+            log("would load file " + path);
         } else {
             String url = getPath(rc, ".pdf");
-            log("load url " + url);
+            log("would load url " + url);
         }
 		return rc;
     }
@@ -486,7 +486,7 @@ public class PDFLoader implements Analyzer {
         return Paths.get(path);
     }
 
-    /** used by Cover */
+    /** used by Cover Topic */
     public String getPath(Resource rc, String suffix) {
         String path = getPath(rc);
         if (path==null) {
@@ -514,26 +514,32 @@ public class PDFLoader implements Analyzer {
         }
 
         path = rc.getURI();
-        if (path.startsWith("files://")) {
+        if (path.startsWith("files:///")) {
             return path.substring(8);
-        }
-        if (path.startsWith("http://localhost/")) {
-            path = path.substring(17);
-        }
-        if (docbase!=null && path.indexOf("/", 9)>0) {
-            String test = docbase + path.substring(path.indexOf("/", 9));
-            if (Files.isReadable(Paths.get(test))) {
-                return test;
+        } else if (path.startsWith("file://")) {
+            path = path.substring(7);
+            if (docbase!=null) {
+                if (Files.isReadable(Paths.get(docbase + "/" + path))) {
+                    return docbase + "/" + path;
+                }
             }
-        }
-        if (path.startsWith("http://")) {
-            return path;
-        }
-        if (Files.isReadable(Paths.get(path))) {
-            return path;
-        }
-        path = System.getProperty("user.home") + "/" + path;
-        if (Files.isReadable(Paths.get(path))) {
+            docbase = System.getProperty("user.home");
+            if (Files.isReadable(Paths.get(docbase + "/" + path))) {
+                path = docbase + "/" + path;
+                if (Files.isReadable(Paths.get(path))) {
+                    return path;
+                } else {
+                    log("unreadable " + docbase + " [" + path + "]");
+                }
+            }
+        } else if (path.startsWith("http://")) {
+            if (docbase!=null) {
+                String test = path.substring(path.indexOf("/",8));
+                //log("test " + docbase + "/" + test);
+                if (Files.isReadable(Paths.get(docbase + "/" + test))) {
+                    return docbase + "/" + test;
+                }
+            }
             return path;
         }
         return null;

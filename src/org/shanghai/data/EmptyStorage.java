@@ -53,6 +53,7 @@ public class EmptyStorage implements MetaCrawl.Storage {
     public boolean write(Resource rc) {
         if (console)
             System.out.println(transformer.asString(rc));
+        //else System.out.println(rc.getURI());
         return true;
     }
 

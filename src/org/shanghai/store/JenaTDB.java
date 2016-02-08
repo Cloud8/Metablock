@@ -28,7 +28,7 @@ import org.apache.jena.rdfxml.xmlinput.JenaReader;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop <fb.com/goetz.hatop>
+   @author Goetz Hatop
    @title A Jena TDB Reader
    @date 2013-01-16
 */

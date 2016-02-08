@@ -28,19 +28,18 @@
     <field name="allfields"><xsl:for-each select="dct:*">
         <xsl:value-of select="concat(' ', normalize-space(text()))"/>
     </xsl:for-each></field>
-    <field name="recordtype">opus</field>
     <xsl:apply-templates select="dct:*"/>
     <xsl:apply-templates select="foaf:img"/>
     <xsl:apply-templates select="fabio:hasDOI"/>
     <xsl:apply-templates select="fabio:hasISSN"/>
+    <xsl:apply-templates select="fabio:hasISBN" />
+    <xsl:apply-templates select="fabio:hasIdentifier"/>
     <xsl:apply-templates select="." mode="spec"/>
  </doc>
 </xsl:template>
 
 <xsl:template match="/rdf:RDF/fabio:*[dct:identifier]">
  <doc>
-    <field name="recordtype">opus</field>
-    <field name="uri_str"><xsl:value-of select="@rdf:about"/></field>
     <xsl:apply-templates select="dct:*"/>
     <xsl:apply-templates select="foaf:img" />
     <xsl:apply-templates select="fabio:hasDOI" />
@@ -64,6 +63,7 @@
 </xsl:template>
 
 <xsl:template match="fabio:*/dct:identifier[starts-with(text(),'urn:')]">
+  <field name="recordtype">opus</field>
   <field name="id">
    <xsl:call-template name="identity">
     <xsl:with-param name="id" select="."/>
@@ -72,15 +72,26 @@
   <field name="urn_str"><xsl:value-of select="."/></field>
 </xsl:template>
 
+<xsl:template match="fabio:*/dct:identifier[not(starts-with(text(),'urn:'))]">
+  <field name="recordtype">opus</field>
+  <field name="id"><xsl:value-of select="."/></field>
+</xsl:template>
+
 <xsl:template name="identity">
   <xsl:param name="id"/>
   <xsl:value-of select="substring($id,0,string-length($id))" />
 </xsl:template>
 
-<xsl:template match="dct:BibliographicResource/dct:identifier">
+<xsl:template match="dct:BibliographicResource/dct:identifier[not(starts-with(text(),'ppn:'))]">
+  <field name="recordtype">opus</field>
   <field name="id"><xsl:value-of  select="."/></field>
   <!-- select="translate(substring-after(
        substring-after(@rdf:about,'//'),'/'),'/',':')"/> -->
+</xsl:template>
+
+<xsl:template match="dct:BibliographicResource/dct:identifier[starts-with(text(),'ppn:')]">
+  <field name="recordtype">opac</field>
+  <field name="id"><xsl:value-of  select="substring(.,5)"/></field>
 </xsl:template>
 
 <!-- TITLE -->
@@ -98,6 +109,10 @@
   <field name="title_short"><xsl:value-of select="." /></field>
   <field name="title_full"><xsl:value-of select="." /></field>
   <field name="title_sort"><xsl:value-of select="." /></field>
+</xsl:template>
+
+<xsl:template match="dct:alternative">
+  <field name="title_sub"><xsl:value-of select="." /></field>
 </xsl:template>
 
 <!-- AUTHOR -->
@@ -230,6 +245,11 @@
 <!-- ISBN -->
 <xsl:template match="fabio:hasISBN">
   <field name="isbn"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<!-- OCLC -->
+<xsl:template match="fabio:hasIdentifier[starts-with(text(),'OCoLC:')]">
+  <field name="oclc_num"><xsl:value-of select="substring(.,7)"/></field>
 </xsl:template>
 
 <!-- ISSN -->
@@ -401,17 +421,12 @@
 </xsl:template>
 
 <!-- SWD TOPICS -->
-<xsl:template match="dct:subject/skos:Concept[contains(@rdf:about,'swd')]">
+<xsl:template match="skos:Concept[contains(@rdf:about,'swd')]">
    <field name="topic"><xsl:value-of select="rdfs:label"/></field>
 </xsl:template>
 
-<!-- TOPICS UNCONTROLLED -->
-<xsl:template match="dct:subject/skos:Concept[not(@rdf:about)]">
-   <field name="topic"><xsl:value-of select="rdfs:label"/></field>
-</xsl:template>
-
-<!-- DDC Topic qualified -->
-<xsl:template match="dct:subject/skos:Concept[contains(@rdf:about,'dewey')]">
+<!-- DDC Topic -->
+<xsl:template match="skos:Concept[contains(@rdf:about,'dewey')]">
   <xsl:param name="class" 
        select="normalize-space(substring-after(@rdf:about,'class/'))"/>
   <xsl:if test="$class!=''">
@@ -423,20 +438,32 @@
   <xsl:apply-templates select="skos:prefLabel" />
 </xsl:template>
 
-<!-- ddc has skos:prefLabel -->
-<xsl:template match="skos:Concept/skos:prefLabel[@xml:lang='de']">
+<!-- DDC has skos:prefLabel -->
+<xsl:template match="skos:Concept[@rdf:about]/skos:prefLabel[@xml:lang='de']">
     <field name="topic_facet"><xsl:value-of select="." /></field>
+    <field name="topic"><xsl:value-of select="." /></field>
 </xsl:template>
 
-<!-- ddc has skos:prefLabel -->
-<xsl:template match="skos:Concept/skos:prefLabel[@xml:lang='en']">
+<!-- DDC has skos:prefLabel -->
+<xsl:template match="skos:Concept[@rdf:about]/skos:prefLabel[@xml:lang='en']">
     <field name="genre"><xsl:value-of select="." /></field>
     <field name="genre_facet"><xsl:value-of select="." /></field>
 </xsl:template>
 
-<!-- ccs pacs msc -->
-<xsl:template match="skos:Concept/skos:prefLabel[not(@xml:lang)]">
+<xsl:template match="dct:subject/skos:Concept[not(@rdf:about)]">
+  <xsl:apply-templates select="rdfs:label"/>
+  <xsl:apply-templates select="skos:prefLabel"/>
+</xsl:template>
+
+<!-- ccs pacs msc metablock -->
+<xsl:template match="skos:Concept[not(@rdf:about)]/skos:prefLabel">
     <field name="topic_facet"><xsl:value-of select="." /></field>
+    <field name="topic"><xsl:value-of select="." /></field>
+</xsl:template>
+
+<!-- TOPICS UNCONTROLLED -->
+<xsl:template match="skos:Concept[not(@rdf:about)]/rdfs:label">
+   <field name="topic"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- contents can be multivalued -->
@@ -485,7 +512,12 @@
 
 <!-- TODO: to be handled by record driver -->
 <xsl:template match="dct:hasPart/dctypes:MovingImage">
-  <field name="url"><xsl:value-of select="concat('video:',@rdf:about)"/></field>
+    <field name="url"><xsl:value-of select="@rdf:about"/></field>
+ <!-- record driver can handles this if extension is mp4
+ <field name="url">
+    <xsl:value-of select="concat('video:',substring(@rdf:about,6))"/>
+ </field>
+ -->
 </xsl:template>
 
 <!-- container.zip -->
@@ -692,7 +724,8 @@
 </xsl:template>
 
 <!-- CALLNUMBER : uri part -->
-<xsl:template match="fabio:*" mode="call">
+<xsl:template match="fabio:*[starts-with(@rdf:about,'http')]" mode="call">
+  <field name="uri_str"><xsl:value-of select="@rdf:about"/></field>
   <xsl:variable name="callnumber"><xsl:value-of 
        select="(substring-after(substring-after(@rdf:about,'//'),'/'))"/>
   </xsl:variable>
@@ -707,6 +740,9 @@
       <xsl:value-of select="concat(substring-before($callnumber,'/'),' ',
                     substring-before(substring-after($callnumber,'/'),'/'))"/>
   </field>
+</xsl:template>
+
+<xsl:template match="fabio:*[starts-with(@rdf:about,'file')]" mode="call">
 </xsl:template>
 
 <!-- SERIES : spec extension -->
@@ -738,10 +774,9 @@
              'http://scholar.google.de/scholar?hl=de&amp;q=',dct:title)"/>
       </field>
    </xsl:when>
-   <xsl:when test="starts-with(@rdf:about, 'http://localhost/')">
-      <field name="url">
-         <xsl:value-of select="substring(@rdf:about,18)"/>
-      </field>
+   <xsl:when test="starts-with(dct:identifier,'ppn:')"></xsl:when>
+   <xsl:when test="dct:hasPart">
+       <!-- parts should have their own urls -->
    </xsl:when>
    <xsl:otherwise>
       <field name="url"><xsl:value-of select="@rdf:about"/></field>

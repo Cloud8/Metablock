@@ -21,8 +21,9 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Statement;
-import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.rdf.model.Seq;
+import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.SKOS;
 
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -132,7 +133,9 @@ public class Cermine extends AbstractExtractor {
         meta = meta==null?null:meta.getChild("title-group");
         meta = meta==null?null:meta.getChild("article-title");
         String title = meta==null?null:meta.getText();
-        if (title!=null) {
+        if (title==null || rc.hasProperty(DCTerms.title)) {
+            //
+        } else {
             rc.addProperty(DCTerms.title, title);
         }
 
@@ -140,7 +143,7 @@ public class Cermine extends AbstractExtractor {
         meta = meta==null?null:meta.getChild("front");
         meta = meta==null?null:meta.getChild("article-meta");
         meta = meta==null?null:meta.getChild("contrib-group");
-        if (meta!=null) {
+        if (meta!=null && !rc.hasProperty(DCTerms.creator)) {
             String[] authors = new String[meta.getContentSize()];
             int i=0;
             for (Element el : (List<Element>)meta.getChildren()) {
@@ -155,7 +158,9 @@ public class Cermine extends AbstractExtractor {
         meta = meta==null?null:meta.getChild("abstract");
         meta = meta==null?null:meta.getChild("p");
         String abstract_ = meta==null?null:meta.getText();
-        if (abstract_ != null) {
+        if (abstract_==null || rc.hasProperty(DCTerms.abstract_)) {
+            //
+        } else {
             rc.addProperty(DCTerms.abstract_, abstract_);
         }
 
@@ -173,13 +178,31 @@ public class Cermine extends AbstractExtractor {
             day = meta.getChild("day").getText();
         }
         if (test) log("year: " + year);
-        if (year!=null) {
+        if (year==null || rc.hasProperty(DCTerms.created)) {
+            //
+        } else {
             rc.addProperty(DCTerms.created, year);
             if (month!=null && day !=null) {
                 String issued = year + "-" + month + "-" + day;
                 rc.addProperty(DCTerms.issued, issued);
             }
         }
+
+        meta = metadata;
+        meta = meta==null?null:meta.getChild("front");
+        meta = meta==null?null:meta.getChild("article-meta");
+        meta = meta==null?null:meta.getChild("kwd-group");
+        if (meta==null || rc.hasProperty(DCTerms.subject)) {
+            //
+        } else {
+            List<Element> childs = meta.getChildren("kwd");
+            for(Element kw : childs) {
+                Resource skos = rc.getModel().createResource(SKOS.Concept);
+                skos.addProperty(SKOS.prefLabel, kw.getText().trim());
+                rc.addProperty(DCTerms.subject, skos);
+            }
+        }
+        if (test) log(metadata);
         return rc;
     }
 

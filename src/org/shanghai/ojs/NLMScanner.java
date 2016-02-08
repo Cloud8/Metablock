@@ -107,8 +107,12 @@ public class NLMScanner implements FileTransporter.Delegate {
         } else {
             String id = urn.getUrn(rc.getURI());
             if (id==null) {
-                logger.info("URN failed : " + rc.getURI() + " " + id);
-                id = rc.getURI().replaceAll("[^a-zA-Z0-9\\:\\.]","");
+                //logger.info("URN failed : " + rc.getURI());
+                id = rc.getURI().substring(rc.getURI().indexOf(":")+1);
+                id = id.startsWith("//")?id.substring(2):id;
+                id = id.replaceAll("/","-");
+                id = id.replaceAll("[^a-zA-Z0-9\\:\\.\\-]","");
+                rc.addProperty(DCTerms.identifier, id);
             } else {
                 rc.addProperty(DCTerms.identifier, id);
             }

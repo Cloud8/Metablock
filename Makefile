@@ -29,6 +29,9 @@ metablock.jar: lib/seaview.jar lib/xslt lib/sparql lib/Manifest.txt
 fat: metablock.jar
 	java -jar metablock.jar
 
+doc: $(CLASS)
+	javadoc -cp $(CPATH) -d doc -tag date:a:"Date:" -tag title:a:"Title:" -tag license:a:"License:" -tag abstract:a:"Abstract:"  $(FILES)
+
 test: 
 	@java -cp lib:lib/* org.seaview.cite.Main
 

@@ -5,6 +5,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.RDFWriter;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.StmtIterator;
 
 import org.apache.jena.riot.RDFDataMgr;
@@ -97,6 +98,17 @@ public final class ModelUtil {
         RDFDataMgr.read(model, new StringReader(rdf), 
                        (String)null, RDFLanguages.RDFXML);
         return model.getResource(uri);
+    }
+
+    public static void remove(Resource rc, Property prop) {
+        StmtIterator si = rc.listProperties(prop);
+        while (si.hasNext()) {
+            Statement stmt = si.nextStatement();
+            if (stmt.getObject().isResource()) {
+                removeProperties(stmt.getResource());
+            }
+        }
+        rc.removeAll(prop);
     }
 
     public static void removeProperties(Resource rc) {

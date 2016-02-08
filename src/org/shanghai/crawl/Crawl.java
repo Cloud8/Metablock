@@ -7,12 +7,13 @@ import org.shanghai.data.FileStorage;
 import org.shanghai.data.EmptyTransporter;
 import org.shanghai.data.EmptyStorage;
 import org.shanghai.solr.SolrStorage;
-import org.shanghai.ojs.OAITransporter;
+import org.shanghai.ojs.OAITransporterList;
 import org.shanghai.data.FileTransporter;
 import org.shanghai.data.VoidTransporter;
 import org.shanghai.data.SourceScanner;
 import org.shanghai.data.DumpStorage;
 import org.shanghai.data.PDFScanner;
+import org.shanghai.data.MP4Scanner;
 import org.shanghai.ojs.OJSTransporter;
 import org.shanghai.ojs.NLMScanner;
 import org.shanghai.data.SourceScanner;
@@ -39,7 +40,7 @@ public class Crawl {
     protected String source;
     protected String target;
     protected String engine;
-    private int oai_counter;
+    //private int oai_counter;
 
     public Crawl(Config config) {
         this.config = config;
@@ -61,7 +62,7 @@ public class Crawl {
         testFile = config.get("crawl.test");
         source = config.get("crawl.source");
         target = config.get("crawl.target");
-        oai_counter = 0;
+        //oai_counter = 0;
     }
 
     public void create(String src, String trg, String eng) {
@@ -112,6 +113,9 @@ public class Crawl {
             if (suffix.contains(".pdf")) {
                 fc.inject(new PDFScanner(target.startsWith(source)).create());
             }
+            if (suffix.contains(".mp4")) {
+                fc.inject(new MP4Scanner(target.startsWith(source)).create());
+            }
             //if (suffix.contains(".epub")) {
             //    fc.inject(new EpubScanner().create());
             //}
@@ -130,9 +134,11 @@ public class Crawl {
             }
             transporter = fc;
         } else if ("oai".equals(crawl)) {
-            Config.OAI settings = config.getOAIList().get(0);
-            settings.urn_prefix = config.get("schema.urn");
-            transporter = new OAITransporter(settings);
+            //Config.OAI settings = config.getOAIList().get(0);
+            //settings.urn_prefix = config.get("schema.urn");
+            //transporter = new OAITransporter(settings);
+            //transporter.create();
+            transporter = new OAITransporterList(config.getOAIList());
             transporter.create();
         } else if (crawl.equals("void")) {
             transporter = new VoidTransporter();
@@ -202,12 +208,12 @@ public class Crawl {
             storage.create();
         } else if (store.startsWith("files")) {
             String directory = config.get("files.docbase");
-            if (source.equals("oai")) { // write model files to oai archive
-                String archive = config.getOAIList().get(oai_counter).archive;
-                if (archive!=null) {
-                    directory = config.getOAIList().get(oai_counter).archive;
-                }
-            } 
+            //if (source.equals("oai")) { // write model files to oai archive
+            //    String archive = config.getOAIList().get(oai_counter).archive;
+            //    if (archive!=null) {
+            //        directory = config.getOAIList().get(oai_counter).archive;
+            //    }
+            //} 
             boolean force = config.getBool("files.force");
             if (store.contains(":")) {
                 directory = store.substring(store.indexOf(":")+1);

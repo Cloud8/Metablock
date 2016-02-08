@@ -112,7 +112,8 @@ public class Grobid extends AbstractExtractor {
             if (subjects!=null)
                 for (String s : subjects) {
                     Resource skos = rc.getModel().createResource(SKOS.Concept);
-                    skos.addProperty(RDFS.label, s);
+                    //skos.addProperty(RDFS.label, s);
+                    skos.addProperty(SKOS.prefLabel, s);
                     rc.addProperty(DCTerms.subject, skos);
                     log("subject " + s);
                     // rc = inject(rc, "subject", s);
@@ -140,7 +141,8 @@ public class Grobid extends AbstractExtractor {
                 for (Keyword keyword : bi.getKeywords()) {
                     String topic = keyword.getKeyword();
                     Resource skos = rc.getModel().createResource(SKOS.Concept);
-                    skos.addProperty(RDFS.label, topic);
+                    //skos.addProperty(RDFS.label, topic);
+                    skos.addProperty(SKOS.prefLabel, topic);
                     rc.addProperty(DCTerms.subject, skos);
                 }
             }
@@ -169,10 +171,14 @@ public class Grobid extends AbstractExtractor {
         try {
             File file = new File(fname);
             //tei = engine.fullTextToTEI(file, false, false, null);
-            tei = engine.fullTextToTEI(file, GrobidAnalysisConfig.defaultInstance());
+            GrobidAnalysisConfig cfg = GrobidAnalysisConfig.defaultInstance();
+            tei = engine.fullTextToTEI(file, cfg);
+            // make tei header:
+            //BiblioItem resHeader = new BiblioItem();
+            //tei = engine.processHeader(fname, false, resHeader);
         } catch (Exception e) {
+            //e.printStackTrace();
             log(e); 
-            // e.printStackTrace();
         } finally { 
             return tei;
         }
@@ -291,7 +297,7 @@ public class Grobid extends AbstractExtractor {
                          Logger.getLogger(Grobid.class.getName());
 
     protected void log(Exception e) {
-        e.printStackTrace();
+        //e.printStackTrace();
         logger.severe(e.toString());
     }
 

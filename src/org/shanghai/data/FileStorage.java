@@ -25,26 +25,21 @@ public class FileStorage implements MetaCrawl.Storage {
     private String store; 
     private String suffix;
     private int count = 0;
-    static private boolean homestore = false;
+    // static private boolean homestore = false;
     static private boolean force = false;
     static private boolean test = false;
 
     public FileStorage(String store, boolean force) {
-        //log("FileStorage [" + store + "]");
         this.store = store;
         this.force = force;
         this.suffix = ".rdf";
+        log("FileStorage [" + store + "]");
     }
 
     @Override
     public void create() {
         if (store==null) {
         } else if (Files.isDirectory(Paths.get(store))) {
-        } else if (Files.isDirectory(Paths.get(
-                   System.getProperty("user.home") + "/" + store))) {
-          store = System.getProperty("user.home") + "/" + store;
-          homestore = true;
-          //log("store " + store);
         } else if (store.endsWith(".rdf")) {
         } else {
             store = null;
@@ -60,14 +55,9 @@ public class FileStorage implements MetaCrawl.Storage {
     public boolean test(Resource rc) {
         test = true;
 		boolean b = false;
-        if (store==null) {
-            b = true;
-        } else if (store.endsWith(".rdf")) {
-            b = write(rc);
-        }
         Path path = getPath(store, rc);
 		b = Files.exists(path);
-        log("test: " + path + " " + b);// + " " + rc.getURI());
+        log("test: " + path + " " + b + " [" + store + "]");
         return b;
     }
 
@@ -85,7 +75,7 @@ public class FileStorage implements MetaCrawl.Storage {
         }
 		Path parent = path.getParent();
         if (parent!=null && !Files.isDirectory(parent) && force) {
-                FileUtil.mkdir(parent);
+            FileUtil.mkdir(parent);
         }
         boolean b = ModelUtil.write(path, rc);
         if (count++%100==0) {
@@ -94,6 +84,7 @@ public class FileStorage implements MetaCrawl.Storage {
         return b;
     }
 
+    // used by ArchiveAnalyzer
     public static Path getPath(Path store, Resource rc) {
         return getPath(store.toString(), rc, ".rdf");
     }
@@ -102,47 +93,55 @@ public class FileStorage implements MetaCrawl.Storage {
         return getPath(store, rc, ".rdf");
     }
 
+    // used by OAITransporter
     public static Path getPath(String store, Resource rc, String suffix) {
         Path path = getMaster(store, rc);
         if (path==null) {
             return path;
+        } else if (store==null) {
+            return path;
         } else if (store.endsWith(".rdf")) {
             return path;
+        } else if (path.endsWith(".rdf")) {
+            return path;
         } 
-        return path.resolveSibling(path.getName(path.getNameCount()-1)+suffix);
+        //if (test) log("plain path: " + path);
+        path = path.resolveSibling(path.getName(path.getNameCount()-1)+suffix);
+        if (test) log("path: " + path);
+        return path;
     }
 
     private static Path getMaster(String store, Resource rc) {
 	    Path path = null;
-        if (store==null) {
+        if (rc.getURI().startsWith("file:///")) {
+            path = Paths.get(rc.getURI().substring(7));
+        } else if (rc.getURI().startsWith("file://")) {
+            path = Paths.get(System.getProperty("user.home") 
+                             + "/" + rc.getURI().substring(7));
+        } else if (store==null) {
             log("Unwilling to perform [" + store + "]");
+            return path;
         } else if (store.endsWith(".rdf")) {
             path = Paths.get(store);
+        } else if (rc.getURI().length()<7) {
+            log("bad resource " + rc.getURI());
         } else {
-            if (rc.getURI().length()<7) {
-                log("bad resource " + rc.getURI());
-                return path;
-            } else if (homestore) {
-                //log("home store " + store);
-                store += rc.getURI().substring(rc.getURI().lastIndexOf("/"));
-            } else {
-                store += rc.getURI().substring(rc.getURI().indexOf("/",7));
-            }
-
+            store += rc.getURI().substring(rc.getURI().indexOf("/",7));
             path = Paths.get(store);
-            if (test) log("first path " + path);
-            String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
-            int slash = rc.getURI().lastIndexOf("/");
-            int dot = rc.getURI().lastIndexOf(".");
-            if (name.equals("JournalArticle") && slash>0) {
-                path = path.resolve(rc.getURI().substring(slash+1));
-            } else if (slash>0 && dot>slash) {
-                path = path.resolveSibling(rc.getURI().substring(slash+1,dot));
-            } else {
-                path = path.resolve("about");
-            }
-            if (test) log("second path " + path);
         }
+        
+        //if (test) log("first path " + path);
+        String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
+        int slash = rc.getURI().lastIndexOf("/");
+        int dot = rc.getURI().lastIndexOf(".");
+        if (name.equals("JournalArticle") && slash>0) {
+            path = path.resolve(rc.getURI().substring(slash+1));
+        } else if (slash>0 && dot>slash) {
+            path = path.resolveSibling(rc.getURI().substring(slash+1,dot));
+        } else {
+            path = path.resolve("about");
+        }
+        //if (test) log("master path " + path);
 		return path;
     }
 

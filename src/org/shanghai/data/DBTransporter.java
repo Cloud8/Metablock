@@ -132,7 +132,7 @@ public class DBTransporter implements MetaCrawl.Transporter {
         if (res.size()<count) {
             res.add((String)null);
         }
-        //log(query + " # " + res.size());
+        //log(query + " # " + off + " " + count + " " + res.size());
         return res;
     }
 
