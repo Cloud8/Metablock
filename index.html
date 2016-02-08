@@ -47,10 +47,10 @@
 
       <section id="main_content">
         <h1>
-<a id="--metablock-preparations-for-a-semantic-publishing-repository-" class="anchor" href="#--metablock-preparations-for-a-semantic-publishing-repository-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>  Metablock: Preparations for a Semantic Publishing Repository </h1>
+<a id="--metablock-semantic-publishing-tools-" class="anchor" href="#--metablock-semantic-publishing-tools-" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>  Metablock: Semantic Publishing Tools </h1>
 
-<p>Metablock reads RDF data and writes a possibly modified resource
-  description back to a RDF target.</p>
+<p><a href="http://cloud8.github.io/Metablock">Metablock</a> reads RDF data and 
+  writes a possibly modified resource description back to a RDF target.</p>
 
 <h5>
 <a id="rdf-data-sources" class="anchor" href="#rdf-data-sources" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF Data sources:</h5>
@@ -73,19 +73,9 @@
 </ul>
 
 <h5>
-<a id="rdf-data-analyzers" class="anchor" href="#rdf-data-analyzers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF data analyzers</h5>
+<a id="indexing--write-rdf-data-to-a-solr-search-index" class="anchor" href="#indexing--write-rdf-data-to-a-solr-search-index" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Indexing : write RDF data to a Solr search index</h5>
 
-<ul>
-<li><p>Language analyzer: guesses the language of a resource desription
-from dcterms abstract or title property</p></li>
-<li><p>Coming soon: Reference analysis: use external libraries to extract 
-bibliographic references from PDF documents</p></li>
-</ul>
-
-<h5>
-<a id="indexing--writing-rdf-data-to-a-solr-search-index" class="anchor" href="#indexing--writing-rdf-data-to-a-solr-search-index" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Indexing : writing RDF data to a Solr search index</h5>
-
-<p>To build a solr index from a SPARQL service endpoint,
+<p>To build a Solr search index from a SPARQL service endpoint,
   three steps are required:</p>
 
 <ol>
@@ -98,7 +88,7 @@ bibliographic references from PDF documents</p></li>
   The sparql queries and xslt transformations used so far are rather general, 
   but modelling of bibliographic resources may vary and require modification.  </p>
 
-<p>All configurations are done in lib/seaview.ttl</p>
+<p>All configurations are done in turtle (see lib/seaview.ttl)</p>
 
 <h5>
 <a id="rdf-transporter-test" class="anchor" href="#rdf-transporter-test" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF Transporter Test</h5>
@@ -110,6 +100,16 @@ bibliographic references from PDF documents</p></li>
 <p>[<code>abd -crawl -test <em>resource</em></code>] : index and transform resource</p>
 
 <p>[<code>abd -crawl <em>resource</em></code>] : index, transform and write resource</p>
+
+<h5>
+<a id="rdf-model-analyzers" class="anchor" href="#rdf-model-analyzers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF model analyzers</h5>
+
+<ul>
+<li><p>Language analyzer: guesses the language of a resource desription
+from dcterms abstract or dcterms title property</p></li>
+<li><p>Coming soon: Reference analysis: use external libraries to extract 
+bibliographical references from PDF documents</p></li>
+</ul>
 
 <hr>
       </section>
