@@ -3,8 +3,6 @@
   Metablock: Semantic Publishing Tools 
 =========================================
 
-%% http://cloud8.github.io/Metablock
-
   [Metablock](http://cloud8.github.io/Metablock) reads RDF data and 
   writes a possibly modified resource description back to a RDF target.
 
