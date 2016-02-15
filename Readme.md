@@ -57,5 +57,10 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   - Coming soon: Reference analysis: use external libraries to extract 
     bibliographical references from PDF documents
 
+##### Javadoc
+
+  [Javadoc](https://github.com/Cloud8/Metablock/tree/master/doc) documentation
+  is available here. 
+  
 
 ____________________________________________________________________________
