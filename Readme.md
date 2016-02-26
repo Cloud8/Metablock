@@ -51,9 +51,11 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
 
   - PDF Analyzer: utilizes Grobid / CERMINE to extract metadata and
     bibliographical references from scientific articles 
+    [<code>abd -crawl -s *resource* -t *resource* -e pdf</code>]
 
   - Reference Analysis: use external libraries to find citation context and
     to determine citation polarity
+    [<code>abd -crawl -s *resource* -t *resource* -e sen</code>]
 
 
 ____________________________________________________________________________
