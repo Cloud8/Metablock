@@ -8,7 +8,6 @@
      xmlns:nlm="http://dtd.nlm.nih.gov/publishing/2.3"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:fabio="http://purl.org/spar/fabio/"
-     xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:xlink="http://www.w3.org/1999/xlink"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
      version="1.0" >
@@ -21,7 +20,7 @@
 
 <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
 
-<xsl:param name="server" select="'http://example.com/'"/>
+<xsl:param name="uri" select="'http://example.com/'"/>
 <xsl:param name="base" select="nlm:article/nlm:front/nlm:article-meta"/>
 <xsl:param name="year" 
          select="$base/nlm:pub-date[@pub-type='collection']/nlm:year"/>
@@ -33,8 +32,7 @@
 </xsl:template>
 
 <xsl:template match="nlm:article">
- <xsl:param name="uri" 
-      select="concat($server, nlm:front/nlm:journal-meta/nlm:journal-id)"/>
+ <xsl:param name="uri" select="$uri"/>
  <rdf:RDF>
    <fabio:JournalArticle rdf:about="{concat($uri,'/',$year,'/',$seq,'/',$aid)}">
     <xsl:apply-templates select="nlm:front/nlm:journal-meta">
@@ -99,7 +97,11 @@
 </xsl:template>
 
 <xsl:template match="nlm:article-meta/nlm:title-group/nlm:trans-title">
-  <dcterms:language><xsl:value-of select="@xml:lang"/></dcterms:language>
+  <xsl:variable name="smallcase" select="'abcdefghijklmnopqrstuvwxyz'" />
+  <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
+  <dcterms:language>
+      <xsl:value-of select="translate(@xml:lang,$uppercase,$smallcase)"/>
+  </dcterms:language>
 </xsl:template>
 
 <xsl:template match="nlm:article-categories">
@@ -129,8 +131,13 @@
 
 <xsl:template match="nlm:contrib-group/nlm:contrib[@contrib-type='author']">
  <xsl:param name="uri"/>
+ <xsl:variable name="aut">
+   <xsl:call-template name="string-generic">
+     <xsl:with-param name="text" select="nlm:name"/>
+   </xsl:call-template>
+ </xsl:variable>
   <rdf:li>
-    <foaf:Person rdf:about="{concat($uri,'/aut/',translate(concat(nlm:name/nlm:given-names,'_',nlm:name/nlm:surname),' ,[].','_'))}">
+    <foaf:Person rdf:about="{concat($uri,'/aut/',$aut)}">
       <xsl:apply-templates select="nlm:name"/>
     </foaf:Person>
   </rdf:li>
@@ -165,8 +172,13 @@
 
 <xsl:template match="nlm:publisher">
  <xsl:param name="uri"/>
+ <xsl:variable name="aut">
+   <xsl:call-template name="string-generic">
+     <xsl:with-param name="text" select="."/>
+   </xsl:call-template>
+ </xsl:variable>
  <dcterms:publisher>
- <foaf:Organization rdf:about="{concat($uri,'/aut/',translate(.,' ,[].','_'))}">
+  <foaf:Organization rdf:about="{concat($uri,'/aut/',$aut)}">
       <foaf:name><xsl:value-of select="." /></foaf:name>
   </foaf:Organization>
  </dcterms:publisher>
@@ -299,6 +311,12 @@
   <dcterms:subject><skos:Concept>
      <rdfs:label><xsl:value-of select="."/></rdfs:label>
   </skos:Concept></dcterms:subject>
+</xsl:template>
+
+<xsl:template name="string-generic">
+ <xsl:param name="text" select="."/>
+ <xsl:value-of select="translate($text, translate($text, 
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzüäö', ''),'')"/>
 </xsl:template>
 
 <xsl:template match="text()"/>

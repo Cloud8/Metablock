@@ -7,6 +7,7 @@ import org.apache.jena.rdf.model.RDFWriter;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.vocabulary.DCTerms;
 
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -105,21 +106,34 @@ public final class ModelUtil {
         while (si.hasNext()) {
             Statement stmt = si.nextStatement();
             if (stmt.getObject().isResource()) {
-                removeProperties(stmt.getResource());
+                remove(stmt.getResource());
             }
         }
         rc.removeAll(prop);
     }
 
-    public static void removeProperties(Resource rc) {
+    private static void remove(Resource rc) {
         StmtIterator si = rc.listProperties();
         while (si.hasNext()) {
             Statement stmt = si.nextStatement();
             if (stmt.getObject().isResource()) {
-                stmt.getResource().removeProperties();
+                remove(stmt.getResource());
             }
         }
         rc.removeProperties();
+    }
+
+    public static String getIdentifier(Resource rc, String prefix) {
+        String id = null;
+        StmtIterator si = rc.listProperties(DCTerms.identifier);
+        while (si.hasNext()) {
+            String literal = si.nextStatement().getString();
+            if (literal.startsWith(prefix)) {
+                id = literal;
+                break;
+            }
+        }
+        return id;
     }
 
     private static final Logger log = Logger.getLogger(ModelUtil.class.getName());

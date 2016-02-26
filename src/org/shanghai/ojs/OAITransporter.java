@@ -108,11 +108,12 @@ public class OAITransporter implements MetaCrawl.Transporter {
             String xslt = FileUtil.readResource(settings.transformer); 
             transformer = new XMLTransformer(xslt);
             transformer.create();
+            String uri = settings.harvest;
+            uri = uri.endsWith("/oai")?uri.substring(0,uri.length()-4):uri;
+            transformer.setParameter("uri", uri);
         }
         testFile = settings.test;
         urn.create();
-        //log("harvest " + settings.harvest + " : " + from + " : " + until 
-        //    + " : " + settings.prefix + " # " + settings.set);
     }
 
     @Override
@@ -228,6 +229,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
             return null;
         } else {
             FileUtil.write(testFile, xml);
+            log("write " + testFile);
         }
 
         Resource rc = null;
@@ -332,6 +334,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
             suffix = ".nlm";
         }
         Path path = FileStorage.getPath(settings.archive, rc, suffix);
+        log("dump to " + path);
         FileUtil.mkdir(path.getParent());
         FileUtil.write(path, xml);
         FileUtil.touch(path, date);

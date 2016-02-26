@@ -153,6 +153,7 @@ public class Cermine extends AbstractExtractor {
         }
 
         meta = metadata;
+        // log(meta);
         meta = meta==null?null:meta.getChild("front");
         meta = meta==null?null:meta.getChild("article-meta");
         meta = meta==null?null:meta.getChild("abstract");
@@ -230,11 +231,11 @@ public class Cermine extends AbstractExtractor {
                     }
                     String uri = getUri(raw, title);
 				    Resource ref = mod.createResource(uri, DCTerms.BibliographicResource);
-				    ref = inject(ref, "bibliographicCitation", raw);
-                    ref = inject(ref, "title", title);
+				    ref = inject(ref, DCTerms.bibliographicCitation, raw);
+                    ref = inject(ref, DCTerms.title, title);
 				    Element year = element.getChild("year");
                     if (year!=null) {
-                        ref = inject(ref, "date", year.getValue());
+                        ref = inject(ref, DCTerms.date, year.getValue());
                     }
                     List<String> authors = new ArrayList<String>();
                     for (Element el : 

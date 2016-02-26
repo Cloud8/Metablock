@@ -188,6 +188,10 @@ public class FileUtil {
         } catch(IOException e) { e.printStackTrace(); }
     }   
 
+    public static boolean exists(String path) {
+        return Files.exists(Paths.get(path));
+    }
+
     public static void mkdir(Path path) {
         if (!Files.exists(path)) {
             try {

@@ -217,6 +217,7 @@ public class XMLTransformer {
             Result result = new StreamResult(baos);
             transformer.transform( new DOMSource(doc), result);
             rdf = new String( baos.toByteArray(), StandardCharsets.UTF_8 );
+        // } catch(Exception e) { log(e);
         } finally {
             return rdf;
         }

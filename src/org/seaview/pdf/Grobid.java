@@ -107,7 +107,7 @@ public class Grobid extends AbstractExtractor {
                     injectAuthors(rc, authors.toArray(new String[authors.size()]));
                 }
             }
-            rc = inject(rc, "title", bi.getTitle());
+            rc = inject(rc, DCTerms.title, bi.getTitle());
             List<String> subjects = bi.getSubjects();
             if (subjects!=null)
                 for (String s : subjects) {
@@ -120,23 +120,23 @@ public class Grobid extends AbstractExtractor {
                 }
             if (bi.getYear()!=null) {
                 String year = bi.getYear();
-                rc = inject(rc, "created", year);
+                rc = inject(rc, DCTerms.created, year);
                 String month = bi.getMonth();
                 month=month==null?"11":month;
                 String day = bi.getDay();
                 day=day==null?"11":day;
                 String issued = year + "-" + month + "-" + day;
-                rc = inject(rc, "issued", issued);
+                rc = inject(rc, DCTerms.issued, issued);
             } else if (bi.getE_Year()!=null) {
                 String year = bi.getE_Year();
-                rc = inject(rc, "created", year);
+                rc = inject(rc, DCTerms.created, year);
                 String month = bi.getE_Month();
                 String day = bi.getE_Day();
                 String issued=month==null?year:year+"-"+month;
                 issued=day==null?issued:issued+"-"+day;
-                rc = inject(rc, "issued", issued);
+                rc = inject(rc, DCTerms.issued, issued);
             }
-            rc = inject(rc, "abstract", bi.getAbstract());
+            rc = inject(rc, DCTerms.abstract_, bi.getAbstract());
             if (bi.getKeywords()!=null) {
                 for (Keyword keyword : bi.getKeywords()) {
                     String topic = keyword.getKeyword();
@@ -146,7 +146,11 @@ public class Grobid extends AbstractExtractor {
                     rc.addProperty(DCTerms.subject, skos);
                 }
             }
-            rc = inject(rc, "hasDOI", bi.getDOI());
+            if (bi.getDOI()!=null && bi.getDOI().length()!=0) {
+                String doi = bi.getDOI();
+                doi = doi.startsWith("http://")?doi:"http://dx.doi.org/" + doi;
+                rc = inject(rc, DCTerms.identifier, doi);
+            }
         } catch (Exception e) {
             log(e); 
         } finally {
@@ -186,8 +190,8 @@ public class Grobid extends AbstractExtractor {
 
     private void readReferences(List<BibDataSet> bdsl, Resource rc, int threshold) {
         int found = 0;
-        //Model mod = ModelFactory.createDefaultModel();
-        Model mod = rc.getModel();
+        // prevent garbage and add statements later to recource
+        Model mod = ModelFactory.createDefaultModel();
         Seq seq = mod.createSeq(rc.getURI() + "/References");
         if (bdsl==null || bdsl.size()==0) {
             log("No references found.");
@@ -226,9 +230,9 @@ public class Grobid extends AbstractExtractor {
                     log("grobid [" + uri + "]");
                 }
                 Resource ref = mod.createResource(uri, DCTerms.BibliographicResource);
-                ref = inject(ref, "bibliographicCitation", raw);
-                ref = inject(ref, "title", title);
-                ref = inject(ref, "identifier", symbol);
+                ref = inject(ref, DCTerms.bibliographicCitation, raw);
+                ref = inject(ref, DCTerms.title, title);
+                ref = inject(ref, DCTerms.identifier, "ref:" + symbol);
                 List<String> authors = new ArrayList<String>();
                 if (bd.getFullAuthors()!=null) {
                     int index = 1;
@@ -257,7 +261,7 @@ public class Grobid extends AbstractExtractor {
                             issued = issued + "-" + day;
                         }
                     }
-                    ref = inject(ref, "date", issued);
+                    ref = inject(ref, DCTerms.date, issued);
                 }
                 seq.add(ref);
                 found++;
@@ -265,8 +269,8 @@ public class Grobid extends AbstractExtractor {
         }
         if (found>threshold && !test) {
             log("added " + found + " references [" + threshold + "]");
+            rc.getModel().add(mod);
             rc.addProperty(DCTerms.references, seq);
-            //rc.getModel().add(mod);
         } else {
             if (test) {
                 log("test: " + found + " references found.");

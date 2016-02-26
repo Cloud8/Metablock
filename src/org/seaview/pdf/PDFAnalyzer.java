@@ -2,6 +2,7 @@ package org.seaview.pdf;
 
 import org.shanghai.util.Language;
 import org.shanghai.util.FileUtil;
+import org.shanghai.util.ModelUtil;
 import org.shanghai.crawl.MetaCrawl;
 
 import org.apache.jena.rdf.model.Model;
@@ -25,7 +26,6 @@ import java.util.logging.Logger;
 
 /*
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop
     @title Reference extractor for pdf files
     @date 2015-05-08
  */
@@ -106,18 +106,17 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
             log("scratch metadata " + rc.getURI());
             extractMetadata(rc, fname);
         }
-        if (refs&&(!rc.hasProperty(DCTerms.references))) {
+        if (refs) {
             log("scratch references " + rc.getURI());
             extractReferences(rc, fname);
         }
-        makeTEI(rc); 
         return rc;
     }
 
     @Override
     public Resource analyze(Resource rc) {
         if (refs && (rc.hasProperty(DCTerms.references))) {
-            remove(rc, DCTerms.references);
+            ModelUtil.remove(rc, DCTerms.references);
             log("removed references " + rc.getURI());
         }
         String fname = create(rc);
@@ -176,7 +175,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
 
         if (!rc.hasProperty(DCTerms.title)) {
             log("setting title from pdf catalog");
-		    if (pl.getTitle()!=null) {
+		    if (pl.getTitle()!=null && pl.getTitle().length()!=0) {
                 rc.addProperty(DCTerms.title, pl.getTitle());
             }
         }
@@ -184,7 +183,6 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         if (!rc.hasProperty(DCTerms.creator) && pl.getAuthor()!=null) {
             log("setting creator from pdf catalog");
             extractor.injectAuthors(rc, new String[]{pl.getAuthor()});
-            //rc.addProperty(creator, pl.getAuthor());
         }
 
         if (!rc.hasProperty(DCTerms.issued) && pl.getDate()!=null) {
@@ -223,56 +221,19 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         }
     }
 
-    private void remove(Resource rc, Property prop) {
-        if (rc.hasProperty(prop)) {
-        } else {
-            //log("no " + prop + " " + rc.getURI());
-            return;
-        }
-        Seq seq = rc.getProperty(prop).getSeq();
-        if (seq!=null && seq.size()>0) {
-            for (int i = 1; i<= seq.size(); i++) {
-                try {
-					Resource obj = seq.getResource(i);
-                    StmtIterator si = obj.listProperties();
-                    while (si.hasNext()) {
-                        Statement stmt = si.nextStatement();
-                        if (stmt.getObject().isResource()) {
-						    Resource sub = stmt.getResource();
-							StmtIterator si2 = sub.listProperties();
-							while (si2.hasNext()) {
-                                Statement stmt2 = si2.nextStatement();
-                                if (stmt2.getObject().isResource()) {
-						            Resource sub2 = stmt2.getResource();
-									sub2.removeProperties();
-									rc.getModel().removeAll(sub2, null, null);
-							    }
-							}
-							//log("rm " + sub.getURI());
-                            remove(sub, stmt.getPredicate());
-                            sub.removeProperties();
-					        rc.getModel().removeAll(sub, null, null);
-                        }
-                    }
-                    obj.removeProperties();
-					rc.getModel().removeAll(obj, null, null);
-                } catch (PropertyNotFoundException e) { log(e); }
-                finally {}
-            }
-        }
-        seq.removeProperties();
-        rc.removeAll(prop);
-    }
-
     private void makeTEI(Resource rc) {
-        String pdf = pl.getPath(rc);
         String tei = pl.getPath(rc, ".tei");
-        String content = extractor.getTEI(pdf);
-        if (content==null) {
-            log("no TEI from: " + extractor.getClass().getSimpleName());
+        if (FileUtil.exists(tei)) {
+            //
         } else {
-            FileUtil.write(tei, content);
-            log("wrote tei: " + tei);
+            String pdf = pl.getPath(rc);
+            String content = extractor.getTEI(pdf);
+            if (content==null) {
+                log("no TEI from: " + extractor.getClass().getSimpleName());
+            } else {
+                FileUtil.write(tei, content);
+                log("wrote tei: " + tei);
+            }
         }
     }
 

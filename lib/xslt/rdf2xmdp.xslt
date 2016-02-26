@@ -42,7 +42,7 @@
 </xsl:template>
 
 <xsl:template match="fabio:*">
-  <xsl:comment> xMetaDissPlus Transformer UB Marburg 2015 </xsl:comment>
+  <xsl:comment> xMetaDissPlus Transformer UB Marburg 2016 </xsl:comment>
   <xsl:apply-templates select="dcterms:title[not(@xml:lang)]"/>
   <xsl:apply-templates select="dcterms:title[@xml:lang]"/>
   <xsl:apply-templates select="dcterms:creator"/>
@@ -69,7 +69,7 @@
 
   <!-- <xsl:apply-templates select="." mode="type"/> -->
   <xsl:apply-templates select="dcterms:type"/>
-  <xsl:apply-templates select="dcterms:identifier"/>
+  <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'urn:')]"/>
   <!-- 21 Sprache -->
   <xsl:choose>
   <xsl:when test="dcterms:language">
@@ -91,7 +91,7 @@
   <!-- 46 Transfer -->
   <xsl:apply-templates select="dcterms:hasPart"/> 
   <!-- 47 Weitere Identifier-->
-  <xsl:apply-templates select="fabio:hasDOI"/>
+  <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]"/>
   <!-- URL LICENSE -->
   <xsl:apply-templates select="." mode="about" />
 </xsl:template>
@@ -368,15 +368,31 @@
     <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
 </xsl:template>
 
-<xsl:template match="dcterms:identifier">
+<xsl:template match="dcterms:identifier[starts-with(text(),'urn:')]">
   <dc:identifier xsi:type="urn:nbn"><xsl:value-of select="."/></dc:identifier>
 </xsl:template>
 
+<xsl:template match="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]">
+  <ddb:identifier ddb:type="DOI"><xsl:value-of select="substring-after(.,'http://dx.doi.org/')"/></ddb:identifier>
+</xsl:template>
+
+<!-- Old -->
 <xsl:template match="fabio:hasDOI">
   <ddb:identifier ddb:type="DOI"><xsl:value-of select="."/></ddb:identifier>
 </xsl:template>
 
-<xsl:template match="dcterms:language">
+<xsl:template match="dcterms:language[@rdf:resource]">
+ <xsl:variable name="lang">
+   <xsl:call-template name="getlang">
+    <xsl:with-param name="input" select="substring-after(@rdf:resource,'http://www.lexvo.org/id/iso639-1/')"/>
+   </xsl:call-template>
+ </xsl:variable>
+ <dc:language xsi:type="dcterms:ISO639-2">
+    <xsl:value-of select="$lang"/>
+ </dc:language>
+</xsl:template>
+
+<xsl:template match="dcterms:language[not(@rdf:resource)]">
  <xsl:variable name="lang">
    <xsl:call-template name="getlang">
     <xsl:with-param name="input" select="."/>

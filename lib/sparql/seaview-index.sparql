@@ -11,14 +11,11 @@ where {
     ?subject ?p ?o .
     ?subject dcterms:identifier ?o .
     FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de')
-    ## FILTER (!isBlank(?subject)) .
     ## ?subject a fabio:DoctoralThesis .
     ## FILTER (regex(?dcterms:issued,'^2014-07') .
-    ## FILTER (?date > "<date>") .
-    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/diss/z2015')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/es')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ed')
-    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ep/0003/2015')
+    ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/ep')
     ## FILTER regex(?subject,'^http://archiv.ub.uni-marburg.de/eb')
     ## FILTER strstarts(str(?subject),'http://purl.org/spar/fabio/')
   # }

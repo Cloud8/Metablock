@@ -7,6 +7,7 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Seq;
 import org.apache.jena.riot.system.IRIResolver;
 import org.apache.jena.vocabulary.DCTerms;
@@ -32,8 +33,6 @@ import java.net.MalformedURLException;
     @date 2015-05-08
  */
 public class AbstractExtractor {
-
-    protected static final String fabio = "http://purl.org/spar/fabio/";
 
     protected boolean title;
     protected boolean refs;
@@ -95,36 +94,36 @@ public class AbstractExtractor {
         if (authors.length==0 || rc.hasProperty(DCTerms.creator)) {
             return rc;
         }
-        Seq seq = rc.getModel().createSeq();
-		int index = 1;
-        List<String> list = new ArrayList<String>();
+        Model mod = ModelFactory.createDefaultModel();
+        Seq seq = mod.createSeq();
+        List<String> uris = new ArrayList<String>();
         for (String aut : authors) {
-            if (aut==null) continue;
-            String uri = TextUtil.createURI(aut);
-            if (list.contains(uri)) {
-                //no duplicates
-            } else {
-                list.add(uri);
-                Resource prs = rc.getModel().createResource(uri, FOAF.Person);
-                prs.addProperty(FOAF.name, aut);
-                seq.add(index++, prs);
-            }
+            if (aut==null || aut.length()==0) continue;
+                // log("injectAuthors [" + aut + "]");
+                String uri = TextUtil.createURI(aut);
+                if (uris.contains(uri)) {
+                    // no duplicates
+                } else {
+                    Resource prs = mod.createResource(uri, FOAF.Person);
+                    prs.addProperty(FOAF.name, aut);
+                    seq.add(prs);
+                }
         }
-		rc.addProperty(DCTerms.creator, seq);
+        if (seq.size()==0) {
+            // skip
+        } else {
+		    int index = 1;
+            rc.getModel().add(mod);
+		    rc.addProperty(DCTerms.creator, seq);
+        }
         return rc;
     }
 
     /** inject property only, if it does not exist already */
-    protected Resource inject(Resource rc, String term, String val) {
+    protected Resource inject(Resource rc, Property prop , String val) {
        if (val==null) {
            return rc;
        } else try {
-           Property prop;
-           if (term.startsWith("has")) {
-               prop = rc.getModel().createProperty(fabio, term);
-           } else {
-               prop = rc.getModel().createProperty(DCTerms.NS, term);
-           }
            if (!rc.hasProperty(prop)) {
                val = val.replaceAll("\\s+", " ");
                rc.addProperty(prop, val);
@@ -154,7 +153,6 @@ public class AbstractExtractor {
         ArrayList<String> links = new ArrayList<String>();
         text = text.replace("\n","").replace("\r","");
 
-        //String regex = "\\(?\\b(https?://|www[.])[-A-Za-z0-9+&amp;@#/%?=~_()|!:,.;]*[-A-Za-z0-9+&amp;@#/%=~_()|]";
         String regex = "^(https?)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]";
 
         Pattern p = Pattern.compile(regex);
@@ -184,7 +182,7 @@ public class AbstractExtractor {
             }
             links.add(url);
         }
-    return links;
+        return links;
     }
 
     protected String getArxivId(String raw) {
@@ -266,7 +264,6 @@ public class AbstractExtractor {
             b = false;
         } finally {
             if (!b) log("iri rejected " + url);
-            //else log("iri accepted " + url);
         }
         return b;
     }

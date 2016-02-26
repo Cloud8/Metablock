@@ -31,7 +31,7 @@
 
   <record>
    <identifier scheme="urn:nbn:de">
-      <xsl:value-of select="dct:identifier" />
+      <xsl:value-of select="dct:identifier[starts-with(text(),'urn:')]" />
    </identifier>
    <resource>
     <identifier scheme="url" type="frontpage" role="primary">

@@ -1,7 +1,5 @@
 
-
-  Metablock: Semantic Publishing Tools 
-=========================================
+## Metablock: Semantic Publishing Tools 
 
 
   [Metablock](http://cloud8.github.io/Metablock) reads RDF data and 
@@ -49,18 +47,13 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
 
   [<code>abd -crawl *resource*</code>] : index, transform and write resource
 
-##### RDF model analyzers
+##### RDF analyzers
 
-  - Language analyzer: guesses the language of a resource desription
-    from dcterms abstract or dcterms title property
+  - PDF Analyzer: utilizes Grobid / CERMINE to extract metadata and
+    bibliographical references from scientific articles 
 
-  - Coming soon: Reference analysis: use external libraries to extract 
-    bibliographical references from PDF documents
+  - Reference Analysis: use external libraries to find citation context and
+    to determine citation polarity
 
-##### Javadoc
-
-  [Javadoc](https://github.com/Cloud8/Metablock/tree/master/doc) documentation
-  is available here. 
-  
 
 ____________________________________________________________________________
