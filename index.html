@@ -73,6 +73,15 @@
 </ul>
 
 <h5>
+<a id="compile--configure" class="anchor" href="#compile--configure" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Compile &amp;&amp; Configure</h5>
+
+<ul>
+<li>configured by lib/metablock.ttl </li>
+<li>make </li>
+<li>java -jar metablock.jar</li>
+</ul>
+
+<h5>
 <a id="indexing--write-rdf-data-to-a-solr-search-index" class="anchor" href="#indexing--write-rdf-data-to-a-solr-search-index" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Indexing : write RDF data to a Solr search index</h5>
 
 <p>To build a Solr search index from a SPARQL service endpoint,
@@ -91,25 +100,67 @@
 <p>All configurations are done in turtle (see lib/seaview.ttl)</p>
 
 <h5>
-<a id="rdf-transporter-test" class="anchor" href="#rdf-transporter-test" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF Transporter Test</h5>
+<a id="rdf-crawling" class="anchor" href="#rdf-crawling" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF Crawling</h5>
 
-<p>[<code>abd -crawl -probe</code>] : get basic information about a data source .</p>
+<p>RDF data sources configured in <em>lib/seaview.ttl</em> can be tested with</p>
 
-<p>[<code>abd -crawl -test</code>] : get some URIs based on enumeration query.</p>
+<pre><code>java -jar metablock.jar -s [source] -t [target] -test
+</code></pre>
 
-<p>[<code>abd -crawl -test <em>resource</em></code>] : index and transform resource</p>
+<p>Copy from RDF <em>source</em> to RDF <em>target</em></p>
 
-<p>[<code>abd -crawl <em>resource</em></code>] : index, transform and write resource</p>
+<pre><code>java -jar metablock.jar -s [source] -t [target]
+</code></pre>
 
 <h5>
 <a id="rdf-analyzers" class="anchor" href="#rdf-analyzers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF analyzers</h5>
 
-<ul>
-<li><p>PDF Analyzer: utilizes Grobid / CERMINE to extract metadata and
-bibliographical references from scientific articles </p></li>
-<li><p>Reference Analysis: use external libraries to find citation context and
-to determine citation polarity</p></li>
-</ul>
+<p>PDF Analyzer: utilizes Grobid / CERMINE to extract metadata and
+  bibliographical references from scientific articles </p>
+
+<pre><code>java -jar metablock.jar -s [source] -t [target] -e pdf
+</code></pre>
+
+<p>Reference Analysis: use external libraries to find citation context and
+  determine citation polarity</p>
+
+<pre><code>java -jar metablock.jar -s [source] -t [target] -e sen
+</code></pre>
+
+<h5>
+<a id="examples" class="anchor" href="#examples" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Examples</h5>
+
+<ol>
+<li>
+<p>Index a directory of PDF files, extract metadata and write to VuFind:</p>
+
+<pre><code>java -jar metablock.jar -crawl -s files -t solr1 -e pdf Documents
+</code></pre>
+
+<p>The -e switch enables the configured metadata extractor.</p>
+</li>
+<li>
+<p>Write DSpace metadata to a virtuoso triplestore:</p>
+
+<pre><code>java -jar metablock.jar -crawl -s dspace -t virt
+</code></pre>
+
+<p>This utilizes the DSpace REST API and needs a properly configured
+repository (Experimental).</p>
+</li>
+<li>
+<p>Crawl OAI sources to a jena TDB store:</p>
+
+<pre><code>java -jar metablock.jar -crawl -s oai -t tdb
+</code></pre>
+</li>
+<li>
+<p>Build a search index for a TDB triple store</p>
+
+<pre><code>java -jar metablock.jar -crawl -s tdb -t solr1
+</code></pre>
+</li>
+</ol>
 
 <hr>
       </section>
