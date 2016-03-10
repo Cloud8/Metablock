@@ -6,7 +6,6 @@ import org.shanghai.ojs.URN;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop
     @title Command Line Interface for the Main RDF Crawler
     @date 2013-03-01
 */
@@ -14,7 +13,7 @@ public class Main {
 
     protected Config config;
     protected Crawl crawl;
-    protected static String configFile = "seaview.ttl";
+    protected static String configFile = "metablock.ttl";
 
     public void dispose() {
 	    if (crawl!=null)

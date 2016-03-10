@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 
 /**
  * @license http://www.apache.org/licenses/LICENSE-2.0
- * @author Goetz Hatop 
  * @title NLM File Scanner to tansform NLM to RDF
  * @date 2014-01-09
  * @abstract Reads a NLM file and makes RDF therefrom
@@ -45,9 +44,8 @@ public class NLMScanner implements FileTransporter.Delegate {
     private static final Logger logger =
                          Logger.getLogger(NLMScanner.class.getName());
 
-    public NLMScanner(String server, String xsltFile, String schema) {
+    public NLMScanner(String xsltFile, String schema) {
         this.transformer = new XMLTransformer(FileUtil.read(xsltFile));
-        this.transformer.setParameter("server", server + "/");
         urn = new URN(schema);
     }
 
@@ -87,7 +85,7 @@ public class NLMScanner implements FileTransporter.Delegate {
         StmtIterator si = rc.listProperties(DCTerms.isPartOf);
         while(si.hasNext()) {
             Resource obj = si.nextStatement().getResource();
-            String name = obj.getPropertyResourceValue(RDF.type).getLocalName();
+            String name = obj.getPropertyResourceValue(DCTerms.type).getLocalName();
             if (name.startsWith("Journal")) {
                 analyze(obj, urn);
             }
@@ -96,6 +94,19 @@ public class NLMScanner implements FileTransporter.Delegate {
         return rc;
     }
 
+    private static void makeIdentifier(Resource rc, URN urn) {
+	    String id = ModelUtil.getIdentifier(rc, "urn:");
+		if (id==null) {
+            id = urn.getUrn(rc.getURI());
+            if (id==null) {
+                logger.info("URN failed : " + rc.getURI());
+			} else {
+                rc.addProperty(DCTerms.identifier, id);
+			}
+		}
+	}
+
+    /*
     private static void makeIdentifier(Resource rc, URN urn) {
         if (rc.hasProperty(DCTerms.identifier) ) {
             String id = rc.getProperty(DCTerms.identifier).getString();
@@ -118,6 +129,7 @@ public class NLMScanner implements FileTransporter.Delegate {
             }
         }
     }
+    */
 
     private static void log(String msg) {
         logger.info(msg);

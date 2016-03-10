@@ -2,14 +2,13 @@
 <xsl:stylesheet 
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:dct="http://purl.org/dc/terms/" 
+     xmlns:dcterms="http://purl.org/dc/terms/" 
      xmlns:dctypes="http://purl.org/dc/dcmitype/"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
      xmlns:mods="http://www.loc.gov/mods/v3"
      xmlns:mets="http://www.loc.gov/METS/"
-     xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:xlink="http://www.w3.org/1999/xlink"
      xmlns:dv="http://dfg-viewer.de/"
      version="1.0">
@@ -18,10 +17,10 @@
 <xsl:strip-space elements="*"/>
 
 <xsl:template match="rdf:RDF">
-  <xsl:apply-templates select="fabio:*" />
+  <xsl:apply-templates select="dcterms:BibliographicResource" />
 </xsl:template>
 
-<xsl:template match="fabio:*">
+<xsl:template match="dcterms:BibliographicResource">
  <mets:mets 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:mets="http://www.loc.gov/METS/"
@@ -34,14 +33,14 @@
    <mets:mdWrap MIMETYPE="text/xml" MDTYPE="MODS">
     <mets:xmlData>
       <mods:mods>
-      <xsl:apply-templates select="dct:title" />
-      <xsl:apply-templates select="dct:creator" />
-      <xsl:apply-templates select="dct:abstract" />
-      <xsl:apply-templates select="dct:issued" />
-      <xsl:apply-templates select="dct:created" />
-      <xsl:apply-templates select="dct:publisher" />
-      <xsl:apply-templates select="dct:subject" />
-      <!-- <xsl:apply-templates select="dct:identifier" /> -->
+      <xsl:apply-templates select="dcterms:title" />
+      <xsl:apply-templates select="dcterms:creator" />
+      <xsl:apply-templates select="dcterms:abstract" />
+      <xsl:apply-templates select="dcterms:issued" />
+      <xsl:apply-templates select="dcterms:created" />
+      <xsl:apply-templates select="dcterms:publisher" />
+      <xsl:apply-templates select="dcterms:subject" />
+      <!-- <xsl:apply-templates select="dcterms:identifier" /> -->
       <mods:identifier type="url"><xsl:value-of select="@rdf:about"/>
       </mods:identifier>
       </mods:mods>
@@ -75,11 +74,11 @@
     </mets:digiprovMD>
    </mets:amdSec>
 
-   <xsl:apply-templates select="dct:hasFormat" />
+   <xsl:apply-templates select="dcterms:hasFormat" />
  </mets:mets>
 </xsl:template>
 
-<xsl:template match="dct:title">
+<xsl:template match="dcterms:title">
  <mods:titleInfo>
   <mods:title>
    <xsl:value-of select="substring-before(concat(.,':'),':')"/>
@@ -87,11 +86,11 @@
  </mods:titleInfo>
 </xsl:template>
 
-<xsl:template match="dct:creator">
+<xsl:template match="dcterms:creator">
   <xsl:apply-templates select="foaf:Person"/>
 </xsl:template>
 
-<xsl:template match="dct:creator/foaf:Person">
+<xsl:template match="dcterms:creator/foaf:Person">
  <mods:name type="personal">
   <mods:namePart>
     <xsl:value-of select="foaf:name" />
@@ -104,32 +103,32 @@
  </mods:name>
 </xsl:template>
 
-<xsl:template match="dct:abstract">
+<xsl:template match="dcterms:abstract">
  <mods:abstract><xsl:value-of select="." /></mods:abstract>
 </xsl:template>
 
-<xsl:template match="dct:identifier">
+<xsl:template match="dcterms:identifier">
  <mods:identifier type="urn"><xsl:value-of select="."/></mods:identifier>
 </xsl:template>
 
-<xsl:template match="dct:issued">
+<xsl:template match="dcterms:issued">
  <mods:recordCreationDate encoding="iso8601">
     <xsl:value-of select="." />
  </mods:recordCreationDate>
 </xsl:template>
 
-<xsl:template match="dct:created">
+<xsl:template match="dcterms:created">
  <mods:dateCreated keyDate="yes" encoding="w3cdtf">
     <xsl:value-of select="." />
  </mods:dateCreated>
  <!-- <mods:dateIssued>[1697]</mods:dateIssued> -->
 </xsl:template>
 
-<xsl:template match="dct:publisher">
+<xsl:template match="dcterms:publisher">
   <xsl:apply-templates select="foaf:Organization"/>
 </xsl:template>
 
-<xsl:template match="dct:publisher/foaf:Organization">
+<xsl:template match="dcterms:publisher/foaf:Organization">
  <mods:originInfo>
    <mods:place>
      <mods:placeTerm type="text">
@@ -139,27 +138,28 @@
  </mods:originInfo>
 </xsl:template>
 
-<xsl:template match="dct:subject">
+<xsl:template match="dcterms:subject">
   <xsl:apply-templates select="skos:Concept"/>
 </xsl:template>
 
-<xsl:template match="dct:subject/skos:Concept[skos:prefLabel]">
+<xsl:template match="dcterms:subject/skos:Concept[skos:prefLabel]">
  <mods:subject authority="ddc">
   <xsl:apply-templates select="skos:prefLabel"/>
  </mods:subject>
 </xsl:template>
 
-<xsl:template match="dct:subject/skos:Concept/skos:prefLabel">
+<xsl:template match="dcterms:subject/skos:Concept/skos:prefLabel">
    <mods:topic><xsl:value-of select="." /></mods:topic>
 </xsl:template>
 
-<xsl:template match="dct:hasFormat">
-    <xsl:apply-templates select="dctypes:Text"/><!-- monographs -->
-    <xsl:apply-templates select="rdf:Seq"/>       <!-- periodical -->
+<xsl:template match="dcterms:hasFormat">
+  <xsl:comment> File Data </xsl:comment>
+  <xsl:apply-templates select="dctypes:Text"/><!-- monographs -->
+  <xsl:apply-templates select="rdf:Seq"/>     <!-- periodical -->
 </xsl:template>
 
-<xsl:template match="dct:hasPart">
- <xsl:if test="contains(dctypes:Text/dct:format,'application/pdf')">
+<xsl:template match="dcterms:hasPart">
+ <xsl:if test="contains(dctypes:Text/dcterms:format,'application/pdf')">
   <mets:fileGrp USE="DOWNLOAD">
     <mets:file ID="All" MIMETYPE="'application/pdf'">
       <mets:FLocat xlink:href="{dctypes:Text/@rdf:about}" LOCTYPE="URL"/>
@@ -169,7 +169,7 @@
 </xsl:template>
 
 <!-- periodical -->
-<xsl:template match="dct:hasFormat/rdf:Seq">
+<xsl:template match="dcterms:hasFormat/rdf:Seq">
   <mets:fileSec>
       <xsl:apply-templates select="." mode="files"/>
   </mets:fileSec>
@@ -180,7 +180,7 @@
   </mets:structMap>
   <mets:structMap TYPE="LOGICAL">
     <mets:div ID="log91196" TYPE="periodical" DMDID="md91196" ADMID="amd91196"
-              LABEL="{../../dct:issued}">
+              LABEL="{../../dcterms:issued}">
       <xsl:apply-templates select="rdf:li/dctypes:Text" mode="logical"/>
     </mets:div>
   </mets:structMap>
@@ -193,11 +193,11 @@
   </mets:structLink>
 </xsl:template>
 
-<xsl:template match="dct:hasFormat/rdf:Seq" mode="files">
+<xsl:template match="dcterms:hasFormat/rdf:Seq" mode="files">
  <mets:fileGrp USE="DEFAULT">
   <xsl:for-each select="rdf:li/dctypes:Text">
     <xsl:comment><xsl:value-of select="position()"/></xsl:comment>
-    <xsl:apply-templates select="dct:hasPart/rdf:Seq/rdf:li" mode="files">
+    <xsl:apply-templates select="dcterms:hasPart/rdf:Seq/rdf:li" mode="files">
       <xsl:with-param name="use" select="'def'"/>
       <xsl:with-param name="mimetype" select="'image/jpeg'" />
     </xsl:apply-templates>
@@ -206,7 +206,7 @@
 
  <mets:fileGrp USE="MAX">
   <xsl:for-each select="rdf:li/dctypes:Text">
-    <xsl:apply-templates select="dct:hasPart/rdf:Seq/rdf:li" mode="files">
+    <xsl:apply-templates select="dcterms:hasPart/rdf:Seq/rdf:li" mode="files">
       <xsl:with-param name="use" select="'max'" />
       <xsl:with-param name="mimetype" select="'image/jpeg'" />
     </xsl:apply-templates>
@@ -215,7 +215,7 @@
 
  <mets:fileGrp USE="MIN">
   <xsl:for-each select="rdf:li/dctypes:Text">
-    <xsl:apply-templates select="dct:hasPart/rdf:Seq/rdf:li" mode="files">
+    <xsl:apply-templates select="dcterms:hasPart/rdf:Seq/rdf:li" mode="files">
       <xsl:with-param name="use" select="'min'" />
       <xsl:with-param name="mimetype" select="'image/jpeg'" />
     </xsl:apply-templates>
@@ -224,7 +224,7 @@
 
  <mets:fileGrp USE="THUMBS">
   <xsl:for-each select="rdf:li/dctypes:Text">
-    <xsl:apply-templates select="dct:hasPart/rdf:Seq/rdf:li" mode="files">
+    <xsl:apply-templates select="dcterms:hasPart/rdf:Seq/rdf:li" mode="files">
       <xsl:with-param name="use" select="'pre'" />
       <xsl:with-param name="mimetype" select="'image/jpeg'" />
     </xsl:apply-templates>
@@ -233,26 +233,27 @@
 
  <mets:fileGrp USE="DOWNLOAD">
   <xsl:for-each select="rdf:li/dctypes:Text">
-    <xsl:apply-templates select="dct:hasPart/rdf:Seq/rdf:li" mode="tif"/>
+    <xsl:apply-templates select="dcterms:hasPart/rdf:Seq/rdf:li" mode="tif"/>
   </xsl:for-each>
  </mets:fileGrp>
 </xsl:template>
 
-<xsl:template match="dct:hasFormat/rdf:Seq/rdf:li" mode="physical">
-    <xsl:apply-templates select="dctypes:Text/dct:hasPart/rdf:Seq/rdf:li" 
+<xsl:template match="dcterms:hasFormat/rdf:Seq/rdf:li" mode="physical">
+    <xsl:apply-templates select="dctypes:Text/dcterms:hasPart/rdf:Seq/rdf:li" 
          mode="physical"/>
 </xsl:template>
 
 <!-- monograph -->
-<xsl:template match="dct:hasFormat/dctypes:Text">
+<xsl:template match="dcterms:hasFormat/dctypes:Text">
+  <xsl:comment> Monograph </xsl:comment>
   <mets:fileSec>
-      <xsl:apply-templates select="dct:hasPart/rdf:Seq" mode="files"/>
-      <xsl:apply-templates select="../../dct:hasPart"/>
+      <xsl:apply-templates select="dcterms:hasPart/rdf:Seq" mode="files"/>
+      <xsl:apply-templates select="../../dcterms:hasPart"/>
   </mets:fileSec>
 
   <mets:structMap TYPE="PHYSICAL">
     <mets:div ID="phys91196" TYPE="physSequence">
-      <xsl:apply-templates select="dct:hasPart/rdf:Seq" mode="physical"/>
+      <xsl:apply-templates select="dcterms:hasPart/rdf:Seq" mode="physical"/>
     </mets:div>
   </mets:structMap>
 
@@ -267,7 +268,7 @@
 </xsl:template>
 
 <!-- monograph -->
-<xsl:template match="dctypes:Text/dct:hasPart/rdf:Seq" mode="files">
+<xsl:template match="dctypes:Text/dcterms:hasPart/rdf:Seq" mode="files">
  <mets:fileGrp USE="DEFAULT">
   <xsl:apply-templates select="rdf:li" mode="files">
       <xsl:with-param name="use" select="'def'"/>
@@ -297,13 +298,13 @@
  </mets:fileGrp>
 </xsl:template>
 
-<xsl:template match="dct:hasPart/rdf:Seq" mode="physical">
+<xsl:template match="dcterms:hasPart/rdf:Seq" mode="physical">
      <xsl:apply-templates select="rdf:li" mode="physical" />
 </xsl:template>
 
 <xsl:template match="rdf:li/dctypes:Text" mode="logical">
   <xsl:variable name="path" select="substring-before(.,'/')"/>
-  <mets:div ID="log_{$path}_1" TYPE="Issue" LABEL="{dct:title}" >
+  <mets:div ID="log_{$path}_1" TYPE="Issue" LABEL="{dcterms:title}" >
      <mets:fptr FILEID="phys_{$path}_1"></mets:fptr>
   </mets:div>
 </xsl:template>
@@ -332,15 +333,15 @@
    </mets:file>
 </xsl:template>
 
-<xsl:template match="dct:hasPart/rdf:Seq/rdf:li" mode="tif">
+<xsl:template match="dcterms:hasPart/rdf:Seq/rdf:li" mode="tif">
   <xsl:variable name="path" select="substring-before(.,'/')"/>
     <mets:file ID="tif_{$path}_{position()}" MIMETYPE="image/tiff">
     <mets:FLocat xlink:href="{concat(../../../@rdf:about,'/',substring-after(.,'/'))}" LOCTYPE="URL"/>
   </mets:file>
 </xsl:template>
 
-<xsl:template match="dct:hasPart/rdf:Seq/rdf:li" mode="physical">
-  <xsl:variable name="order" select="count(../../../../preceding-sibling::rdf:li/dctypes:Text/dct:hasPart/rdf:Seq/rdf:li)"/>
+<xsl:template match="dcterms:hasPart/rdf:Seq/rdf:li" mode="physical">
+  <xsl:variable name="order" select="count(../../../../preceding-sibling::rdf:li/dctypes:Text/dcterms:hasPart/rdf:Seq/rdf:li)"/>
   <xsl:variable name="path" select="substring-before(.,'/')"/>
   <mets:div ID="phys_{$path}_{position()}" ORDER="{count(preceding-sibling::rdf:li) + 1 + $order}" TYPE="page" >
          <mets:fptr FILEID="def_{$path}_{position()}"></mets:fptr>

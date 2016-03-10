@@ -5,7 +5,6 @@
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:dcterms="http://purl.org/dc/terms/"
      xmlns:dctypes="http://purl.org/dc/dcmitype/"
-     xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
@@ -37,11 +36,11 @@
      xmlns:dini="http://www.d-nb.de/standards/xmetadissplus/type/"
      xsi:schemaLocation="http://www.d-nb.de/standards/xmetadissplus/ http://files.dnb.de/standards/xmetadissplus/xmetadissplus.xsd">
 
-    <xsl:apply-templates select="fabio:*" />
+    <xsl:apply-templates select="dcterms:BibliographicResource" />
   </xMetaDiss:xMetaDiss>
 </xsl:template>
 
-<xsl:template match="fabio:*">
+<xsl:template match="dcterms:BibliographicResource">
   <xsl:comment> xMetaDissPlus Transformer UB Marburg 2016 </xsl:comment>
   <xsl:apply-templates select="dcterms:title[not(@xml:lang)]"/>
   <xsl:apply-templates select="dcterms:title[@xml:lang]"/>
@@ -57,7 +56,7 @@
   <xsl:apply-templates select="dcterms:publisher"/>
   <!-- 7. publisher journals -->
   <xsl:if test="count(dcterms:publisher)=0">
-  <xsl:apply-templates select="dcterms:isPartOf/fabio:*/dcterms:publisher"/>
+  <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:publisher"/>
   </xsl:if>
   <xsl:apply-templates select="dcterms:contributor"/>
 
@@ -67,23 +66,21 @@
   <xsl:apply-templates select="dcterms:issued"/>
   <xsl:apply-templates select="dcterms:modified"/>
 
-  <!-- <xsl:apply-templates select="." mode="type"/> -->
-  <xsl:apply-templates select="dcterms:type"/>
+  <xsl:apply-templates select="dcterms:type[@rdf:resource]"/>
   <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'urn:')]"/>
   <!-- 21 Sprache -->
   <xsl:choose>
   <xsl:when test="dcterms:language">
     <xsl:apply-templates select="dcterms:language"/> 
   </xsl:when>
-  <xsl:when test="dcterms:isPartOf/fabio:JournalIssue/dcterms:language">
-    <xsl:apply-templates select="dcterms:isPartOf/fabio:JournalIssue/dcterms:language"/> 
+  <xsl:when test="dcterms:isPartOf/*/dcterms:language">
+    <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:language"/> 
   </xsl:when>
   </xsl:choose>
 
   <!-- 29 Hochschulschrift ist Teil von -->
-  <xsl:apply-templates select="dcterms:isPartOf/fabio:JournalIssue/fabio:hasIdentifier"/>
-  <xsl:apply-templates select="dcterms:isPartOf/fabio:JournalIssue/dcterms:title"/>
-  <xsl:apply-templates select="dcterms:isPartOf/fabio:Periodical"/>
+  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:identifier[starts-with(text(),'zdb:')]"/>
+  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title"/>
   <!-- 39 Recht -->
   <xsl:apply-templates select="dcterms:rights"/> 
   <!-- 41 Akademischer Grad -->
@@ -99,7 +96,7 @@
 <xsl:template match="dcterms:title[not(@xml:lang)]">
   <xsl:variable name="lang">
    <xsl:call-template name="getlang">
-    <xsl:with-param name="input" select="../dcterms:language"/>
+    <xsl:with-param name="input" select="substring-after(../dcterms:language/@rdf:resource,'http://www.lexvo.org/id/iso639-1/')"/>
    </xsl:call-template>
   </xsl:variable>
   <dc:title xsi:type="ddb:titleISO639-2" lang="{$lang}">
@@ -195,7 +192,7 @@
 </xsl:template>
 
 <xsl:template match="dcterms:publisher[@rdf:resource]">
-  <xsl:apply-templates select="../dcterms:isPartOf/fabio:*/dcterms:publisher"/>
+  <xsl:apply-templates select="../dcterms:isPartOf/*/dcterms:publisher"/>
 </xsl:template>
 
 <xsl:template match="dcterms:publisher">
@@ -289,7 +286,7 @@
    <xsl:when test="$input='el'">grc</xsl:when>
    <xsl:when test="$input='he'">heb</xsl:when>
    <xsl:when test="$input='zu'">und</xsl:when>
-   <xsl:otherwise><xsl:value-of select="$input"/></xsl:otherwise>
+   <xsl:otherwise><xsl:value-of select="'und'"/></xsl:otherwise>
  </xsl:choose>
 </xsl:template>
 
@@ -320,52 +317,53 @@
      Sound, Image, MovingImage, StillImage, MusicalNotation, 
      CourseMaterial, Website, Software, CarthographicMaterial, ResearchData,
 -->
-<!--
-<xsl:template match="fabio:Book|fabio:Biography" mode="type">
-    <dc:type xsi:type="dini:PublType">book</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:PeriodicalIssue" mode="type">
-    <dc:type xsi:type="dini:PublType">PeriodicalPart</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:DoctoralThesis" mode="type">
+<xsl:template match="dcterms:type[@rdf:resource]">
+  <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
+  <xsl:variable name="type" select="substring-after(@rdf:resource,'/fabio/')"/>
+  <xsl:choose>
+  <xsl:when test="$type='DoctoralThesis'">
     <dc:type xsi:type="dini:PublType">doctoralThesis</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:JournalArticle" mode="type">
+  </xsl:when>
+  <xsl:when test="$type='JournalArticle'">
     <dc:type xsi:type="dini:PublType">article</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:Article" mode="type">
-    <dc:type xsi:type="dini:PublType">article</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:InBook" mode="type">
+  </xsl:when>
+  <xsl:when test="$type='JournalIssue'">
+    <dc:type xsi:type="dini:PublType">PeriodicalPart</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='Book'">
+    <dc:type xsi:type="dini:PublType">book</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='Journal'">
+    <dc:type xsi:type="dini:PublType">Periodical</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='BookChapter'">
     <dc:type xsi:type="dini:PublType">bookPart</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:BookChapter" mode="type">
-    <dc:type xsi:type="dini:PublType">bookPart</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:Paper" mode="type">
-    <dc:type xsi:type="dini:PublType">workingPaper</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:CollectedWorks" mode="type">
-    <dc:type xsi:type="dini:PublType">Website</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
-<xsl:template match="fabio:*" mode="type">
+  </xsl:when>
+  <xsl:when test="$type='Periodical'">
+    <dc:type xsi:type="dini:PublType">Periodical</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='PeriodicalIssue'">
+    <dc:type xsi:type="dini:PublType">PeriodicalPart</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='MusicalComposition'">
+    <dc:type xsi:type="dini:PublType">MusicalNotation</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='MastersThesis'">
+    <dc:type xsi:type="dini:PublType">MusicalNotation</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='BachelorsThesis'">
+    <dc:type xsi:type="dini:PublType">bachelorThesis</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='Biography'">
+    <dc:type xsi:type="dini:PublType">book</dc:type>
+  </xsl:when>
+  <xsl:when test="$type='CollectedWorks'">
+    <dc:type xsi:type="dini:PublType">book</dc:type>
+  </xsl:when>
+  <xsl:otherwise>
     <dc:type xsi:type="dini:PublType">report</dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
-</xsl:template>
--->
-
-<xsl:template match="dcterms:type">
-    <dc:type xsi:type="dini:PublType"><xsl:value-of select="."/></dc:type>
-    <dc:type xsi:type="dcterms:DCMIType">Text</dc:type>
+  </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="dcterms:identifier[starts-with(text(),'urn:')]">
@@ -374,11 +372,6 @@
 
 <xsl:template match="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]">
   <ddb:identifier ddb:type="DOI"><xsl:value-of select="substring-after(.,'http://dx.doi.org/')"/></ddb:identifier>
-</xsl:template>
-
-<!-- Old -->
-<xsl:template match="fabio:hasDOI">
-  <ddb:identifier ddb:type="DOI"><xsl:value-of select="."/></ddb:identifier>
 </xsl:template>
 
 <xsl:template match="dcterms:language[@rdf:resource]">
@@ -416,31 +409,21 @@
  MEDREZ : ZDB-Idn 1465812-4
 -->
 
-<xsl:template match="dcterms:isPartOf/fabio:JournalIssue/fabio:hasIdentifier">
+<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:identifier[starts-with(text(),'zdb:')]">
  <dcterms:isPartOf xsi:type="ddb:Erstkat-ID">
-     <xsl:value-of select="."/>
+     <xsl:value-of select="substring-after(.,'zdb:')"/>
  </dcterms:isPartOf>
 </xsl:template>
 
-<xsl:template match="dcterms:isPartOf/fabio:JournalIssue/dcterms:title">
+<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title">
  <dcterms:isPartOf xsi:type="ddb:ZS-Ausgabe">
      <xsl:value-of select="."/>
  </dcterms:isPartOf>
 </xsl:template>
 
-<xsl:template match="dcterms:isPartOf/fabio:Periodical">
- <xsl:if test="../../fabio:hasSequenceIdentifier and dcterms:title">
-   <dcterms:isPartOf xsi:type="ddb:noScheme">
-     <xsl:value-of select="concat(dcterms:title,' ; ',
-                                  ../../fabio:hasSequenceIdentifier)"/>
-   </dcterms:isPartOf>
- </xsl:if>
- <xsl:apply-templates select="fabio:hasISSN"/>
-</xsl:template>
-
-<xsl:template match="dcterms:isPartOf/fabio:Periodical/fabio:hasISSN">
+<xsl:template match="dcterms:isPartOf/*/dcterms:identifier[starts-with(text(),'issn:')]">
  <dcterms:isPartOf xsi:type="ddb:ISSN">
-    <xsl:value-of select="."/>
+    <xsl:value-of select="substring-after(.,'issn:')"/>
  </dcterms:isPartOf>
 </xsl:template>
 
@@ -452,19 +435,18 @@
   <dc:rights><xsl:value-of select="."/></dc:rights>
 </xsl:template>
 
-<xsl:template match="fabio:*" mode="degree">
-</xsl:template>
-
-<xsl:template match="fabio:DoctoralThesis" mode="degree">
+<xsl:template match="dcterms:BibliographicResource[contains(dcterms:type/@rdf:resource,'DoctoralThesis')]" mode="degree">
   <thesis:degree>
     <thesis:level>thesis.doctoral</thesis:level>
     <thesis:grantor xsi:type="cc:Corporate">
       <cc:universityOrInstitution>
         <cc:name>Philipps-Universität Marburg</cc:name>
         <cc:place>Marburg</cc:place>
+        <xsl:if test="dcterms:provenance/aiiso:Faculty">
         <cc:department>
-          <cc:name><xsl:value-of select="normalize-space(dcterms:publisher/aiiso:Faculty)"/></cc:name>
+          <cc:name><xsl:value-of select="normalize-space(dcterms:provenance/aiiso:Faculty)"/></cc:name>
         </cc:department>
+       </xsl:if>
       </cc:universityOrInstitution>
     </thesis:grantor>
   </thesis:degree>
@@ -507,34 +489,13 @@
 </xsl:template>
 
 <!-- URL LICENSE -->
-<xsl:template match="fabio:*" mode="about">
+<xsl:template match="dcterms:BibliographicResource" mode="about">
   <ddb:identifier ddb:type="URL">
-       <xsl:value-of select="@rdf:about"/>
-  </ddb:identifier>
-  <ddb:rights ddb:kind="free"/>
-</xsl:template>
-
-<xsl:template match="fabio:DoctoralThesis" mode="about">
-  <ddb:identifier ddb:type="URL">
-       <xsl:value-of select="@rdf:about"/>
-  </ddb:identifier>
-  <xsl:choose>
-  <xsl:when test="contains(dcterms:license/@rdf:resource,'creativecommons')">
-    <ddb:rights ddb:kind="free"/>
-  </xsl:when>
-  <xsl:otherwise><ddb:rights ddb:kind="domain"/></xsl:otherwise>
-  </xsl:choose>
-</xsl:template>
-
-<xsl:template match="fabio:JournalArticle" mode="about">
-  <ddb:identifier ddb:type="URL">
-   <xsl:choose>
-     <xsl:when test="fabio:hasURL">
-       <xsl:value-of select="fabio:hasURL"/>
+   <xsl:choose><!-- meta journal -->
+     <xsl:when test="contains(dcterms:source/@rdf:resource,'meta')">
+       <xsl:value-of select="dcterms:source/@rdf:resource"/>
      </xsl:when>
-     <xsl:otherwise>
-       <xsl:value-of select="@rdf:about"/>
-     </xsl:otherwise>
+     <xsl:otherwise><xsl:value-of select="@rdf:about"/></xsl:otherwise>
    </xsl:choose>
   </ddb:identifier>
   <xsl:choose>
@@ -542,10 +503,7 @@
       <ddb:rights ddb:kind="free"/>
   </xsl:when>
   <!-- NLM -->
-  <xsl:when test="contains(dcterms:isPartOf/fabio:JournalIssue/dcterms:license/@rdf:resource,'creativecommons')">
-      <ddb:rights ddb:kind="free"/>
-  </xsl:when>
-  <xsl:when test="contains(@rdf:about,'ep/0002/')">
+  <xsl:when test="contains(dcterms:isPartOf/*/dcterms:license/@rdf:resource,'creativecommons')">
       <ddb:rights ddb:kind="free"/>
   </xsl:when>
   <xsl:otherwise>
@@ -558,5 +516,7 @@
 <xsl:template match="text()"/>
 
 <xsl:template match="*" priority="-1"/>
+<xsl:template match="*" mode="degree" priority="-1"/>
+<xsl:template match="*" mode="about" priority="-1"/>
 
 </xsl:stylesheet>

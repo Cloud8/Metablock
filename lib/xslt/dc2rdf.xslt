@@ -6,7 +6,6 @@
      xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" 
      xmlns:dc="http://purl.org/dc/elements/1.1/" 
      xmlns:dcterms="http://purl.org/dc/terms/"
-     xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
@@ -33,23 +32,9 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
      xmlns:dcterms="http://purl.org/dc/terms/">
-  <xsl:choose>
-  <xsl:when test="contains(dc:type, 'doc-type:')">
-  <xsl:element name="{concat('fabio:',substring-after(dc:type, 'doc-type:'))}">
-    <xsl:attribute name="rdf:about">
-        <xsl:value-of select="dc:identifier"/>
-    </xsl:attribute>
+  <dcterms:BibliographicResource rdf:about="{dc:identifier[starts-with(., 'http')]}">
     <xsl:apply-templates select="*" />
-  </xsl:element>
-  </xsl:when>
-  <xsl:when test="dc:identifier[starts-with(., 'http')]">
-      <dcterms:BibliographicResource rdf:about="{dc:identifier[starts-with(., 'http')]}">
-         <xsl:apply-templates select="*" />
-      </dcterms:BibliographicResource>
-  </xsl:when>
-  <xsl:otherwise>
-  </xsl:otherwise>
-  </xsl:choose>
+  </dcterms:BibliographicResource>
  </rdf:RDF>
 </xsl:template>
 
@@ -125,19 +110,7 @@
 </xsl:template>
 
 <xsl:template match="dc:identifier[1]">
-  <xsl:choose>
-  <xsl:when test="starts-with(. , 'http://')">
-    <dcterms:identifier>
-        <xsl:value-of select="translate(substring-after(substring-after(.,'//'),'/'),'/',':')"/>
-    </dcterms:identifier>
-  </xsl:when>
-  <xsl:when test="starts-with(. , 'urn:')">
-    <dcterms:identifier><xsl:value-of select="."/></dcterms:identifier>
-  </xsl:when>
-  <xsl:otherwise>
-    <dcterms:identifier><xsl:value-of select="."/></dcterms:identifier>
-  </xsl:otherwise>
-  </xsl:choose>
+  <dcterms:identifier><xsl:value-of select="."/></dcterms:identifier>
 </xsl:template>
 
 <xsl:template match="text()"/>

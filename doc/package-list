@@ -1,5 +1,14 @@
+com.simontuffs.onejar
 org.seaview.bayes
 org.seaview.cite
+org.seaview.lex
+org.seaview.main
+org.seaview.opus
 org.seaview.pdf
 org.shanghai.crawl
 org.shanghai.data
+org.shanghai.ojs
+org.shanghai.rdf
+org.shanghai.solr
+org.shanghai.store
+org.shanghai.util

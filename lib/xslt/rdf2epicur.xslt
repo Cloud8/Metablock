@@ -3,22 +3,19 @@
 <xsl:stylesheet
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:dct="http://purl.org/dc/terms/"
-     xmlns:fabio="http://purl.org/spar/fabio/"
+     xmlns:dcterms="http://purl.org/dc/terms/"
      xmlns:urn="http://www.d-nb.de/standards/urn/"
      version="1.0">
 
-<!-- UB Marburg 2013 -->
+<!-- UB Marburg 2013 / 2016 -->
 <xsl:output method="xml" encoding="UTF-8" indent="yes" />
 
 <xsl:template match="rdf:RDF">
- <xsl:apply-templates select="fabio:*" />
+ <xsl:apply-templates select="dcterms:BibliographicResource" />
 </xsl:template>
 
-<!--
-    xmlns:epicur="urn:nbn:de:1111-2004033116"
--->
-<xsl:template match="fabio:*">
+<!-- xmlns:epicur="urn:nbn:de:1111-2004033116" -->
+<xsl:template match="dcterms:BibliographicResource">
  <epicur xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="urn:nbn:de:1111-2004033116"
          xsi:schemaLocation="urn:nbn:de:1111-2004033116 http://www.persistent-identifier.de/xepicur/version1.0/xepicur.xsd">
@@ -31,17 +28,16 @@
 
   <record>
    <identifier scheme="urn:nbn:de">
-      <xsl:value-of select="dct:identifier[starts-with(text(),'urn:')]" />
+      <xsl:value-of select="dcterms:identifier[starts-with(text(),'urn:')]" />
    </identifier>
    <resource>
     <identifier scheme="url" type="frontpage" role="primary">
-     <xsl:choose>
-      <xsl:when test="fabio:hasURL">
-       <xsl:value-of select="fabio:hasURL"/>
-      </xsl:when>
-      <xsl:otherwise>
        <xsl:value-of select="@rdf:about" />
-      </xsl:otherwise>
+     <xsl:choose><!-- meta journal -->
+      <xsl:when test="contains(dcterms:source/@rdf:resource,'meta')">
+       <xsl:value-of select="dcterms:source/@rdf:resource"/>
+      </xsl:when>
+      <xsl:otherwise><xsl:value-of select="@rdf:about" /></xsl:otherwise>
      </xsl:choose>
     </identifier>
     <format scheme="imt">text/html</format>
@@ -51,5 +47,3 @@
 </xsl:template>
 
 </xsl:stylesheet>
-
-

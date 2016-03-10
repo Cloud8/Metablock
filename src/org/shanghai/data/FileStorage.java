@@ -25,13 +25,10 @@ public class FileStorage implements MetaCrawl.Storage {
     private String store; 
     private String suffix;
     private int count = 0;
-    // static private boolean homestore = false;
-    static private boolean force = false;
     static private boolean test = false;
 
-    public FileStorage(String store, boolean force) {
+    public FileStorage(String store) {
         this.store = store;
-        this.force = force;
         this.suffix = ".rdf";
         log("FileStorage [" + store + "]");
     }
@@ -74,7 +71,7 @@ public class FileStorage implements MetaCrawl.Storage {
 		    return false;
         }
 		Path parent = path.getParent();
-        if (parent!=null && !Files.isDirectory(parent) && force) {
+        if (parent!=null && !Files.isDirectory(parent)) {
             FileUtil.mkdir(parent);
         }
         boolean b = ModelUtil.write(path, rc);
@@ -132,6 +129,10 @@ public class FileStorage implements MetaCrawl.Storage {
         
         //if (test) log("first path " + path);
         String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
+        if (rc.hasProperty(RDF.type, DCTerms.BibliographicResource)
+            && rc.hasProperty(DCTerms.type)) {
+            name = rc.getPropertyResourceValue(DCTerms.type).getLocalName();
+        }
         int slash = rc.getURI().lastIndexOf("/");
         int dot = rc.getURI().lastIndexOf(".");
         if (name.equals("JournalArticle") && slash>0) {

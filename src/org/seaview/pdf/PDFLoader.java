@@ -412,21 +412,35 @@ public class PDFLoader implements Analyzer {
             pdfaid.setAbout("");
 
             XMPSchemaDublinCore dc = xmp.addDublinCoreSchema();
-            dc.setTitle(info.getTitle());
-            dc.addCreator(info.getAuthor());
-            dc.addSubject(info.getSubject());
-            dc.setDescription(info.getSubject());
+            if (info.getTitle()!=null) {
+			    dc.setTitle(info.getTitle());
+			}
+            if (info.getAuthor()!=null) {
+			    dc.addCreator(info.getAuthor());
+			}
+            if (info.getSubject()!=null) {
+			    dc.addSubject(info.getSubject());
+                dc.setDescription(info.getSubject());
+		    }
             //dc.addContributor("Contributor");
             //dc.setCoverage("coverage");
             //dc.addLanguage("language");
             //dc.setCoverage("coverage");
             //dc.setFormat("format");
             XMPSchemaPDF pdf = xmp.addPDFSchema();
-            pdf.setKeywords(info.getKeywords());
-            pdf.setProducer(info.getProducer());
+			if (info.getKeywords()!=null) {
+                pdf.setKeywords(info.getKeywords());
+			}
+			if (info.getProducer()!=null) {
+                pdf.setProducer(info.getProducer());
+			}
             XMPSchemaBasic basic = xmp.addBasicSchema();
-            basic.setCreateDate(info.getCreationDate());
-            basic.setModifyDate(info.getModificationDate());
+			if (info.getCreationDate()!=null) {
+                basic.setCreateDate(info.getCreationDate());
+			}
+			if (info.getModificationDate()!=null) {
+                basic.setModifyDate(info.getModificationDate());
+			}
 
             metadata.importXMPMetadata(xmp.asByteArray());
         } catch (IOException e) { log(e); }

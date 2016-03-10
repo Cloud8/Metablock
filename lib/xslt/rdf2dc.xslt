@@ -4,7 +4,6 @@
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
      xmlns:dcterms="http://purl.org/dc/terms/"
-     xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
@@ -13,7 +12,7 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:dc="http://purl.org/dc/elements/1.1/"
      xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
-     exclude-result-prefixes="rdf dcterms fabio foaf aiiso skos ore"
+     exclude-result-prefixes="rdf dcterms foaf aiiso skos ore"
      version="1.0" >
 
 <xsl:output method="xml" standalone="yes" encoding="UTF-8" indent="yes" />
@@ -21,11 +20,11 @@
 <xsl:template match="rdf:RDF">
  <oai_dc:dc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
-    <xsl:apply-templates select="fabio:*" />
+    <xsl:apply-templates select="dcterms:BibliographicResource" />
  </oai_dc:dc>
 </xsl:template>
 
-<xsl:template match="fabio:*">
+<xsl:template match="dcterms:BibliographicResource">
   <xsl:comment> Dublin Core Transformer UB Marburg 2015 </xsl:comment>
   <xsl:apply-templates select="dcterms:title[not(@xml:lang)]"/>
   <xsl:apply-templates select="dcterms:title[@xml:lang]"/>
@@ -35,7 +34,7 @@
 
   <xsl:apply-templates select="dcterms:publisher"/>
   <xsl:if test="count(dcterms:publisher)=0">
-  <xsl:apply-templates select="dcterms:isPartOf/fabio:*/dcterms:publisher"/>
+  <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:publisher"/>
   </xsl:if>
   <xsl:apply-templates select="dcterms:contributor"/>
 
@@ -50,21 +49,11 @@
   <xsl:apply-templates select="dcterms:format"/>
   -->
 
-  <xsl:choose>
-  <xsl:when test="fabio:hasDOI">
-      <xsl:apply-templates select="fabio:hasDOI"/>
-  </xsl:when>
-  <xsl:when test="dcterms:XXidentifier">
-      <xsl:apply-templates select="dcterms:identifier"/>
-  </xsl:when>
-  <xsl:otherwise>
-      <xsl:apply-templates select="." mode="about" />
-  </xsl:otherwise>
-  </xsl:choose>
-
   <xsl:apply-templates select="dcterms:source"/>
   <xsl:apply-templates select="dcterms:language"/> 
   <xsl:apply-templates select="dcterms:rights"/> 
+
+  <dc:identifier><xsl:value-of select="@rdf:about"/></dc:identifier>
 </xsl:template>
 
 <xsl:template match="dcterms:title[not(@xml:lang)]">
@@ -135,7 +124,7 @@
 </xsl:template>
 
 <xsl:template match="dcterms:publisher[@rdf:resource]">
-  <xsl:apply-templates select="../dcterms:isPartOf/fabio:*/dcterms:publisher"/>
+  <xsl:apply-templates select="../dcterms:isPartOf/*/dcterms:publisher"/>
 </xsl:template>
 
 <xsl:template match="dcterms:publisher">
@@ -191,10 +180,6 @@
   <dc:identifier><xsl:value-of select="."/></dc:identifier>
 </xsl:template>
 
-<xsl:template match="fabio:hasDOI">
-  <dc:identifier><xsl:value-of select="concat('http://dx.doi.org/',.)"/></dc:identifier>
-</xsl:template>
-
 <xsl:template match="dcterms:language">
  <xsl:variable name="lang">
    <xsl:call-template name="getlang">
@@ -206,29 +191,7 @@
  </dc:language>
 </xsl:template>
 
-<!--
-<xsl:template match="dcterms:isPartOf/fabio:JournalIssue/fabio:hasIdentifier">
- <dcterms:isPartOf xsi:type="ddb:Erstkat-ID">
-     <xsl:value-of select="."/>
- </dcterms:isPartOf>
-</xsl:template>
--->
-
-<xsl:template match="dcterms:isPartOf/fabio:JournalIssue/dcterms:title">
- <dc:isPartOf><xsl:value-of select="."/></dc:isPartOf>
-</xsl:template>
-
-<xsl:template match="dcterms:isPartOf/fabio:Periodical">
- <xsl:if test="../../fabio:hasSequenceIdentifier and dcterms:title">
-   <dc:isPartOf>
-     <xsl:value-of select="concat(dcterms:title,' ; ',
-                                  ../../fabio:hasSequenceIdentifier)"/>
-   </dc:isPartOf>
- </xsl:if>
- <xsl:apply-templates select="fabio:hasISSN"/>
-</xsl:template>
-
-<xsl:template match="dcterms:isPartOf/fabio:Periodical/fabio:hasISSN">
+<xsl:template match="dcterms:isPartOf/*/dcterms:title">
  <dc:isPartOf><xsl:value-of select="."/></dc:isPartOf>
 </xsl:template>
 
@@ -238,10 +201,6 @@
 
 <xsl:template match="dcterms:rights[not(@rdf:resource)]">
   <dc:rights><xsl:value-of select="."/></dc:rights>
-</xsl:template>
-
-<xsl:template match="fabio:*" mode="about">
-  <dc:identifier><xsl:value-of select="@rdf:about"/></dc:identifier>
 </xsl:template>
 
 <!-- suppress emptyness -->

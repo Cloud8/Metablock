@@ -140,38 +140,10 @@ public class XMLTransformer {
         params.put(name, value);
     }
 
-    // public Resource transform(Resource rc) {
-    //     Model model = rc.getModel();
-    //     String data = asString(model);
-    //     String rdf = _transform(data);
-    //     model = asModel(rdf);
-    //     return model.getResource(rc.getURI());
-    // }
-
-    //cheap transformer
-    //public String transform( Model model ) {
-    //    return _transform( asString(model) );
-    //}
-
     //cheap transformer
     public String transform( Resource rc ) {
         return _transform( asString(rc) );
     }
-
-    // public Resource transform(Document doc, String uri) {
-    //     Document rdf = _transformDoc(doc);
-    //     Model model = ModelUtil.createModel();
-    //     try {
-    //         DOM2Model.createD2M(uri, model).load(rdf);
-    //     } catch( SAXParseException e ) { log(e); }
-    //     return model.getResource(uri);
-    // }
-
-    // public Resource transform(Document doc, String uri) {
-    //     String rdf = _transform(doc);
-    //     Model model = asModel(rdf);
-    //     return model.getResource(uri);
-    // }
 
     public Resource transform(Document doc) {
         String rdf = _transform(doc);

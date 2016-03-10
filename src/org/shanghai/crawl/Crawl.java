@@ -123,10 +123,9 @@ public class Crawl {
                 fc.inject(new TrivialScanner().create());
             }
             if (suffix.contains(".nlm")) {
-                String server = config.get("ojs.server");
                 String xslt = config.get("files.nlm");
                 String schema = config.get("schema.urn");
-                fc.inject(new NLMScanner(server, xslt, schema).create());
+                fc.inject(new NLMScanner(xslt, schema).create());
                 log("injected NLMScanner " + xslt);
             }
             if (suffix.contains(".txt")) {
@@ -208,20 +207,10 @@ public class Crawl {
             storage.create();
         } else if (store.startsWith("files")) {
             String directory = config.get("files.docbase");
-            //if (source.equals("oai")) { // write model files to oai archive
-            //    String archive = config.getOAIList().get(oai_counter).archive;
-            //    if (archive!=null) {
-            //        directory = config.getOAIList().get(oai_counter).archive;
-            //    }
-            //} 
-            boolean force = config.getBool("files.force");
             if (store.contains(":")) {
                 directory = store.substring(store.indexOf(":")+1);
-                if (store.equals("files:data")) {
-                    force = true;
-                }
             }
-            storage = new FileStorage(directory, force);
+            storage = new FileStorage(directory);
             storage.create();
         } else if ("empty".equals(store)) {
             storage = new EmptyStorage();

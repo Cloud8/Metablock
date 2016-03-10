@@ -12,7 +12,7 @@ lib/%.class: src/%.java
 	@echo $<
 	@javac $(JOPTS) -cp src:$(CPATH) -d lib $<
 
-default: lib/seaview.jar
+default: metablock.jar
 
 compile: $(CLASS) 
 

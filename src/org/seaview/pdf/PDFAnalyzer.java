@@ -161,9 +161,11 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         if (!rc.hasProperty(DCTerms.type) 
             && rc.hasProperty(RDF.type, DCTerms.BibliographicResource)) {
 			if (pl.size<30) {
-			    rc.addProperty(DCTerms.type, "Article");
+                String type = "http://purl.org/spar/fabio/Article";
+			    rc.addProperty(DCTerms.type, rc.getModel().createResource(type));
 			} else {
-			    rc.addProperty(DCTerms.type, "Book");
+                String type = "http://purl.org/spar/fabio/Book";
+			    rc.addProperty(DCTerms.type, rc.getModel().createResource(type));
 			}
 		}
 

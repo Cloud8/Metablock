@@ -2,10 +2,9 @@
 <xsl:stylesheet
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:dct="http://purl.org/dc/terms/"
+     xmlns:dcterms="http://purl.org/dc/terms/"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
-     xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:ore="http://www.openarchives.org/ore/terms/"
      version="1.0">
 
@@ -13,7 +12,7 @@
 
 <xsl:template match="rdf:RDF">
  <rdf:RDF>
-  <xsl:apply-templates select="fabio:*" />
+  <xsl:apply-templates select="dcterms:BibliographicResource" />
  </rdf:RDF>
 </xsl:template>
 

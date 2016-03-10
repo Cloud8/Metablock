@@ -42,13 +42,10 @@ import java.util.logging.Logger;
   */
 public class ArchiveAnalyzer implements Analyzer {
 
-    private static final String fabio = "http://purl.org/spar/fabio/";
-
     private Path store;
     private Language language;
     private int count;
     private HashMap<String,String> hash;
-    private Property hasURL;
 
     public ArchiveAnalyzer(String store) {
         this.store = Paths.get(store);
@@ -100,8 +97,8 @@ public class ArchiveAnalyzer implements Analyzer {
         if (store==null) { // no writes from here
             // log("analyze " + id + " " + rc.getURI());
         } else { 
-            hasURL = rc.getModel().createProperty(fabio, "hasURL");
 	        b = writeParts(store, rc); // write article
+            // b = true ; // write issue only
             if (b && sub!=null && !hash.containsKey(sub.getURI())) {
                 b = writeParts(store, sub); // write issue
                 if (b) hash.put(sub.getURI(), sub.getURI());
@@ -143,18 +140,19 @@ public class ArchiveAnalyzer implements Analyzer {
 		    return b;
 		}
         String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
+        if (name.equals("BibliographicResource")) {
+            name = rc.getPropertyResourceValue(DCTerms.type).getLocalName();
+        }
 
         if (Files.isRegularFile(path.resolveSibling("index.html"))) {
             //log(" file exists: index.html"); 
-            //String url = rc.getProperty(hasURL).getString();
-        } else if (rc.hasProperty(hasURL)) {
-            String url = rc.getProperty(hasURL).getString();
+        } else if (rc.hasProperty(DCTerms.source)) {
+            String url = rc.getProperty(DCTerms.source).getResource().getURI();
             FileUtil.mkdir(path.getParent());
             FileUtil.copy(url, path.resolveSibling("index.html"));
             if (url.length()>32 && rc.getURI().length()>32 && 
                 url.substring(0,32).equals(rc.getURI().substring(0,32))) {
                 log("remove " + url);
-                rc.removeAll(hasURL); // all the same
             }
         }
 
@@ -170,12 +168,13 @@ public class ArchiveAnalyzer implements Analyzer {
                                    .getProperty(RDFS.label).getString();
                 if (name.startsWith("Journal") && format.contains("pdf")) {
 				    String pdf = fname.substring(0, fname.indexOf(".rdf")) + ".pdf";
-                    Path base = store.relativize(path.resolveSibling(pdf));
+                    //Path base = store.relativize(path.resolveSibling(pdf));
                     if (Files.isRegularFile(path.resolveSibling(pdf))) {
-                        //log(path.resolveSibling(pdf) + " " + format); 
+                        //log(" file exists: " + pdf); 
 				    } else {
+                        //log("write " + obj.getURI() + " to " + pdf);
+                        FileUtil.mkdir(path.getParent());
                         FileUtil.copy(obj.getURI(), path.resolveSibling(pdf));
-                        //log("wrote " + path.resolveSibling(pdf));
 				    }
                     hash.put(obj, rc.getURI() + "/" + pdf);
                 } else {
@@ -187,6 +186,7 @@ public class ArchiveAnalyzer implements Analyzer {
 
         for(Map.Entry<Resource, String> entry : hash.entrySet()) {
             Resource obj = entry.getKey();
+            //log("rename " + obj.getURI() + " to " + entry.getValue());
             obj = ResourceUtils.renameResource(obj, entry.getValue()); 
         }
         hash.clear();
@@ -198,7 +198,7 @@ public class ArchiveAnalyzer implements Analyzer {
 		if (rc.hasProperty(FOAF.img)) {
 		    String source = rc.getProperty(FOAF.img).getString();
             if (Files.isRegularFile(path.resolveSibling(cover))) {
-                log(" file exists: " + cover); 
+                // log(" file exists: " + cover); 
 			} else {
                 FileUtil.copy(source, path.resolveSibling(cover));
 			}

@@ -4,7 +4,6 @@ import java.util.logging.Logger;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop
     @title Command Line Interface for the Shanghai RDF Indexer
     @date 2013-03-01
 */
@@ -137,7 +136,7 @@ public class Main {
             } 
             System.out.println("configured by " + args[1]);
         } else {
-            myself = new Main("lib/seaview.ttl");
+            myself = new Main("lib/metablock.ttl");
         }
         myself.index(args);
     }

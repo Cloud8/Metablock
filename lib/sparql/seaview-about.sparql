@@ -21,7 +21,7 @@ construct {
     ?e ?f ?g .
     ?g ?h ?i .
     ?i ?j ?k .
-} where { # GRAPH <http://semantic.repository.de> 
+} where { 
     {
       <subject> ?b ?c .
       optional {

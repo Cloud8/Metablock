@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet 
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-     xmlns:dct="http://purl.org/dc/terms/"
+     xmlns:dcterms="http://purl.org/dc/terms/"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-     xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:nlm="http://dtd.nlm.nih.gov/publishing/2.3"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -13,12 +12,12 @@
 
 <!-- see dspace config/crosswalks/QDC.properties -->
 <xsl:template match="/">
-  <xsl:apply-templates select="rdf:RDF/fabio:*"/>
+  <xsl:apply-templates select="rdf:RDF/dcterms:BibliographicResource"/>
 </xsl:template>
 
-<xsl:template match="/rdf:RDF/fabio:*[dct:identifier]">
+<xsl:template match="/rdf:RDF/dcterms:BibliographicResource[dcterms:identifier]">
   <item>
-    <xsl:apply-templates select="dct:*"/>
+    <xsl:apply-templates select="dcterms:*"/>
     <metadata>
       <language>de_DE</language>
       <value><xsl:value-of select="@rdf:about"/></value>
@@ -27,12 +26,12 @@
   </item>
 </xsl:template>
 
-<xsl:template match="dct:creator">
+<xsl:template match="dcterms:creator">
   <xsl:apply-templates select="foaf:Person"/>
   <xsl:apply-templates select="rdf:Seq/rdf:li/foaf:Person"/>
 </xsl:template>
 
-<xsl:template match="dct:creator/foaf:Person">
+<xsl:template match="dcterms:creator/foaf:Person">
   <metadata>
     <language>de_DE</language>
     <value><xsl:value-of select="foaf:name"/></value>
@@ -40,7 +39,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:creator/rdf:Seq/rdf:li/foaf:Person">
+<xsl:template match="dcterms:creator/rdf:Seq/rdf:li/foaf:Person">
   <metadata>
     <language>de_DE</language>
     <value><xsl:value-of select="foaf:name"/></value>
@@ -48,7 +47,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:identifier">
+<xsl:template match="dcterms:identifier">
   <metadata>
     <language>de_DE</language>
     <value><xsl:value-of select="."/></value>
@@ -56,7 +55,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:abstract[@xml:lang='de']">
+<xsl:template match="dcterms:abstract[@xml:lang='de']">
   <metadata>
     <language>de_DE</language>
     <value><xsl:value-of select="."/></value>
@@ -64,7 +63,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:abstract[@xml:lang='en']">
+<xsl:template match="dcterms:abstract[@xml:lang='en']">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="."/></value>
@@ -72,7 +71,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:created">
+<xsl:template match="dcterms:created">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="."/></value>
@@ -80,7 +79,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:issued">
+<xsl:template match="dcterms:issued">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="concat(.,'T08:18:27Z')"/></value>
@@ -88,7 +87,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:dateAccepted">
+<xsl:template match="dcterms:dateAccepted">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="concat(.,'T08:18:27Z')"/></value>
@@ -96,7 +95,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:title[@xml:lang='de']">
+<xsl:template match="dcterms:title[@xml:lang='de']">
   <metadata>
     <language>de_DE</language>
     <value><xsl:value-of select="."/></value>
@@ -104,7 +103,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:title[@xml:lang='en']">
+<xsl:template match="dcterms:title[@xml:lang='en']">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="."/></value>
@@ -112,14 +111,14 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:title[not(@xml:lang)]">
+<xsl:template match="dcterms:title[not(@xml:lang)]">
   <metadata>
     <value><xsl:value-of select="."/></value>
     <key>dc.title</key>
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:type">
+<xsl:template match="dcterms:type">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="."/></value>
@@ -127,11 +126,11 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:contributor">
+<xsl:template match="dcterms:contributor">
   <xsl:apply-templates select="foaf:Person"/>
 </xsl:template>
 
-<xsl:template match="dct:contributor/foaf:Person">
+<xsl:template match="dcterms:contributor/foaf:Person">
   <metadata>
     <language>de_DE</language>
     <value><xsl:value-of select="foaf:name"/></value>
@@ -139,7 +138,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:format">
+<xsl:template match="dcterms:format">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="."/></value>
@@ -147,7 +146,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:language">
+<xsl:template match="dcterms:language">
   <metadata>
     <language>en_US</language>
     <value><xsl:value-of select="."/></value>
@@ -155,11 +154,11 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:publisher">
+<xsl:template match="dcterms:publisher">
  <xsl:apply-templates select="foaf:Organization"/>
 </xsl:template>
 
-<xsl:template match="dct:publisher/foaf:Organization">
+<xsl:template match="dcterms:publisher/foaf:Organization">
   <metadata>
     <language>de_DE</language>
     <value><xsl:value-of select="foaf:name"/></value>
@@ -167,7 +166,7 @@
   </metadata>
 </xsl:template>
 
-<xsl:template match="dct:*">
+<xsl:template match="dcterms:*">
 </xsl:template>
 
 <xsl:template match="@*|node()" priority="-1">

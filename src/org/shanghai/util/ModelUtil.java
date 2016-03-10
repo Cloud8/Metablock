@@ -43,13 +43,9 @@ public final class ModelUtil {
         model.setNsPrefix("dcterms", "http://purl.org/dc/terms/");
         model.setNsPrefix("dctypes", "http://purl.org/dc/dcmitype/");
         model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
-        model.setNsPrefix("fabio", "http://purl.org/spar/fabio/");
         model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
         model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
         model.setNsPrefix("void", "http://rdfs.org/ns/void#");
-        model.setNsPrefix("c4o", "http://purl.org/spar/c4o/");
-        model.setNsPrefix("prism", "http://prismstandard.org/namespaces/basic/2.1/");
-        model.setNsPrefix("bibo", "http://purl.org/ontology/bibo/");
         return model;
     }
 
@@ -129,7 +125,7 @@ public final class ModelUtil {
         while (si.hasNext()) {
             String literal = si.nextStatement().getString();
             if (literal.startsWith(prefix)) {
-                id = literal;
+                id = literal.substring(prefix.length());;
                 break;
             }
         }

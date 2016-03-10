@@ -7,47 +7,54 @@
      xmlns:dctypes="http://purl.org/dc/dcmitype/"
      xmlns:nlm="http://dtd.nlm.nih.gov/publishing/2.3"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
-     xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:xlink="http://www.w3.org/1999/xlink"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
      version="1.0" >
 
 <!--
-  /** @license http://www.apache.org/licenses/LICENSE-2.0
-    * @title NLM to RDF Transformer
-    * @date 2014-06-05
-   **/ -->
+ /** @license http://www.apache.org/licenses/LICENSE-2.0
+   * @title NLM to RDF Transformer
+   * @date 2014-06-05
+ **/ 
+ -->
 
 <xsl:output method="xml" encoding="UTF-8" indent="yes"/>
-
-<xsl:param name="uri" select="'http://example.com/'"/>
-<xsl:param name="base" select="nlm:article/nlm:front/nlm:article-meta"/>
-<xsl:param name="year" 
-         select="$base/nlm:pub-date[@pub-type='collection']/nlm:year"/>
-<xsl:param name="seq" select="$base/nlm:issue-id[@pub-id-type='other']"/>
-<xsl:param name="aid" select="$base/nlm:article-id[@pub-id-type='other']"/>
 
 <xsl:template match="/">
   <xsl:apply-templates select="*" />
 </xsl:template>
 
 <xsl:template match="nlm:article">
- <xsl:param name="uri" select="$uri"/>
+  <xsl:apply-templates select="nlm:front" />
+</xsl:template>
+
+<xsl:template match="nlm:article/nlm:front">
+  <xsl:param name="year" select="
+       nlm:article-meta/nlm:pub-date[@pub-type='collection']/nlm:year"/>
+  <xsl:param name="seq" select="
+       nlm:article-meta/nlm:issue-id[@pub-id-type='other']"/>
+  <xsl:param name="aid" select="
+       nlm:article-meta/nlm:article-id[@pub-id-type='other']"/>
+  <xsl:param name="uri" select="substring-before(
+       nlm:article-meta/nlm:self-uri/@xlink:href,'/article')"/>
+
  <rdf:RDF>
-   <fabio:JournalArticle rdf:about="{concat($uri,'/',$year,'/',$seq,'/',$aid)}">
-    <xsl:apply-templates select="nlm:front/nlm:journal-meta">
+   <dcterms:BibliographicResource rdf:about="{concat($uri,'/',$year,'/',$seq,'/',$aid)}">
+    <xsl:apply-templates select="nlm:journal-meta">
+        <xsl:with-param name="uri" select="$uri"/>
+        <xsl:with-param name="seq" select="$seq"/>
+        <xsl:with-param name="year" select="$year"/>
+    </xsl:apply-templates>
+    <xsl:apply-templates select="nlm:article-meta">
         <xsl:with-param name="uri" select="$uri"/>
     </xsl:apply-templates>
-    <xsl:apply-templates select="nlm:front/nlm:article-meta">
-        <xsl:with-param name="uri" select="$uri"/>
-    </xsl:apply-templates>
-   </fabio:JournalArticle>
+   </dcterms:BibliographicResource>
  </rdf:RDF>
 </xsl:template>
 
 <xsl:template match="nlm:article-meta">
     <xsl:param name="uri"/>
-    <dcterms:type><xsl:value-of select="'article'"/></dcterms:type>
+    <dcterms:type rdf:resource="http://purl.org/spar/fabio/JournalArticle"/>
     <xsl:apply-templates select="nlm:title-group"/>
     <xsl:apply-templates select="nlm:contrib-group">
         <xsl:with-param name="uri" select="$uri"/>
@@ -76,7 +83,7 @@
 </xsl:template>
 
 <xsl:template match="nlm:self-uri[@content-type='application/pdf'][@xlink:href]">
-  <fabio:hasURL><xsl:value-of select="@xlink:href"/></fabio:hasURL>
+  <dcterms:source rdf:resource="{@xlink:href}"/>
   <dcterms:hasPart>
     <dctypes:Text rdf:about="{concat(substring-before(@xlink:href,
                    'view'), 'download',substring-after(@xlink:href,'view'))}">
@@ -99,9 +106,8 @@
 <xsl:template match="nlm:article-meta/nlm:title-group/nlm:trans-title">
   <xsl:variable name="smallcase" select="'abcdefghijklmnopqrstuvwxyz'" />
   <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
-  <dcterms:language>
-      <xsl:value-of select="translate(@xml:lang,$uppercase,$smallcase)"/>
-  </dcterms:language>
+  <dcterms:language rdf:resource="{concat('http://www.lexvo.org/id/iso639-1/',
+                        translate(@xml:lang,$uppercase,$smallcase))}"/>
 </xsl:template>
 
 <xsl:template match="nlm:article-categories">
@@ -204,8 +210,11 @@
 
 <xsl:template match="nlm:journal-meta">
  <xsl:param name="uri"/>
+ <xsl:param name="seq"/>
+ <xsl:param name="year"/>
   <dcterms:isPartOf>
-    <fabio:JournalIssue rdf:about="{concat($uri,'/',$year,'/',$seq)}">
+    <dcterms:BibliographicResource rdf:about="{concat($uri,'/',$year,'/',$seq)}">
+      <dcterms:type rdf:resource="http://purl.org/spar/fabio/JournalIssue"/>
       <xsl:choose>
       <xsl:when 
         test="../nlm:article-meta/nlm:volume and ../nlm:article-meta/nlm:issue">
@@ -228,22 +237,22 @@
       <xsl:apply-templates select="../nlm:article-meta/nlm:issue-title"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:issue-id"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:pub-date"/>
-      <dcterms:type><xsl:value-of select="'PeriodicalPart'"/></dcterms:type>
-      <xsl:apply-templates select="nlm:issn"/>
       <xsl:apply-templates select="nlm:publisher">
         <xsl:with-param name="uri" select="$uri"/>
       </xsl:apply-templates>
       <dcterms:isPartOf>
-        <fabio:Journal rdf:about="{$uri}">
+        <dcterms:BibliographicResource rdf:about="{$uri}">
+          <dcterms:type rdf:resource="http://purl.org/spar/fabio/Journal"/>
           <xsl:apply-templates select="nlm:journal-title"/>
-        </fabio:Journal>
+        </dcterms:BibliographicResource>
       </dcterms:isPartOf>
-  </fabio:JournalIssue>
+  </dcterms:BibliographicResource>
  </dcterms:isPartOf>
 </xsl:template>
 
 <xsl:template match="nlm:journal-meta/nlm:journal-id">
   <xsl:comment><xsl:value-of select="."/></xsl:comment>
+  <xsl:apply-templates select="../nlm:issn"/>
 </xsl:template>
 
 <xsl:template match="nlm:journal-meta/nlm:journal-title">
@@ -251,34 +260,31 @@
 </xsl:template>
 
 <xsl:template match="nlm:journal-meta/nlm:issn">
-  <fabio:hasISSN><xsl:value-of select="."/></fabio:hasISSN>
+  <dcterms:identifier>
+    <xsl:value-of select="concat('issn:',.)"/>
+  </dcterms:identifier>
 </xsl:template>
 
 <xsl:template match="nlm:article-meta/nlm:volume">
-  <fabio:hasVolumeIdentifier>
-    <xsl:value-of select="."/>
-  </fabio:hasVolumeIdentifier>
-</xsl:template>
-
-<!-- internal ojs issue identifier -->
-<xsl:template match="nlm:article-meta/nlm:issue-id">
-  <fabio:hasIssueIdentifier>
-    <xsl:value-of select="."/>
- </fabio:hasIssueIdentifier>
+  <dcterms:identifier>
+    <xsl:value-of select="concat('vol:',.)"/>
+  </dcterms:identifier>
 </xsl:template>
 
 <!-- issue sequence number -->
-<xsl:template match="nlm:article-meta/nlm:issue[@seq]">
-  <fabio:hasSequenceIdentifier>
-    <xsl:value-of select="."/>
- </fabio:hasSequenceIdentifier>
+<xsl:template match="nlm:article-meta/nlm:issue">
+  <xsl:if test="count(../nlm:volume)=0">
+    <dcterms:identifier>
+      <xsl:value-of select="concat('vol:',.)"/>
+    </dcterms:identifier>
+  </xsl:if>
 </xsl:template>
 
 <!-- internal article identifier -->
 <xsl:template match="nlm:article-meta/nlm:article-id[@pub-id-type='other']">
-  <fabio:hasIdentifier>
+  <dcterms:identifier>
     <xsl:value-of select="concat('ojs:',.)"/>
- </fabio:hasIdentifier>
+  </dcterms:identifier>
 </xsl:template>
 
 <xsl:template match="nlm:article-meta/nlm:issue-title">
@@ -286,7 +292,9 @@
 </xsl:template>
 
 <xsl:template match="nlm:article-meta/nlm:article-id[@pub-id-type='doi']">
-  <fabio:hasDOI><xsl:value-of select="."/></fabio:hasDOI>
+  <dcterms:identifier>
+    <xsl:value-of select="concat('http://dx.doi.org/',.)"/>
+  </dcterms:identifier>
 </xsl:template>
 
 <xsl:template match="nlm:pub-date[@pub-type='collection']">
