@@ -97,12 +97,12 @@
   The sparql queries and xslt transformations used so far are rather general, 
   but modelling of bibliographic resources may vary and require modification.  </p>
 
-<p>All configurations are done in turtle (see lib/seaview.ttl)</p>
+<p>All configurations are done in turtle (see lib/metablock.ttl)</p>
 
 <h5>
 <a id="rdf-crawling" class="anchor" href="#rdf-crawling" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>RDF Crawling</h5>
 
-<p>RDF data sources configured in <em>lib/seaview.ttl</em> can be tested with</p>
+<p>RDF data sources configured in <em>lib/metablock.ttl</em> can be tested with</p>
 
 <pre><code>java -jar metablock.jar -s [source] -t [target] -test
 </code></pre>
@@ -132,21 +132,18 @@
 
 <ol>
 <li>
-<p>Index a directory of PDF files, extract metadata and write to VuFind:</p>
+<p>Index a directory of PDF files, enable pdf engine to extract metadata 
+  and write to VuFind:</p>
 
 <pre><code>java -jar metablock.jar -crawl -s files -t solr1 -e pdf Documents
 </code></pre>
-
-<p>The -e switch enables the configured metadata extractor.</p>
 </li>
 <li>
-<p>Write DSpace metadata to a virtuoso triplestore:</p>
+<p>Write DSpace metadata from DSpace REST API to Virtuoso triplestore 
+  (experimental):</p>
 
 <pre><code>java -jar metablock.jar -crawl -s dspace -t virt
 </code></pre>
-
-<p>This utilizes the DSpace REST API and needs a properly configured
-repository (Experimental).</p>
 </li>
 <li>
 <p>Crawl OAI sources to a jena TDB store:</p>
@@ -161,6 +158,8 @@ repository (Experimental).</p>
 </code></pre>
 </li>
 </ol>
+
+<hr>
 
 <hr>
       </section>
