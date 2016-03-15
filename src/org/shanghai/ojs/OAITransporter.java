@@ -112,7 +112,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
             uri = uri.endsWith("/oai")?uri.substring(0,uri.length()-4):uri;
             transformer.setParameter("uri", uri);
         }
-        testFile = settings.test;
+        testFile = settings.test==null?"data/oai-test.xml":settings.test;
         urn.create();
     }
 
@@ -240,6 +240,7 @@ public class OAITransporter implements MetaCrawl.Transporter {
         }
         // make DCTerms.identifier
         rc = NLMScanner.analyze(rc, urn);
+        if (dump) dump(rc, xml, true);
         return rc;
     }
 
@@ -328,16 +329,25 @@ public class OAITransporter implements MetaCrawl.Transporter {
     }
 
     private void dump(Resource rc, String xml) {
+        dump(rc, xml, false);
+    }
+
+    private void dump(Resource rc, String xml, boolean test) {
         String date = rc.getProperty(DCTerms.issued).getString();
         String suffix = ".xml";
         if ("nlm".equals(settings.prefix)) {
             suffix = ".nlm";
         }
         Path path = FileStorage.getPath(settings.archive, rc, suffix);
-        log("dump to " + path);
-        FileUtil.mkdir(path.getParent());
-        FileUtil.write(path, xml);
-        FileUtil.touch(path, date);
+        if (test) {
+            path = path.resolveSibling("ojs-"+path.getName(path.getNameCount()-1));
+            log("will dump to " + path + " [" + date + "]");
+        } else {
+            log("dump to " + path);
+            FileUtil.mkdir(path.getParent());
+            FileUtil.write(path, xml);
+            FileUtil.touch(path, date);
+        }
     }
 
     static {

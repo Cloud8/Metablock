@@ -705,8 +705,14 @@
       <field name="id"><xsl:value-of select="dcterms:identifier"/></field>
    </xsl:when>
   </xsl:choose>
+
   <xsl:choose>
    <xsl:when test="dcterms:hasPart"><!--parts have their own urls--></xsl:when>
+   <xsl:when test="dcterms:source[@rdf:resource]"><!-- OJS issues-->
+      <field name="url">
+             <xsl:value-of select="dcterms:source/@rdf:resource"/>
+      </field>
+   </xsl:when>
    <xsl:otherwise>
       <field name="url"><xsl:value-of select="@rdf:about"/></field>
    </xsl:otherwise>

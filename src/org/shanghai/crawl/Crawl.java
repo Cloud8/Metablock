@@ -137,7 +137,8 @@ public class Crawl {
             //settings.urn_prefix = config.get("schema.urn");
             //transporter = new OAITransporter(settings);
             //transporter.create();
-            transporter = new OAITransporterList(config.getOAIList());
+            transporter = new OAITransporterList(
+                config.getOAIList(), config.get("schema.urn"));
             transporter.create();
         } else if (crawl.equals("void")) {
             transporter = new VoidTransporter();

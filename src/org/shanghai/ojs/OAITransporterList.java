@@ -28,14 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
-/*
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-*/
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -50,11 +42,12 @@ public class OAITransporterList implements MetaCrawl.Transporter {
     private int index;
     private int mark;
     private int count;
-    //private List<String> results = new ArrayList<String>();
+    private String urn_schema;
     private Map<String,Integer> map = new HashMap<String,Integer>();
 
-    public OAITransporterList(List<Config.OAI> config) {
+    public OAITransporterList(List<Config.OAI> config, String urn_schema) {
         this.config =  config;
+        this.urn_schema = urn_schema;
     }
 
     @Override
@@ -62,6 +55,7 @@ public class OAITransporterList implements MetaCrawl.Transporter {
         index = 0;
 	    oais = new ArrayList<MetaCrawl.Transporter>();
         for (Config.OAI conf : config) {
+            conf.urn_prefix=conf.urn_prefix==null?urn_schema:conf.urn_prefix;
 		    MetaCrawl.Transporter oai = new OAITransporter(conf);
 			oai.create();
 		    oais.add(oai);

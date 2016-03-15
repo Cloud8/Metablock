@@ -40,11 +40,11 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
   The sparql queries and xslt transformations used so far are rather general, 
   but modelling of bibliographic resources may vary and require modification.  
 
-  All configurations are done in turtle (see lib/seaview.ttl)
+  All configurations are done in turtle (see lib/metablock.ttl)
 
 ##### RDF Crawling
 
-  RDF data sources configured in *lib/seaview.ttl* can be tested with
+  RDF data sources configured in *lib/metablock.ttl* can be tested with
 
     java -jar metablock.jar -s [source] -t [target] -test
 
@@ -68,19 +68,16 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
 
 ##### Examples
 
-   1. Index a directory of PDF files, extract metadata and write to VuFind:
+   1. Index a directory of PDF files, enable pdf engine to extract metadata 
+      and write to VuFind:
 
         java -jar metablock.jar -crawl -s files -t solr1 -e pdf Documents
 
-   The -e switch enables the configured metadata extractor.
-  
-   2. Write DSpace metadata to a virtuoso triplestore:
+   2. Write DSpace metadata from DSpace REST API to Virtuoso triplestore 
+      (experimental):
    
         java -jar metablock.jar -crawl -s dspace -t virt
 
-   This utilizes the DSpace REST API and needs a properly configured
-   repository (Experimental).
-  
    3. Crawl OAI sources to a jena TDB store:
 
         java -jar metablock.jar -crawl -s oai -t tdb
@@ -88,6 +85,7 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
    4. Build a search index for a TDB triple store
 
         java -jar metablock.jar -crawl -s tdb -t solr1
+
 
 
 ------------------------------------------------------------------------

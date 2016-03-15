@@ -80,7 +80,7 @@
 
   <!-- 29 Hochschulschrift ist Teil von -->
   <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:identifier[starts-with(text(),'zdb:')]"/>
-  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title"/>
+  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title[contains(text(),../../../dcterms:created)]"/>
   <!-- 39 Recht -->
   <xsl:apply-templates select="dcterms:rights"/> 
   <!-- 41 Akademischer Grad -->
@@ -258,11 +258,11 @@
 <xsl:template match="dcterms:abstract[not(@xml:lang)]">
   <xsl:variable name="lang">
    <xsl:call-template name="getlang">
-    <xsl:with-param name="input" select="../dcterms:language"/>
+    <xsl:with-param name="input" select="substring-after(../dcterms:language/@rdf:resource,'http://www.lexvo.org/id/iso639-1/')"/>
    </xsl:call-template>
   </xsl:variable>
  <dcterms:abstract xsi:type="ddb:contentISO639-2" lang="{$lang}">
-    <xsl:value-of select="."/>
+    <xsl:value-of select="normalize-space(.)"/>
  </dcterms:abstract>
 </xsl:template>
 
@@ -385,6 +385,8 @@
  </dc:language>
 </xsl:template>
 
+<!-- old -->
+<!--
 <xsl:template match="dcterms:language[not(@rdf:resource)]">
  <xsl:variable name="lang">
    <xsl:call-template name="getlang">
@@ -395,6 +397,7 @@
     <xsl:value-of select="$lang"/>
  </dc:language>
 </xsl:template>
+-->
 
 <!-- 
  dcterms:isPartOf: mit Hilfe diese Elementes wird die Verknüpfung von Lieferung
@@ -415,7 +418,7 @@
  </dcterms:isPartOf>
 </xsl:template>
 
-<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title">
+<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title[contains(text(),../../../dcterms:created)]">
  <dcterms:isPartOf xsi:type="ddb:ZS-Ausgabe">
      <xsl:value-of select="."/>
  </dcterms:isPartOf>

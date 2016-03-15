@@ -54,6 +54,9 @@ public class FileStorage implements MetaCrawl.Storage {
 		boolean b = false;
         Path path = getPath(store, rc);
 		b = Files.exists(path);
+        if (store.endsWith(".rdf")) {
+            b = ModelUtil.write(path, rc);
+        }
         log("test: " + path + " " + b + " [" + store + "]");
         return b;
     }
@@ -92,6 +95,7 @@ public class FileStorage implements MetaCrawl.Storage {
 
     // used by OAITransporter
     public static Path getPath(String store, Resource rc, String suffix) {
+    /*
         Path path = getMaster(store, rc);
         if (path==null) {
             return path;
@@ -104,11 +108,12 @@ public class FileStorage implements MetaCrawl.Storage {
         } 
         //if (test) log("plain path: " + path);
         path = path.resolveSibling(path.getName(path.getNameCount()-1)+suffix);
-        if (test) log("path: " + path);
+        //if (test) log("path: " + path);
         return path;
-    }
+        }
 
-    private static Path getMaster(String store, Resource rc) {
+        private static Path getMaster(String store, Resource rc) {
+    */
 	    Path path = null;
         if (rc.getURI().startsWith("file:///")) {
             path = Paths.get(rc.getURI().substring(7));
@@ -120,6 +125,7 @@ public class FileStorage implements MetaCrawl.Storage {
             return path;
         } else if (store.endsWith(".rdf")) {
             path = Paths.get(store);
+            return path;
         } else if (rc.getURI().length()<7) {
             log("bad resource " + rc.getURI());
         } else {
@@ -127,7 +133,7 @@ public class FileStorage implements MetaCrawl.Storage {
             path = Paths.get(store);
         }
         
-        //if (test) log("first path " + path);
+        if (test) log("first path " + path);
         String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
         if (rc.hasProperty(RDF.type, DCTerms.BibliographicResource)
             && rc.hasProperty(DCTerms.type)) {
@@ -143,6 +149,8 @@ public class FileStorage implements MetaCrawl.Storage {
             path = path.resolve("about");
         }
         //if (test) log("master path " + path);
+        path = path.resolveSibling(path.getName(path.getNameCount()-1)+suffix);
+        //if (test) log("final path: " + path);
 		return path;
     }
 
