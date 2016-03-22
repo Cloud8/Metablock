@@ -21,6 +21,5 @@ commit:
 	git merge --no-edit -s ours remotes/doc/gh-pages
 
 push:
-	pit push doc master:gh-pages
- 	git push doc master:gh-pages
+	git push doc master:gh-pages
 
