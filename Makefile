@@ -17,6 +17,7 @@ init:
 
 sync:
 	rsync -av --delete ../../autobib/dlib/doc/ doc
+	rsync -av --delete ../../autobib/book/09Readme.txt Readme.md
 
 commit:
 	git add --all
@@ -25,4 +26,5 @@ commit:
 
 push:
 	git push doc master:gh-pages
+	git Readme.md doc master:gh-pages
 

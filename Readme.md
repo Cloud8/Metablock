@@ -86,11 +86,18 @@ Step 1. and 2. need a SPARQL query, step 3 works with XSLT. <br/>
 
         java -jar metablock.jar -crawl -s tdb -t solr1
 
-##### Javadoc Documentation
-  
-  [Javadoc](http://cloud8.github.io/Metablock/doc) is available online.
-   
 
+##### Javadoc Documentation
+
+  [Javadoc](http://cloud8.github.io/Metablock/doc) is available online.
+
+
+
+%% ### Collaboration
+%% 
+%% We're *open to pull requests*! If you'd like to collaborate, offer feedback, 
+%% know better english or better code, feel free to make use of the issues 
+%% section on this github repository.
 
 ------------------------------------------------------------------------
 
