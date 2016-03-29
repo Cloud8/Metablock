@@ -34,6 +34,11 @@ import org.grobid.core.engines.config.GrobidAnalysisConfig;
 import org.grobid.core.lang.Language;
 import org.grobid.core.exceptions.GrobidException;
 
+/**
+    @license http://www.apache.org/licenses/LICENSE-2.0
+    @title Wrapper to use Grobid for metadata / reference extrcation
+    @date 2015-05-08
+ */
 public class Grobid extends AbstractExtractor {
 
     private boolean doTitle;
@@ -232,7 +237,9 @@ public class Grobid extends AbstractExtractor {
                 Resource ref = mod.createResource(uri, DCTerms.BibliographicResource);
                 ref = inject(ref, DCTerms.bibliographicCitation, raw);
                 ref = inject(ref, DCTerms.title, title);
-                ref = inject(ref, DCTerms.identifier, "ref:" + symbol);
+                if (symbol!=null) {
+                    ref = inject(ref, DCTerms.identifier, "ref:" + symbol);
+                }
                 List<String> authors = new ArrayList<String>();
                 if (bd.getFullAuthors()!=null) {
                     int index = 1;

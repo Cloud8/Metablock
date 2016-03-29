@@ -49,8 +49,11 @@ import java.net.MalformedURLException;
 import java.lang.IllegalArgumentException;
 import com.google.common.collect.Lists;
 
-/*
-  see : cermine-impl/src/main/java/pl/edu/icm/cermine/RDFGenerator.java
+/**
+    @license http://www.apache.org/licenses/LICENSE-2.0
+    @title Wrapper to use CERMINE for metadata / reference extrcation
+    @date 2015-05-08
+    see : cermine-impl/src/main/java/pl/edu/icm/cermine/RDFGenerator.java
  */
 public class Cermine extends AbstractExtractor {
 

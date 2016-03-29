@@ -176,7 +176,10 @@ public class MetaCrawl {
         return found;
     }
 
-    /** crawl this resource */
+    /** crawl this resource 
+        @param id the resource identifier
+        @return the number of successfully written resources
+     */
     public int crawl(String id) {
         //log("crawl (" + id + ") " + create);
         boolean b = true;

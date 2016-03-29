@@ -3,6 +3,10 @@ package org.seaview.cite;
 import java.util.logging.Logger;
 import java.util.Random;
 
+/**
+   @title Dummy Classifier for Sentiment Analysis
+   @date 2016-01-03
+ */
 public class ClassifierZero implements RefSentiment.Classifier {
 
     private String modelFile;

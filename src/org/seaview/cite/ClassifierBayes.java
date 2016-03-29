@@ -17,10 +17,9 @@ import java.util.Arrays;
 import org.seaview.bayes.BayesClassifier;
 import org.seaview.bayes.Classifier;
 
-/*
- * @title Naive Bayes Sentiment analysis
- * @author Götz Hatop
- * @date 2016-01-03
+/**
+   @title Naive Bayes Sentiment analysis
+   @date 2016-01-03
  */
 public class ClassifierBayes implements RefSentiment.Classifier {
 

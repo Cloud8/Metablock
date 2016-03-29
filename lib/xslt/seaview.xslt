@@ -63,7 +63,7 @@
 </xsl:template>
 
 <xsl:template match="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]">
-  <field name="doi_str"><xsl:value-of select="."/></field>
+  <field name="doi_str_mv"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- TITLE -->
@@ -222,7 +222,14 @@
 
 <!-- LANGUAGE -->
 <xsl:template match="dcterms:language[@rdf:resource]">
- <xsl:variable name="lang"><xsl:call-template name="getlang"/></xsl:variable>
+ <xsl:call-template name="language">
+   <xsl:with-param name="lang" select="substring-after(
+    ../dcterms:language/@rdf:resource, 'http://www.lexvo.org/id/iso639-1/')"/>
+ </xsl:call-template>
+</xsl:template>
+
+<xsl:template name="language" match="dcterms:language[not(@rdf:resource)]">
+ <xsl:param name="lang" select="."/>
  <field name="language">
   <xsl:choose>
    <xsl:when test="$lang='de'">German</xsl:when>
@@ -373,6 +380,9 @@
     <field name="oai_set_str_mv">
         <xsl:value-of select="concat('doc-type:','book')"/>
     </field>
+  </xsl:when>
+  <xsl:when test="$type='Article'">
+    <field name="format"><xsl:value-of select="'Article'"/></field>
   </xsl:when>
   <xsl:otherwise>
     <field name="format"><xsl:value-of select="'Work'"/></field>

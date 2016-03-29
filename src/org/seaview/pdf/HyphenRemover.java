@@ -104,7 +104,11 @@ public class HyphenRemover {
         return dehyphenate;
     }
 
-    /** Removes ligatures, multiple spaces and hypens from a text file */
+    /** Removes ligatures, multiple spaces and hypens from a text file 
+        @param reader The reader for the lines
+        @param docId A document identifier
+        @return The dehyphenated string
+      */
     public static String dehyphenate(LineNumberReader reader, String docId) {
 
         String line;
@@ -148,7 +152,11 @@ public class HyphenRemover {
         return sb.toString();
     }
 
-    /** Removes ligatures, multiple spaces and hypens from a text file */
+    /** Removes ligatures, multiple spaces and hypens from a text file 
+        @param text The text to treat
+        @param docId A document identifier
+        @return The dehyphenated string
+    */
     public static String dehyphenate(String text, String docId) {
         return dehyphenate(new LineNumberReader(new StringReader(text)), docId);
     }

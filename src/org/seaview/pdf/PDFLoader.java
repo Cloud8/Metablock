@@ -41,7 +41,6 @@ import org.apache.pdfbox.preflight.ValidationResult.ValidationError;
 import javax.activation.FileDataSource;
 import javax.xml.transform.TransformerException;
 import org.apache.jempbox.xmp.XMPMetadata;
-//import org.apache.jempbox.impl.XMLUtil;
 import org.apache.jempbox.xmp.pdfa.XMPSchemaPDFAId;
 import org.apache.jempbox.xmp.XMPSchemaDublinCore;
 import org.apache.jempbox.xmp.XMPSchemaPDF;
@@ -69,6 +68,11 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.logging.Logger;
 
+/**
+    @license http://www.apache.org/licenses/LICENSE-2.0
+    @title Load PDF files with Apache PDFBox
+    @date 2014-05-18
+ */
 public class PDFLoader implements Analyzer {
 
     private PDDocument document;
@@ -500,7 +504,7 @@ public class PDFLoader implements Analyzer {
         return Paths.get(path);
     }
 
-    /** used by Cover Topic */
+    /* used by Cover Topic */
     public String getPath(Resource rc, String suffix) {
         String path = getPath(rc);
         if (path==null) {

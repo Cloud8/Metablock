@@ -26,10 +26,22 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
-/*
- * @author Götz Hatop
- * @title Citation Sentiment Analysis
- * @date 2016-01-03
+/**
+   @title Citation Sentiment Analysis
+   @date 2016-01-03
+   @abstract Determine citation sentiment (experimental).
+             This class can be used to train a citation sentiment classifier.
+             The file format used for training and testing is that from
+             InProceedings{athar:2011:SS,
+              author    = {Athar, Awais},
+              title     = {Sentiment Analysis of Citations using Sentence Structure-Based Features},
+              booktitle = {Proceedings of the ACL 2011 Student Session},
+              month     = {June},
+              year      = {2011},
+              address   = {Portland, OR, USA},
+              publisher = {Association for Computational Linguistics},
+              pages     = {81--87},
+              url       = {http://www.aclweb.org/anthology/P11-3015}
  */
 public class RefSentiment extends RefAnalyzer implements Analyzer {
 
@@ -123,15 +135,13 @@ public class RefSentiment extends RefAnalyzer implements Analyzer {
         String fname = rc.getURI();
         if (fname.startsWith("file://")) {
             log("test " + fname.substring(7));
-            //test(fname.substring(7), true); // train
-            //test(fname.substring(7), false); // test
             test(fname.substring(7)); // train && test
         } 
         return rc;
     }
 
-    /** learn from the first 80% of the data, use the last 20% for testing 
-        for efficiency, separating test and training data is useful,
+    /** learn from the first 80% of the data, use the last 20% for testing. 
+        For efficiency, separating test and training data may be useful,
         this is for simplicity and to gain a rough understanding of
         training data.
      */

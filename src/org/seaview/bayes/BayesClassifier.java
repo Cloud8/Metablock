@@ -115,6 +115,7 @@ public class BayesClassifier<T, K> extends Classifier<T, K> implements Serializa
      * Classifies the given set of features. and return the full details of the
      * classification.
      *
+     * @param features The features
      * @return The set of categories the set of features is classified as.
      */
     public Collection<Classification<T, K>> classifyDetailed(

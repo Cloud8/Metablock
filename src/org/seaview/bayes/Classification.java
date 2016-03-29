@@ -65,7 +65,7 @@ public class Classification<T, K> implements Serializable {
 
     /**
      * Retrieves the classification's probability.
-     * @return
+     * @return the classification's probability.
      */
     public float getProbability() {
         return this.probability;

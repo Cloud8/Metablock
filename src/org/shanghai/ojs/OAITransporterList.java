@@ -16,7 +16,6 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Seq;
 import org.apache.jena.vocabulary.DCTerms;
-import org.apache.jena.sparql.vocabulary.FOAF;
 
 import java.io.InputStream;
 import java.nio.file.Path;

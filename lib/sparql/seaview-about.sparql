@@ -2,17 +2,17 @@ PREFIX  rdf:   <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX  dcterms:   <http://purl.org/dc/terms/>
 PREFIX  dctypes: <http://purl.org/dc/dcmitype/>
 PREFIX  foaf:  <http://xmlns.com/foaf/0.1/>
-PREFIX  fabio: <http://purl.org/spar/fabio/>
 PREFIX  aiiso: <http://purl.org/vocab/aiiso/schema#>
-PREFIX  frbr: <http://purl.org/vocab/frbr/core#>
-PREFIX  pica: <http://localhost/view/>
-PREFIX  daia: <http://purl.org/ontology/daia/>
-PREFIX  pro: <http://purl.org/spar/pro/>
-PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
-PREFIX  prism: <http://prismstandard.org/namespaces/basic/2.0/>
-PREFIX  cito: <http://purl.org/spar/cito/>
-PREFIX  ore: <http://www.openarchives.org/ore/terms/>
 PREFIX  void: <http://rdfs.org/ns/void#>
+# PREFIX  fabio: <http://purl.org/spar/fabio/>
+# PREFIX  frbr: <http://purl.org/vocab/frbr/core#>
+# PREFIX  pica: <http://localhost/view/>
+# PREFIX  daia: <http://purl.org/ontology/daia/>
+# PREFIX  pro: <http://purl.org/spar/pro/>
+# PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
+# PREFIX  prism: <http://prismstandard.org/namespaces/basic/2.0/>
+# PREFIX  cito: <http://purl.org/spar/cito/>
+# PREFIX  ore: <http://www.openarchives.org/ore/terms/>
 
 ## six levels of hierarchy
 construct {

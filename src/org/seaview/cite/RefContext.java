@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop
     @title Citation Context Finder
     @date 2015-06-02
     @abstract Simple citation context finder without learning machinery

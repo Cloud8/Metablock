@@ -95,25 +95,6 @@ public class FileStorage implements MetaCrawl.Storage {
 
     // used by OAITransporter
     public static Path getPath(String store, Resource rc, String suffix) {
-    /*
-        Path path = getMaster(store, rc);
-        if (path==null) {
-            return path;
-        } else if (store==null) {
-            return path;
-        } else if (store.endsWith(".rdf")) {
-            return path;
-        } else if (path.endsWith(".rdf")) {
-            return path;
-        } 
-        //if (test) log("plain path: " + path);
-        path = path.resolveSibling(path.getName(path.getNameCount()-1)+suffix);
-        //if (test) log("path: " + path);
-        return path;
-        }
-
-        private static Path getMaster(String store, Resource rc) {
-    */
 	    Path path = null;
         if (rc.getURI().startsWith("file:///")) {
             path = Paths.get(rc.getURI().substring(7));

@@ -26,9 +26,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.net.MalformedURLException;
 
-/*
+/**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop
     @title AbstractExtractor for pdf files
     @date 2015-05-08
  */
@@ -68,7 +67,9 @@ public class AbstractExtractor {
         return null;
     }
 
-    /** reject a reference to limit false positives */
+    /** @param raw The raw reference string
+        @return True, if the reference string is bad
+        reject a reference to limit false positives */
     protected boolean reject(String raw) {
         if (raw.replaceAll("\\s","").contains("....")) {
             return true;
@@ -119,7 +120,7 @@ public class AbstractExtractor {
         return rc;
     }
 
-    /** inject property only, if it does not exist already */
+    /* inject property only, if it does not exist already */
     protected Resource inject(Resource rc, Property prop , String val) {
        if (val==null) {
            return rc;
@@ -197,7 +198,7 @@ public class AbstractExtractor {
 		return null;
     }
 
-    /** no stinking parser */
+    /* no stinking parser */
     protected String getDoi(String raw) {
 	    int x = raw.indexOf("doi:");
         x=x<0?raw.indexOf("DOI:"):x;

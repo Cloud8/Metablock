@@ -24,9 +24,9 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import java.util.logging.Logger;
 
-/*
+/**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @title Reference extractor for pdf files
+    @title Reference and Bibliographic Metadata extractor for PDF files
     @date 2015-05-08
  */
 public class PDFAnalyzer implements MetaCrawl.Analyzer {

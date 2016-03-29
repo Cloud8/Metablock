@@ -30,9 +30,7 @@ import java.util.logging.Logger;
 import java.nio.file.Paths;
 
 /**
-    (c) reserved.
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop
     @title Inserts isReferencedBy statements into referenced Resource
     @date 2015-05-27
 */

@@ -2,8 +2,11 @@ package org.shanghai.rdf;
 
 import org.shanghai.util.FileUtil;
 
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+//import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
+//import org.apache.solr.client.solrj.impl.HttpSolrServer;
+//import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.client.solrj.request.DirectXmlRequest;
@@ -31,7 +34,7 @@ import org.apache.solr.core.CoreContainer;
 */
 public class SolrPost {
 
-    protected SolrServer server;
+    protected SolrClient client;
     private String solr;
 
     public SolrPost(String solr) {
@@ -39,13 +42,15 @@ public class SolrPost {
     }
 
     public void create() {
-        server = new HttpSolrServer(solr);
+        //server = new HttpSolrServer(solr);
+        //server = new CommonsHttpSolrServer(solr);
+        client = new HttpSolrClient(solr);
     }
 
     public void dispose() {
         log("solr commit");
         try {
-          server.commit();
+          client.commit();
         } catch(SolrServerException e) { log(e); }
           catch(IOException e) { log(e); }
     }
@@ -55,7 +60,7 @@ public class SolrPost {
         q.setRows(0); // don't actually request any data
         boolean b = false;
         try {
-            long found = server.query(q).getResults().getNumFound();
+            long found = client.query(q).getResults().getNumFound();
             b = (found!=0L);
         } catch(SolrServerException e) { log(e); }
         finally {
@@ -70,7 +75,7 @@ public class SolrPost {
            return b;
        try {
            DirectXmlRequest up = new DirectXmlRequest( "/update", data );
-           server.request( up ); 
+           client.request( up ); 
            b=true;
         } catch(SolrServerException e) {/*log(e);*/log(data.substring(0,512));}
           catch(IOException e) { log(e); }
@@ -88,7 +93,7 @@ public class SolrPost {
         }
         //log("delete [" + id + "] [" + delete + "]");
         try {
-            server.deleteByQuery(delete);
+            client.deleteByQuery(delete);
             b=true;
         } catch(IOException e) { log(e); }
           catch(SolrServerException e) { log(e); }
@@ -107,7 +112,7 @@ public class SolrPost {
         doc.addField(field, oper);
         b = true;
         try {
-            server.add(doc);
+            client.add(doc);
         } catch(SolrServerException e) { log(e); }
           catch(IOException e) { log(e); }
          finally {
@@ -117,7 +122,7 @@ public class SolrPost {
 
     public void destroy() {
         try {
-          server.deleteByQuery( "*:*" );
+          client.deleteByQuery( "*:*" );
         } catch(SolrServerException e) { log(e); }
         catch(IOException e) { log(e); }
     }

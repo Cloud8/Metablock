@@ -28,8 +28,7 @@ import java.io.IOException;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop 
-   @title PDF Cover Page
+   @title PDF Cover Page Creator
    @date 2013-03-25
  */
 public class Cover implements Analyzer {

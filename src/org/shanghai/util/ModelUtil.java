@@ -8,6 +8,10 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.DCTypes;
+import org.apache.jena.vocabulary.SKOS;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.sparql.vocabulary.FOAF;
 
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -39,12 +43,12 @@ public final class ModelUtil {
     public static Model prefix(Model model) {
         if (model==null) return model;
         for(int i=0; i<9; i++) model.removeNsPrefix("ns"+i);
-        model.setNsPrefix("rdf", "http://www.w3.org/1999/02/22-rdf-syntax-ns#");
-        model.setNsPrefix("dcterms", "http://purl.org/dc/terms/");
-        model.setNsPrefix("dctypes", "http://purl.org/dc/dcmitype/");
-        model.setNsPrefix("foaf", "http://xmlns.com/foaf/0.1/");
+        model.setNsPrefix("rdf", RDF.uri);
+        model.setNsPrefix("dcterms", DCTerms.NS);
+        model.setNsPrefix("dctypes", DCTypes.NS);
+        model.setNsPrefix("skos", SKOS.uri);
+        model.setNsPrefix("foaf", FOAF.NS);
         model.setNsPrefix("aiiso", "http://purl.org/vocab/aiiso/schema#");
-        model.setNsPrefix("skos", "http://www.w3.org/2004/02/skos/core#");
         model.setNsPrefix("void", "http://rdfs.org/ns/void#");
         return model;
     }

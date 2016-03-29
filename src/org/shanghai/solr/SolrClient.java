@@ -1,7 +1,7 @@
 package org.shanghai.solr;
 
 import org.shanghai.rdf.SolrPost;
-import org.apache.solr.client.solrj.SolrServer;
+//import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.request.DirectXmlRequest;
@@ -14,6 +14,7 @@ import org.apache.solr.common.SolrDocument;
 import java.util.logging.Logger;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.IOException;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
@@ -24,15 +25,15 @@ import java.util.ArrayList;
 public class SolrClient {
 
     public class MySolrPost extends SolrPost {
-        public SolrServer server;
+        public org.apache.solr.client.solrj.SolrClient client;
         public MySolrPost(String solr) {
             super(solr);
         }
         @Override
         public void create() {
             super.create();
-            this.server = super.server;
-            log("MySolrPost.create exposes server! ");
+            this.client = super.client;
+            log("MySolrPost.create exposes client! ");
         }
     }
 
@@ -62,8 +63,9 @@ public class SolrClient {
         try {
             SolrQuery q = new SolrQuery(query);
             q.setRows(0); // don't actually request any data
-            return solrPost.server.query(q).getResults().getNumFound();
+            return solrPost.client.query(q).getResults().getNumFound();
         } catch(SolrServerException e) { log(e); }
+          catch(IOException e) { log(e); }
         return 0;
     }
 
@@ -84,7 +86,7 @@ public class SolrClient {
         solrQuery.setRows(1);
         solrQuery.setQuery(query);
         try {
-            QueryResponse rsp = solrPost.server.query( solrQuery );
+            QueryResponse rsp = solrPost.client.query( solrQuery );
             SolrDocumentList docs = rsp.getResults();
             sdoc = docs.get(0);
         } catch(SolrServerException e) { log(e); log(oid);}
@@ -110,7 +112,7 @@ public class SolrClient {
         query.setQuery("uri_str:*");
         query.setRows(fetchSize);
         try {
-            QueryResponse rsp = solrPost.server.query(query);
+            QueryResponse rsp = solrPost.client.query(query);
 
             long offset = 0;
             long totalResults = rsp.getResults().getNumFound();
@@ -120,7 +122,7 @@ public class SolrClient {
                 query.setStart((int) offset);  // requires an int? wtf?
                 query.setRows(fetchSize);
 
-                for (SolrDocument doc : solrPost.server.query(query).getResults())
+                for (SolrDocument doc : solrPost.client.query(query).getResults())
                 {
                      count++;
                      if (off<count && found<limit) {
@@ -138,6 +140,7 @@ public class SolrClient {
                 offset += fetchSize;
             }
         } catch(SolrServerException e) { log(e); }
+          catch(IOException e) { log(e); }
         return result;
     }
 

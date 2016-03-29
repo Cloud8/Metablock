@@ -36,10 +36,9 @@ import edu.stanford.nlp.util.CoreMap;
 import edu.stanford.nlp.util.Generics;
 import edu.stanford.nlp.sentiment.SentimentCoreAnnotations;
 
-/*
- * @title Stanford Sentiment analysis
- * @date 2015-12-16
- *
+/**
+   @title Stanford Sentiment analysis
+   @date 2015-12-16
  */
 public class ClassifierStanford implements RefSentiment.Classifier {
 
