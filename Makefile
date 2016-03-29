@@ -26,5 +26,5 @@ commit:
 
 push:
 	git push doc master:gh-pages
-	git Readme.md doc master:gh-pages
+	git push Readme.md master:gh-pages
 
