@@ -78,14 +78,14 @@ public class Config {
         return create(in);
     }
 
-    public Config create(InputStream in) {
+    public Config create(InputStream is) {
 		try {
             model = ModelUtil.createModel();
 		} catch(java.lang.ExceptionInInitializerError e) {
 		    log("Config: " + e.getCause());
             e.printStackTrace();
 		}
-        model.read(in, SH, "TURTLE");
+        model.read(is, SH, "TURTLE");
         return this;
     }
 

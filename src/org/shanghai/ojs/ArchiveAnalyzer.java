@@ -74,7 +74,7 @@ public class ArchiveAnalyzer implements Analyzer {
     @Override
     public Resource analyze(Resource rc) {
         Resource sub = null;
-        String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
+        String name = rc.getPropertyResourceValue(DCTerms.type).getLocalName();
         if (name.equals("JournalArticle")) {
             if (rc.hasProperty(DCTerms.language)) {
                 // good.
@@ -152,7 +152,7 @@ public class ArchiveAnalyzer implements Analyzer {
             FileUtil.copy(url, path.resolveSibling("index.html"));
             if (url.length()>32 && rc.getURI().length()>32 && 
                 url.substring(0,32).equals(rc.getURI().substring(0,32))) {
-                log("remove " + url);
+                //log("remove " + url);
             }
         }
 
@@ -200,7 +200,7 @@ public class ArchiveAnalyzer implements Analyzer {
             if (Files.isRegularFile(path.resolveSibling(cover))) {
                 // log(" file exists: " + cover); 
 			} else {
-                FileUtil.copy(source, path.resolveSibling(cover));
+                FileUtil.copyIfExists(source, path.resolveSibling(cover));
 			}
             rc.removeAll(FOAF.img);
 		}

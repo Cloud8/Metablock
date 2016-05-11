@@ -1,5 +1,6 @@
 package org.seaview.pdf;
 
+import org.seaview.pdf.SimpleCover;
 import org.shanghai.util.Language;
 import org.shanghai.util.FileUtil;
 import org.shanghai.util.ModelUtil;
@@ -38,7 +39,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
     private boolean refs;
     private int threshold;
     private PDFLoader pl;
-    private Cover cover;
+    private SimpleCover cover;
     private AbstractExtractor extractor;
     private Language language;
     public int count;
@@ -85,7 +86,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         if (pl==null) {
             pl = new PDFLoader();
         }
-        cover = new Cover(pl);
+        cover = new SimpleCover(pl);
         cover.create();
         language.create();
         pl.create();
@@ -136,7 +137,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
 
         cover.analyze(rc);
         language.analyze(rc);
-        makeTEI(rc); 
+        // makeTEI(rc); 
 
         return rc;
     }
@@ -151,7 +152,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
             threshold = MONOTHRESHOLD;
             return pl.maltreat(3, 0.70); // pages 0-3 and 30 % from the tail 
         } else {
-            return pl.getPath(rc);
+            return pl.getPath(rc, ".pdf");
         }
     }
 
@@ -195,7 +196,8 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
             rc.addProperty(DCTerms.created, pl.getDate().substring(0,4));
         }
 
-        if (!rc.hasProperty(DCTerms.abstract_)) {
+        // GH201605 : suppressed
+        if (false && !rc.hasProperty(DCTerms.abstract_)) {
             if (extractor.getClass().getSimpleName().equals("Grobid")) {
                 log("trying secondary abstract extractor");
                 Cermine cermine = new Cermine(true, false);
@@ -225,10 +227,12 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
 
     private void makeTEI(Resource rc) {
         String tei = pl.getPath(rc, ".tei");
-        if (FileUtil.exists(tei)) {
+        if (tei==null) {
+            //
+        } else if (FileUtil.exists(tei)) {
             //
         } else {
-            String pdf = pl.getPath(rc);
+            String pdf = pl.getPath(rc, ".pdf");
             String content = extractor.getTEI(pdf);
             if (content==null) {
                 log("no TEI from: " + extractor.getClass().getSimpleName());

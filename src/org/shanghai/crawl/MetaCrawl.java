@@ -113,13 +113,12 @@ public class MetaCrawl {
     }
 
     public String probe() {
-        if (transporter==null 
-        || transporter.getClass().getSimpleName().equals("EmptyTransporter")) {
-            String result = this.getClass().getSimpleName();
-            for (Analyzer a : analyzers) result += " " + a.probe();
-            return result;
+        StringBuilder sb = new StringBuilder();
+        sb.append(transporter.probe());
+        for (Analyzer a : analyzers) {
+            sb.append(" # ").append(a.probe());
         }
-        return(transporter.probe());
+        return(sb.toString());
     }
 
     public void test() {
@@ -171,7 +170,7 @@ public class MetaCrawl {
         start = System.currentTimeMillis();
         int found = transporter.index(source);
         end = System.currentTimeMillis();
-        log("index [" + source + "] " + found + " items in " 
+        if (found>1) log("index [" + source + "] " + found + " items in " 
                      + (end - start)/1000 + " sec.");
         return found;
     }

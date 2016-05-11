@@ -18,12 +18,12 @@ import org.shanghai.ojs.OJSTransporter;
 import org.shanghai.ojs.NLMScanner;
 import org.shanghai.data.SourceScanner;
 import org.shanghai.data.FileScanner;
+import org.shanghai.util.FileUtil;
 
 import java.util.logging.Logger;
 
 /**
    @license http://www.apache.org/licenses/LICENSE-2.0
-   @author Goetz Hatop 
    @title The Crawler API
    @date 2013-02-23
    @abstract Creates Transporter and Storage and starts crawling 
@@ -40,7 +40,6 @@ public class Crawl {
     protected String source;
     protected String target;
     protected String engine;
-    //private int oai_counter;
 
     public Crawl(Config config) {
         this.config = config;
@@ -82,9 +81,9 @@ public class Crawl {
         } else {
             int logC = config.getInt("crawl.count");
             boolean create = true; // insert statements
-            if (engine!=null && engine.contains("del")) {
-                create = false; // update: delete before insert
-            }
+            //if (engine!=null && engine.contains("del")) {
+            //    create = false; // update: delete before insert
+            //}
             if (storage==null) {
                 createStorage(target);
             } if (storage==null) {
@@ -95,7 +94,7 @@ public class Crawl {
         }
     }
 
-    public void createTransporter(String crawl) {
+    public MetaCrawl.Transporter createTransporter(String crawl) {
         if (crawl.contains("files")) {
             source = "files"; // make parent understand
             String suffix = config.get("files.suffix");
@@ -147,14 +146,17 @@ public class Crawl {
             transporter = new EmptyTransporter();
 			transporter.create();
         } else if (crawl.startsWith("ojs")) {
-            String[] db = {
-                     config.get("ojs.dbhost"), config.get("ojs.dbase"),
-                     config.get("ojs.dbuser"), config.get("ojs.dbpass")};
-            String[] idx = { config.get("ojs.enum"), config.get("ojs.dump"),
-                     config.get("ojs.transporter") };
+            String[] db = { config.get("ojs.dbhost"), config.get("ojs.dbase"),
+                config.get("ojs.dbuser"), config.get("ojs.dbpass")};
+            String[] idx = { config.get("ojs.articles"), 
+                config.get("ojs.articlesd"), config.get("ojs.transporter") };
+            String[] iss = { config.get("ojs.issues"), 
+                config.get("ojs.issuesd"), config.get("ojs.transporter") };
+            String[] jrn = { config.get("ojs.journals"), 
+                config.get("ojs.journalsd"), config.get("ojs.transporter") };
             String[] srv = { config.get("ojs.server"),
-                     config.get("ojs.docbase"), config.get("schema.urn")};
-            transporter = new OJSTransporter(db, idx, srv);
+                config.get("files.docbase"), config.get("schema.urn")};
+            transporter = new OJSTransporter(db, idx, iss, jrn, srv);
             transporter.create();
         } else {
             String store = config.get(crawl+".sparql");
@@ -177,6 +179,7 @@ public class Crawl {
                 transporter.create();
             }
         }
+        return transporter;
     }
 
     public MetaCrawl.Storage createStorage(String store) {
@@ -221,7 +224,12 @@ public class Crawl {
             storage.create();
         } else if (store.startsWith("dump")) {
             String dumpFile = config.get("crawl.test");
-            storage = new DumpStorage(dumpFile);
+            if (store.startsWith("dump:")) {
+                String xslt = FileUtil.read(store.substring(5));
+                storage = new DumpStorage(dumpFile, xslt);
+            } else {
+                storage = new DumpStorage(dumpFile);
+            }
             storage.create();
         } else {
             log("No storage! [" + store + "]");
@@ -230,11 +238,12 @@ public class Crawl {
     }
 
     public void probe() {
-        createTransporter(source);
-        crawler = new MetaCrawl(transporter,testFile);
-        crawler.create();
+        //createTransporter(source);
+        //crawler = new MetaCrawl(transporter,testFile);
+        //crawler.create();
+        createCrawler();
         log(crawler.probe());
-        crawler.dispose();
+        //crawler.dispose();
     }
 
     public void test() {
@@ -255,7 +264,6 @@ public class Crawl {
         } else {
             crawler.test(transporter.getIdentifiers(0,1).get(0));
         }
-        //crawler.dispose();
     }
 
     public void test(String from, String until) {
@@ -332,11 +340,13 @@ public class Crawl {
 
     private void crawl(String resource) {
         int found = crawler.index(resource);
-        log("crawl #" + found + " " + resource);
+        log("crawl # " + found + " [" + resource + "] " + source);
         if (found==0) {
             found = crawler.crawl(resource);
-        } else {
+        } else if (found>0) {
             found = crawler.crawl();
+        } else {
+            log("crawl # " + found + " blocked.");
         }
     }
 

@@ -129,9 +129,7 @@ public class DBTransporter implements MetaCrawl.Transporter {
         String query = index.replace("<offset>",Integer.toString(off))
                             .replace("<count>",Integer.toString(count));
         List<String> res = database.getColumn(query, count);
-        if (res.size()<count) {
-            res.add((String)null);
-        }
+        //if (res.size()<count) res.add((String)null);
         //log(query + " # " + off + " " + count + " " + res.size());
         return res;
     }

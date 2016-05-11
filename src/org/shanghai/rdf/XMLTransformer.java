@@ -1,6 +1,7 @@
 package org.shanghai.rdf;
 
 import org.shanghai.util.ModelUtil;
+import org.shanghai.util.FileUtil;
 
 import java.util.Iterator;
 import java.util.logging.Logger;
@@ -17,6 +18,8 @@ import java.io.UnsupportedEncodingException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import javax.xml.parsers.SAXParser;
@@ -101,6 +104,11 @@ public class XMLTransformer {
         this.xslt = xslt;
     }
 
+    //public XMLTransformer(InputStream is) {
+    //    this();
+    //    xslt = FileUtil.read(is);
+    //}
+
     public void create() {
         factory = ((SAXTransformerFactory) TransformerFactory.newInstance());
         factory.setErrorListener(new MyErrorListener());
@@ -154,16 +162,10 @@ public class XMLTransformer {
 
     public Resource transform(String xml) {
         String rdf = _transform(xml);
+        if (rdf==null) {
+            log("transformed to zero.");
+        }
         return asResource(rdf);
-        //if (rdf==null) {
-        //    log("transformed to zero.");
-        //}
-        //Resource rc = asResource(rdf);
-        //if (rc==null) {
-        //    log("[" + rdf + "]");
-        //    log("resource is zero.");
-        //}
-        //return rc;
     }
 
     public Resource asResource(String rdf) {
@@ -178,7 +180,7 @@ public class XMLTransformer {
         return model.getResource(uri);
     }
 
-    private String _transform( Document doc ) {
+    public String _transform( Document doc ) {
         String rdf = null;
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -306,20 +308,42 @@ public class XMLTransformer {
         return text;
     }
 
-    private Document asDocument(String xml) {
+    // transform to Document
+    public Document transformToDocument(String xml) {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
-            InputSource is = new InputSource(new StringReader(xml));
-            return db.parse(is);
+            Document document = db.newDocument();
+            StreamSource is = new StreamSource(new StringReader(xml));
+            //InputSource is = new InputSource(new StringReader(xml));
+            DOMResult result = new DOMResult(document); 
+            Transformer transformer = templates.newTransformer();
+            transformer.transform(is, result);
+            return document;
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
-        } catch (SAXException e) {
+        } catch (TransformerConfigurationException e) {
             throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (TransformerException e) {
             throw new RuntimeException(e);
         }
     }
+
+    /*
+    private String transformToString(Document doc) {
+        try {
+            DOMSource domSource = new DOMSource(doc);
+            StringWriter writer = new StringWriter();
+            StreamResult result = new StreamResult(writer);
+            Transformer transformer = templates.newTransformer();
+            transformer.transform(domSource, result);
+            return writer.toString();
+         } catch(TransformerException ex) {
+            ex.printStackTrace();
+            return null;
+         }
+    }
+    */
 
     class MyErrorListener implements ErrorListener {
         public void warning(TransformerException e)

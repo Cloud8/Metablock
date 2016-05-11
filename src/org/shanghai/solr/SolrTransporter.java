@@ -6,7 +6,6 @@ import org.shanghai.crawl.MetaCrawl;
 import org.shanghai.util.FileUtil;
 import org.shanghai.util.ModelUtil;
 
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.common.SolrDocument;

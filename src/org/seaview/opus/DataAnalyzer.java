@@ -1,90 +1,166 @@
 package org.seaview.opus;
 
-import org.shanghai.crawl.MetaCrawl;
-import org.shanghai.rdf.XMLTransformer;
-import org.shanghai.util.FileUtil;
+import org.shanghai.crawl.MetaCrawl.Analyzer;
+import org.shanghai.util.ModelUtil;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.DCTypes;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+import org.apache.jena.sparql.vocabulary.FOAF;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.ResIterator;
-import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.util.ResourceUtils;
 
+import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
-/**
-  @license http://www.apache.org/licenses/LICENSE-2.0
-  @author Goetz Hatop
-  @title (Really simple-dumb) Data analysis
-  @date 2015-07-01
-*/
-public class DataAnalyzer implements MetaCrawl.Analyzer {
+/** 
+  * @title Archive Datastreams to Storage Backend
+  * @date 2016-04-10 
+  */
+public class DataAnalyzer implements Analyzer {
 
-    private XMLTransformer transformer;
-
-    public DataAnalyzer() {
+    public interface Backend {
+        public Backend create();
+        public void dispose();
+        public void test();
+        public String writeCover(Resource rc);
+        public String writeCover(Resource rc, BufferedImage image);
+        public String writeIndex(Resource rc, String url);
+        public String writePart(Resource rc, Resource obj);
     }
 
-    public DataAnalyzer(String xsltFile) {
-        String xslt = FileUtil.read(xsltFile);
-        transformer = new XMLTransformer(xslt); 
+    private Backend backend;
+
+    public DataAnalyzer(String store) {
+        this.backend = new FileBackend(store);
     }
 
     @Override
-    public MetaCrawl.Analyzer create() {
-        if (transformer==null) {
-            return this;
-        }
-        transformer.create();
+    public Analyzer create() {
+        backend.create();
         return this;
     }
 
     @Override
     public void dispose() {
-        //log("data analyze disposed.");
-        if (transformer!=null) {
-            transformer.dispose();
-            transformer = null;
-        }
+        backend.dispose();
     }
 
     @Override
     public String probe() {
-        return " " + this.getClass().getName();
+        return this.getClass().getSimpleName();
     }
 
     @Override
     public Resource analyze(Resource rc) {
-        if (rc==null) {
-            log("data analyze with zero resource");
-            return rc;
+        Resource sub = null;
+        String name = rc.getPropertyResourceValue(DCTerms.type).getLocalName();
+        StmtIterator si = rc.listProperties(DCTerms.isPartOf);
+        while(si.hasNext()) {
+            Resource obj = si.nextStatement().getResource();
+            name = obj.getPropertyResourceValue(DCTerms.type).getLocalName();
+            if (name.equals("JournalIssue")) {
+                sub = getPartOf(obj);
+                sub.addProperty(DCTerms.hasPart, rc);
+            }
         }
-        String test = transformer.transform(rc).trim();
-        if (test.equals("")) {
-        } else {
-            log("test [" + test + "] # " + rc.getURI());
+        boolean b = writeParts(rc); // write article
+        // b = true ; // write issue anyway
+        if (b && sub!=null) {
+            b = writeParts(sub); // write issue
+            b = !b;
         }
         return rc;
     }
 
     @Override
     public Resource test(Resource rc) {
-        log("test " + rc.getURI());
-        analyze(rc);
-        //rc.getModel().write(System.out, "RDF/JSON");
-        return rc;
+        log("test # " + rc.getURI());
+        backend.test();
+        return analyze(rc);
+    }
+
+    // return a copy of isPartOf Resource 
+    private Resource getPartOf(Resource rc) {
+        Model model = ModelUtil.createModel();
+        StmtIterator si = rc.listProperties();
+        while( si.hasNext() ) {
+            Statement stmt = si.nextStatement();
+            model.add(stmt);
+            if (stmt.getObject().isResource()) {
+                Resource obj = stmt.getObject().asResource();
+                StmtIterator sub = obj.listProperties();
+                while( sub.hasNext() ) {
+                    model.add(sub.nextStatement());
+                }
+            }
+        }
+        return model.getResource(rc.getURI());
+    }
+
+    /** write resource parts to storage backend */
+    private boolean writeParts(Resource rc) {
+
+        String result = null;
+        if (rc.hasProperty(DCTerms.source)) {
+            RDFNode obj = rc.getProperty(DCTerms.source).getObject();
+            if (obj.isResource()) {
+                result = backend.writeIndex(rc, obj.asResource().getURI());
+            } else {
+                // result = backend.writeIndex(rc, rc.getURI());
+            }
+        } else {
+            // result = backend.writeIndex(rc, rc.getURI());
+        }
+        if (result==null) {
+            // log("failed to write index " + rc.getURI());
+        }
+
+        String cover = backend.writeCover(rc);
+        if (cover!=null) {
+            rc.removeAll(FOAF.img);
+            rc.addProperty(FOAF.img, cover);
+		}
+
+        HashMap<Resource,String> hash = new HashMap<Resource,String>();
+        StmtIterator si = rc.listProperties(DCTerms.hasPart);
+        while (si.hasNext()) {
+            Resource obj = si.nextStatement().getResource();
+            String uri = backend.writePart(rc, obj);
+            if (uri==null) {
+                // nothing
+            } else {
+			    hash.put(obj, uri);
+            }
+        }
+        for(Map.Entry<Resource, String> entry : hash.entrySet()) {
+            Resource obj = entry.getKey();
+            log("rename " + obj.getURI() + " to " + entry.getValue());
+            obj = ResourceUtils.renameResource(obj, entry.getValue()); 
+        }
+        hash.clear();
+        return true;
+    }
+
+    private void log(Exception e) {
+        logger.info(e.toString());
+    }
+
+    private void log(String msg) {
+        logger.info(msg);
     }
 
     private static final Logger logger =
                          Logger.getLogger(DataAnalyzer.class.getName());
 
-    protected void log(String msg) {
-        logger.info(msg);
-    }
-
-    protected void log(Exception e) {
-        logger.info(e.toString());
-    }
-
 }
+

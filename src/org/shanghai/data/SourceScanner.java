@@ -9,6 +9,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.vocabulary.DCTerms;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.jena.sparql.vocabulary.FOAF;
 
 import java.nio.file.Path;
@@ -55,8 +56,7 @@ public class SourceScanner extends FileScanner
         Resource rc = super.read(fname);
         try {
 		    this.scanFile(fname, rc);
-        } //catch(FileNotFoundException e) { log(e); }
-          catch(IOException e) { log(e); }
+        } catch(IOException e) { log(e); }
         finally {
             return rc;
         }
@@ -82,7 +82,8 @@ public class SourceScanner extends FileScanner
         title = null;
 	    StringBuilder sb = new StringBuilder();
     
-	    rc.addProperty(DCTerms.type, "Software"); //dini publ type
+        String type = "http://purl.org/spar/fabio/Software"; // not supported
+	    rc.addProperty(DCTerms.type, rc.getModel().createResource(type)); 
 	    rc.addProperty(DCTerms.format, "Computer File"); //RDA Content Type 
 
         int x = fname.lastIndexOf(".")+1;
@@ -101,11 +102,14 @@ public class SourceScanner extends FileScanner
 			sb.append("\n");
             line = reader.readLine();
         }
-	    rc.addProperty(DCTerms.extent, ""+lineCount + " lines"); 
+        Resource ex = rc.getModel().createResource(DCTerms.SizeOrDuration);
+        ex.addProperty(RDF.value, lineCount + " lines.");
+        rc.addProperty(DCTerms.extent, ex);
         if (title==null) {
             title = fname.substring(fname.lastIndexOf("/")+1);
         }
 	    rc.addProperty(DCTerms.title, title); 
+	    rc.addProperty(DCTerms.abstract_, sb.toString()); 
 	}
 
     /** look for tags */

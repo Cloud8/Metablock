@@ -1,12 +1,10 @@
 package org.seaview.pdf;
 
-import pl.edu.icm.cermine.PdfBxStructureExtractor;
+import pl.edu.icm.cermine.ContentExtractor;
 import pl.edu.icm.cermine.metadata.model.DocumentMetadata;
-import pl.edu.icm.cermine.PdfBxStructureExtractor;
-import pl.edu.icm.cermine.PdfNLMMetadataExtractor;
+import pl.edu.icm.cermine.metadata.model.DocumentAuthor;
 import pl.edu.icm.cermine.structure.model.BxDocument;
 import pl.edu.icm.cermine.exception.AnalysisException;
-import pl.edu.icm.cermine.PdfNLMReferencesExtractor;
 import pl.edu.icm.cermine.bibref.model.BibEntry;
 import pl.edu.icm.cermine.ComponentConfiguration;
 import pl.edu.icm.cermine.ExtractionUtils;
@@ -57,9 +55,10 @@ import com.google.common.collect.Lists;
  */
 public class Cermine extends AbstractExtractor {
 
-	private PdfBxStructureExtractor cermine;
-    private PdfNLMMetadataExtractor   bibExtractor;
-    private PdfNLMReferencesExtractor refExtractor;
+	private ContentExtractor cermine;
+	//private PdfBxStructureExtractor cermine;
+    //private PdfNLMMetadataExtractor   bibExtractor;
+    //private PdfNLMReferencesExtractor refExtractor;
     private BxDocument bxdoc;
 
     public Cermine(boolean title, boolean refs) {
@@ -74,20 +73,15 @@ public class Cermine extends AbstractExtractor {
     public void create() {
         count = 0;
         try {
-		    cermine = new PdfBxStructureExtractor();
-            if (title) {
-                bibExtractor = new PdfNLMMetadataExtractor();
-            }
-            if (refs) {
-                refExtractor = new PdfNLMReferencesExtractor();
-            }
+		    cermine = new ContentExtractor();
         } catch(AnalysisException e) { log(e); }
     }
 
     public void create(String fname) {
         try {
             InputStream is = new FileInputStream(fname);
-            bxdoc = cermine.extractStructure(is);
+            cermine.setPDF(new FileInputStream(fname));
+            bxdoc = cermine.getBxDocument();
             is.close();
         } catch(FileNotFoundException e) {log(e);}
            catch(MalformedURLException e) {log(e);}
@@ -102,17 +96,19 @@ public class Cermine extends AbstractExtractor {
     @Override
     public void extractMetadata(Resource rc, String fname) {
         try {
-            Element metadata = bibExtractor.extractMetadataAsNLM(bxdoc);
-			readCermine(metadata, rc);
+            DocumentMetadata dm = cermine.getMetadata();
+			readCermine(dm, rc);
         } catch(AnalysisException e) { e.printStackTrace(); log(e);}
     }
 
     @Override
     public void extractReferences(Resource rc, String fname, int threshold) {
         try {
-            Element[] refArray = refExtractor.extractReferencesAsNLM(bxdoc); 
-            count += refArray.length;
-		    readReferences(refArray, rc, threshold);
+            //Element[] refArray = refExtractor.extractReferencesAsNLM(bxdoc); 
+            List<BibEntry> references = cermine.getReferences();
+            count += references.size();
+		    // readReferences(refArray, rc, threshold);
+		    readReferences(references, rc, threshold);
         } catch(AnalysisException e) { e.printStackTrace(); log(e);}
         // GH20151231 bonus : test cermines citation sentiment analysis
         if (test) try {
@@ -122,6 +118,31 @@ public class Cermine extends AbstractExtractor {
                 log(properties.toString());
             }
         } catch(AnalysisException e) { e.printStackTrace(); log(e);}
+    }
+
+    protected Resource readCermine(DocumentMetadata dm, Resource rc) 
+        // throws AnalysisException 
+    {
+        if (dm.getTitle()==null || rc.hasProperty(DCTerms.title)) {
+            //
+        } else {
+            rc.addProperty(DCTerms.title, dm.getTitle());
+        }
+        List<DocumentAuthor> authors = dm.getAuthors();
+        String[] aut = new String[authors.size()];
+        for (int i=0; i<authors.size(); i++) {
+            DocumentAuthor author = authors.get(i);
+                aut[i++] = author.getName();
+        }
+        rc = injectAuthors(rc, aut);
+
+        String abstract_ = null; // no abstract from cermine ?
+        if (abstract_==null || rc.hasProperty(DCTerms.abstract_)) {
+            //
+        } else {
+            rc.addProperty(DCTerms.abstract_, abstract_);
+        }
+        return rc;
     }
 
     @SuppressWarnings("unchecked")
@@ -208,6 +229,10 @@ public class Cermine extends AbstractExtractor {
         }
         if (test) log(metadata);
         return rc;
+    }
+
+    private void readReferences(List<BibEntry> refs, Resource rc, int threshold)
+    {
     }
 
     @SuppressWarnings({"unchecked"})

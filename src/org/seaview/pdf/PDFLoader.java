@@ -51,6 +51,7 @@ import java.text.SimpleDateFormat;
 import java.text.ParseException;
 import java.net.URL;
 import java.net.MalformedURLException;
+import java.net.HttpURLConnection;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -83,6 +84,7 @@ public class PDFLoader implements Analyzer {
     private SimpleDateFormat sdf; 
 
     public PDFLoader() {
+        this.docbase = null;
     }
 
     public PDFLoader(String docbase) {
@@ -120,19 +122,28 @@ public class PDFLoader implements Analyzer {
     @Override
     public Resource analyze(Resource rc) {
         dispose(); // close document
-        Path path = getPath(docbase, rc, ".pdf");
-        if (Files.isRegularFile(path) && path.toString().endsWith(".pdf")) {
+        String path = getPath(rc, ".pdf");
+        if (path==null) {
+            return rc;
+        } else if (Files.isRegularFile(Paths.get(path)) 
+            && path.endsWith(".pdf")) {
             log("load path " + path);
             try {
-                document = PDDocument.load(Files.newInputStream(path));
+                document = PDDocument.load(Files.newInputStream(Paths.get(path)));
             } catch (IOException e) { log(e); }
         } else {
-            String url = getPath(rc, ".pdf");
-            log("load url " + url);
+            log("load url " + path);
             try {
-                URL curl = new URL(url);
-                document = PDDocument.load(curl.openStream());
+                URL url = new URL(path);
+                HttpURLConnection uc = (HttpURLConnection)url.openConnection();
+                uc.setRequestProperty("User-Agent", "Seaview 5.3");
+                uc.connect();
+                document = PDDocument.load(uc.getInputStream());
+                uc.disconnect();
             } catch (IOException e) { log(e); }
+        }
+        if (document==null) {
+            return rc;
         }
         size = document.getNumberOfPages();
         if (docbase==null) { 
@@ -146,8 +157,8 @@ public class PDFLoader implements Analyzer {
 
     @Override
     public Resource test(Resource rc) {
-        Path path = getPath(docbase, rc, ".pdf");
-        if (Files.isRegularFile(path) && path.toString().endsWith(".pdf")) {
+        String path = getPath(rc, ".pdf");
+        if (Files.isRegularFile(Paths.get(path)) && path.endsWith(".pdf")) {
             log("would load file " + path);
         } else {
             String url = getPath(rc, ".pdf");
@@ -258,6 +269,9 @@ public class PDFLoader implements Analyzer {
     }
 
     public PDPage getPageOne() {
+        if (document==null) {
+            return null;
+        }
         PDDocumentCatalog catalog = document.getDocumentCatalog();
         PDPageTree root = catalog.getPages();
         if (root.getCount() == 0) {
@@ -496,26 +510,28 @@ public class PDFLoader implements Analyzer {
         return true;
     }
 
-    private Path getPath(String docbase, Resource rc, String suffix) {
-        String path = this.getPath(rc, suffix);
-        if (path==null) {
-            return null;
-        }
-        return Paths.get(path);
-    }
-
     /* used by Cover Topic */
     public String getPath(Resource rc, String suffix) {
         String path = getPath(rc);
+        //log("getPath " + suffix + " " + path);
         if (path==null) {
             log("no path " + rc.getURI());
+            return null;
         }
         int x = path.lastIndexOf(".");
-        path = x>0?path.substring(0,x)+suffix:path;
+        if (x>0 && path.substring(x).length()==suffix.length()) {
+            // log("getPath " + x + " # " + suffix + " " + path);
+            path = path.substring(0,x)+suffix;
+        } else if (suffix.equals(".pdf") && path.contains("/download/")) {
+            // support ojs
+        } else {
+            // log("no path for " + suffix + " " + path);
+            return null;
+        }
         return path;
     }
 
-    public String getPath(Resource rc) {
+    private String getPath(Resource rc) {
         StmtIterator si = rc.listProperties(DCTerms.hasPart);
         String path = null;
         while( si.hasNext() ) {
@@ -525,6 +541,7 @@ public class PDFLoader implements Analyzer {
             } else if (node.isLiteral() && node.toString().equals("")) {
                 // log("empty " + path);
             } else if (node.isResource()) {
+                //log("part " + node.asResource().getURI());
 				return getPath(node.asResource());
             } else {
 				throw new AssertionError("strange format");
@@ -553,9 +570,9 @@ public class PDFLoader implements Analyzer {
         } else if (path.startsWith("http://")) {
             if (docbase!=null) {
                 String test = path.substring(path.indexOf("/",8));
-                //log("test " + docbase + "/" + test);
-                if (Files.isReadable(Paths.get(docbase + "/" + test))) {
-                    return docbase + "/" + test;
+                // log("test [" + docbase + "] " + test);
+                if (Files.isReadable(Paths.get(docbase + test))) {
+                    return docbase + test;
                 }
             }
             return path;

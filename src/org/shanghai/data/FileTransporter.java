@@ -42,6 +42,10 @@ public class FileTransporter implements MetaCrawl.Transporter {
 
     private List<Delegate> delegates;
 
+    //public FileTransporter() {
+    //    this("rdf", 1, 1);
+    //}
+
     public FileTransporter(String suffix, int depth, int logC) {
         this.depth = depth;
         this.logC = logC;

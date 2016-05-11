@@ -349,7 +349,7 @@
     <dc:type xsi:type="dini:PublType">MusicalNotation</dc:type>
   </xsl:when>
   <xsl:when test="$type='MastersThesis'">
-    <dc:type xsi:type="dini:PublType">MusicalNotation</dc:type>
+    <dc:type xsi:type="dini:PublType">masterThesis</dc:type>
   </xsl:when>
   <xsl:when test="$type='BachelorsThesis'">
     <dc:type xsi:type="dini:PublType">bachelorThesis</dc:type>

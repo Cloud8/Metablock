@@ -1,6 +1,7 @@
 package org.shanghai.util;
 
 import java.net.URL;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 
 import java.io.DataOutputStream;
@@ -172,14 +173,36 @@ public class FileUtil {
         copy(from, Paths.get(to));
     }   
 
+    public static void copyIfExists(String url, Path path) {
+        if (url.startsWith("file:")) {
+            copy(getFilePath(url), path);
+            return;
+        } else if (url.startsWith("http")) try {
+            URL u = new URL(url);
+            HttpURLConnection huc = (HttpURLConnection)u.openConnection();
+			huc.setRequestMethod("HEAD");
+            huc.connect();
+			if (huc.getResponseCode() == HttpURLConnection.HTTP_OK) {
+			    copy(url, path);
+			}
+        } catch(IOException e) { e.printStackTrace(); }
+    }
+
     public static void copy(String url, Path path) {
+        if (url.startsWith("file:")) {
+            copy(getFilePath(url), path);
+            return;
+        }
         try {
             URL oracle = new URL(url);
             InputStream is = oracle.openStream();
 			Files.copy(is, path, StandardCopyOption.REPLACE_EXISTING);
             is.close();
         } catch(MalformedURLException e) { e.printStackTrace(); }
-          catch(IOException e) { e.printStackTrace(); }
+          catch(AccessDeniedException e) { log(e.toString()); }
+          catch(FileNotFoundException e) { e.printStackTrace(); }
+          catch(IOException e) { log(e.toString()); }
+          //catch(IOException e) { e.printStackTrace(); }
     }   
 
     public static void copy(Path from, Path to) {
@@ -362,7 +385,18 @@ public class FileUtil {
         }
         return baos;
     }
-
+  
+    private static Path getFilePath(String uri) {
+        Path path = null;
+        if (uri.startsWith("file:///")) {
+            path = Paths.get(uri.substring(7));
+            //log("getFilePath " + path);
+        } else if (uri.startsWith("file://")) {
+            path = Paths.get(System.getProperty("user.home")
+                             + "/" + uri.substring(7));
+        }
+        return path; 
+    }
 
     private static final Logger logger =
                          Logger.getLogger(FileUtil.class.getName());

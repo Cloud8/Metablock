@@ -30,18 +30,11 @@
            select="(substring-after(substring-after(@rdf:about,'//'),'/'))"/>
            <xsl:for-each select="dcterms:*"><xsl:value-of 
            select="concat(' ', normalize-space(text()))"/></xsl:for-each>
+           <xsl:for-each select="dcterms:*/foaf:*/*[text()]"><xsl:value-of 
+           select="concat(' ', normalize-space(text()))"/></xsl:for-each>
     </field>
     <xsl:apply-templates select="." mode="spec"/>
-    <xsl:apply-templates select="." mode="call"/>
  </doc>
-</xsl:template>
-
-<xsl:template match="dcterms:identifier[starts-with(text(),'urn:')]">
-  <field name="recordtype">opus</field>
-  <field name="id"><xsl:call-template name="identity">
-    <xsl:with-param name="id" select="."/></xsl:call-template>
-  </field>
-  <field name="urn_str"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <xsl:template name="identity">
@@ -62,8 +55,20 @@
   <field name="oclc_num"><xsl:value-of select="substring(.,6)"/></field>
 </xsl:template>
 
+<!-- not used:
+<xsl:template match="dcterms:identifier[starts-with(text(),'opus:')]">
+  <field name="opus_str"><xsl:value-of select="substring(.,6)"/></field>
+</xsl:template>
+-->
+
 <xsl:template match="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]">
   <field name="doi_str_mv"><xsl:value-of select="."/></field>
+  <field name="edition"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<!-- opac -->
+<xsl:template match="dcterms:hasVersion">
+  <field name="edition"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- TITLE -->
@@ -76,6 +81,7 @@
  </xsl:choose>
 </xsl:template>
 
+<!-- MAIN TITLE -->
 <xsl:template name="title" match="dcterms:title[not(@xml:lang)][1]">
   <field name="title"><xsl:value-of select="." /></field>
   <field name="title_short"><xsl:value-of select="." /></field>
@@ -89,7 +95,7 @@
 </xsl:template>
 
 <!-- AUTHOR -->
-<xsl:template match="dcterms:creator[1]">
+<xsl:template match="dcterms:creator">
   <xsl:apply-templates select="foaf:Person"/>
   <xsl:apply-templates select="rdf:Seq"/>
 </xsl:template>
@@ -104,26 +110,19 @@
 
 <xsl:template match="dcterms:creator/rdf:Seq/rdf:li/foaf:Person">
     <xsl:apply-templates select="foaf:name"/>
+    <xsl:apply-templates select="foaf:role"/>
 </xsl:template>
 
-<xsl:template match="dcterms:creator/foaf:Person[1]/foaf:name[1]">
+<xsl:template match="dcterms:creator/foaf:Person/foaf:name">
   <field name="author"><xsl:value-of select="."/></field>
 </xsl:template>
 
-<xsl:template match="dcterms:creator/rdf:Seq/rdf:li[1][not(@rdf:resource)]/foaf:Person[1]/foaf:name[1]">
+<xsl:template match="dcterms:creator/rdf:Seq/rdf:li/foaf:Person/foaf:name">
   <field name="author"><xsl:value-of select="."/></field>
 </xsl:template>
 
-<xsl:template match="dcterms:creator/rdf:Seq/rdf:li[@rdf:resource]">
-  <xsl:variable name="rc" select="@rdf:resource"/>
-  <!--<xsl:comment><xsl:value-of select="$rc"/></xsl:comment>-->
-  <field name="author2">
-  <xsl:value-of select="//*/dcterms:creator/rdf:Seq/rdf:li/foaf:Person[@rdf:about=$rc]/foaf:name"/>
-  </field>
-</xsl:template>
-
-<xsl:template match="dcterms:creator/rdf:Seq/rdf:li[position()>1]/foaf:Person/foaf:name">
-  <field name="author2"><xsl:value-of select="."/></field>
+<xsl:template match="dcterms:creator/rdf:Seq/rdf:li/foaf:Person/foaf:role">
+  <field name="author_role"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <!-- searchable, but not displayed -->
@@ -138,43 +137,33 @@
 </xsl:template>
 
 <xsl:template match="dcterms:contributor/foaf:Person">
-    <xsl:choose>
-      <xsl:when test="foaf:role='editor'">
-        <field name="author2">
-            <xsl:value-of select="concat(foaf:name,' [Hrsg]')"/>
-        </field>
-      </xsl:when>
-      <xsl:when test="foaf:role='advisor'">
-        <field name="author_additional">
-            <xsl:value-of select="foaf:name"/>
-        </field>
-      </xsl:when>
-      <xsl:when test="foaf:role='translator'">
-        <field name="author2">
-            <xsl:value-of select="concat(foaf:name,' [Übers.]')"/>
-        </field>
-      </xsl:when>
-      <xsl:otherwise>
-        <field name="author2">
-            <xsl:value-of select="foaf:name"/>
-        </field>
-      </xsl:otherwise>
-    </xsl:choose>
+    <xsl:apply-templates select="foaf:name"/>
+    <xsl:apply-templates select="foaf:role"/>
+</xsl:template>
+
+<xsl:template match="dcterms:contributor/foaf:Person/foaf:name[1]">
+   <field name="author2"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:contributor/foaf:Person/foaf:role[1]">
+   <field name="author2_role"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:contributor/foaf:Organization">
     <xsl:apply-templates select="foaf:name"/>
+    <xsl:apply-templates select="foaf:role"/>
 </xsl:template>
 
-<xsl:template match="dcterms:contributor/foaf:Person/foaf:name">
-   <field name="author2"><xsl:value-of select="."/></field>
+<xsl:template match="dcterms:contributor/foaf:Organization/foaf:name[1]">
+   <field name="author_corporate"><xsl:value-of select="."/></field>
 </xsl:template>
 
-<xsl:template match="dcterms:contributor/foaf:Organization/foaf:name">
-   <field name="author2"><xsl:value-of select="."/></field>
+<xsl:template match="dcterms:contributor/foaf:Organization/foaf:role[1]">
+   <field name="author_corporate_role"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:provenance">
+   <!-- <xsl:comment><xsl:value-of select="' provenance '"/></xsl:comment> -->
    <xsl:apply-templates select="aiiso:Faculty" />
    <xsl:apply-templates select="aiiso:Center" />
    <xsl:apply-templates select="aiiso:Division" />
@@ -207,7 +196,6 @@
 
 <!-- OJS : original article URL -->
 <xsl:template match="dcterms:source[@rdf:resource]">
-  <!-- <field name="edition"><xsl:value-of select="@rdf:resource"/></field> -->
 </xsl:template>
 
 <!-- Opus : source_title loaded from driver -->
@@ -269,7 +257,6 @@
 <xsl:template match="dcterms:issued[1]">
   <!--
   <field name="publishDate"><xsl:value-of select="." /></field>
-  <field name="publishDate"><xsl:value-of select="substring(.,1,4)"/></field>
   -->
   <field name="publishDateSort"><xsl:value-of select="." /></field>
   <field name="first_indexed">
@@ -284,8 +271,10 @@
 
 <xsl:template match="dcterms:created">
   <field name="publishDate"><xsl:value-of select="." /></field>
-  <field name="era"><xsl:value-of select="substring(.,1,4)" /></field>
   <field name="era_facet"><xsl:value-of select="substring(.,1,4)" /></field>
+  <!-- displayed as topic if present
+  <field name="era"><xsl:value-of select="substring(.,1,4)" /></field>
+  -->
 </xsl:template>
 
 <xsl:template match="dcterms:extent">
@@ -358,13 +347,16 @@
     </field>
   </xsl:when>
   <xsl:when test="$type='MastersThesis'">
-    <field name="format"><xsl:value-of select="'Book'"/></field>
+    <field name="format"><xsl:value-of select="'Work'"/></field>
     <field name="oai_set_str_mv">
         <xsl:value-of select="concat('doc-type:','masterThesis')"/>
     </field>
   </xsl:when>
+  <xsl:when test="$type='MovingImage'">
+    <field name="format"><xsl:value-of select="'Video'"/></field>
+  </xsl:when>
   <xsl:when test="$type='BachelorsThesis'">
-    <field name="format"><xsl:value-of select="'Book'"/></field>
+    <field name="format"><xsl:value-of select="'Work'"/></field>
     <field name="oai_set_str_mv">
         <xsl:value-of select="concat('doc-type:','bachelorThesis')"/>
     </field>
@@ -404,6 +396,12 @@
 
 <xsl:template match="dcterms:subject">
   <xsl:apply-templates select="skos:Concept"/>
+</xsl:template>
+
+<!-- RVK -->
+<xsl:template match="skos:Concept[contains(@rdf:about,'rvk')]">
+  <field name="genre"><xsl:value-of select="rdfs:label"/></field>
+  <field name="genre_facet"><xsl:value-of select="rdfs:label"/></field>
 </xsl:template>
 
 <!-- SWD TOPICS -->
@@ -525,15 +523,12 @@
 </xsl:template>
 
 <!-- LICENSE : core extension -->
-<xsl:template match="dcterms:license[1]">
+<xsl:template match="dcterms:license[@rdf:resource]">
+  <field name="license_str"><xsl:value-of select="@rdf:resource"/></field>
   <xsl:choose>
    <xsl:when test="../dcterms:accessRights"><!--restricted-->
      <field name="oai_set_str_mv">
-    <xsl:value-of select="'restricted_access'"/></field>
-   </xsl:when>
-   <xsl:when test="@rdf:resource">
-     <field name="license_str"><xsl:value-of select="@rdf:resource"/></field>
-     <field name="oai_set_str_mv"><xsl:value-of select="'open_access'"/></field>
+            <xsl:value-of select="'restricted_access'"/></field>
    </xsl:when>
    <xsl:otherwise>
      <field name="oai_set_str_mv"><xsl:value-of select="'open_access'"/></field>
@@ -545,7 +540,7 @@
 <xsl:template match="dcterms:rights[@rdf:resource]">
 </xsl:template>
 
-<!-- ACCESS RIGHTS : core extension : IP address list -->
+<!-- RESTRICTED ACCESS : core extension : IP address list -->
 <xsl:template match="dcterms:accessRights">
    <field name="rights_str_mv"><xsl:value-of select="."/></field>
 </xsl:template>
@@ -576,7 +571,11 @@
   <field name="url"><xsl:value-of select="@rdf:resource" /></field>
 </xsl:template>
 
-<xsl:template match="dcterms:isPartOf">
+<xsl:template match="dcterms:isPartOf[not(dcterms:BibliographicResource)]">
+  <field name="series"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:isPartOf[dcterms:BibliographicResource]">
   <xsl:comment><xsl:value-of select="'hierarchy level 1'"/></xsl:comment>
   <field name="hierarchytype"></field>
   <field name="is_hierarchy_id">
@@ -592,13 +591,13 @@
     </xsl:call-template>
   </field>
   <field name="hierarchy_parent_title">
-     <xsl:value-of select="*/dcterms:title"/>
+     <xsl:value-of select="*/dcterms:title[not(@xml:lang)]"/>
   </field>
-  <xsl:apply-templates select="*" mode="hierarchy"/>
+  <xsl:apply-templates select="dcterms:BibliographicResource" mode="hierarchy"/>
 </xsl:template>
 
 <!-- TOP hierarchy -->
-<xsl:template match="dcterms:isPartOf/*[count(dcterms:isPartOf)=0]" mode="hierarchy">
+<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource[count(dcterms:isPartOf)=0]" mode="hierarchy">
   <xsl:variable name="oid">
      <xsl:call-template name="identity"><xsl:with-param name="id" 
           select="dcterms:identifier[starts-with(text(),'urn:')]"/>
@@ -612,14 +611,26 @@
   <field name="hierarchy_browse">
      <xsl:value-of select="concat(dcterms:title,'{{{_ID_}}}',$oid)"/>
   </field>
+  <xsl:apply-templates select="dcterms:provenance"/>
+  <xsl:apply-templates select="dcterms:publisher"/>
 </xsl:template>
 
 <!-- hierarchy with more levels to follow-->
-<xsl:template match="dcterms:isPartOf/*[count(dcterms:isPartOf)=1]" mode="hierarchy">
+<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource[count(dcterms:isPartOf)=1]" mode="hierarchy">
   <xsl:comment><xsl:value-of select="'hierarchy level'"/></xsl:comment>
-  <xsl:apply-templates select="dcterms:publisher"/>
-  <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:publisher"/>
   <xsl:apply-templates select="dcterms:isPartOf/*" mode="hierarchy"/>
+  <xsl:apply-templates select="dcterms:title" mode="container"/>
+</xsl:template>
+
+<!-- GH201603 : container test : multiple titles ? -->
+<!--
+<xsl:template match="dcterms:title[not(@xml:lang)]" mode="container">
+  <field name="container_title"><xsl:value-of select="."/></field>
+  <field name="container_issue"><xsl:value-of select="."/></field>
+</xsl:template>
+-->
+
+<xsl:template match="*" mode="container">
 </xsl:template>
 
 <!-- FULLTEXT : extension dcterms:tableOfContents dcterms:description -->
@@ -628,19 +639,25 @@
 </xsl:template>
 
 <!-- REFERENCES : core extension -->
-<xsl:template match="dcterms:BibliographicResource[starts-with(@rdf:about,'file')]/dcterms:references">
+<xsl:template match="dcterms:references">
   <xsl:apply-templates select="rdf:Seq"/>
 </xsl:template>
 
-<xsl:template match="dcterms:BibliographicResource[starts-with(@rdf:about,'http')]/dcterms:references">
-  <field name="ref_str_mv"><xsl:value-of select="'references'"/></field>
-</xsl:template>
-
-<xsl:template match="dcterms:references/rdf:Seq">
+<xsl:template match="dcterms:BibliographicResource[starts-with(@rdf:about,'file')]/dcterms:references/rdf:Seq">
+  <!-- References to solr -->
   <xsl:apply-templates select="rdf:li"/>
 </xsl:template>
 
-<!-- References to solr -->
+<xsl:template match="dcterms:BibliographicResource[starts-with(@rdf:about,'http')]/dcterms:references/rdf:Seq">
+  <!-- References handled by RecordDriver -->
+  <field name="ref_str_mv"><xsl:value-of select="'references'"/></field>
+</xsl:template>
+
+<!-- from sparql -->
+<xsl:template match="dcterms:references[@rdf:resource]">
+  <field name="ref_str_mv"><xsl:value-of select="'references'"/></field>
+</xsl:template>
+
 <xsl:template match="dcterms:references/rdf:Seq/rdf:li">
   <xsl:apply-templates select="dcterms:BibliographicResource"/>
 </xsl:template>
@@ -660,24 +677,15 @@
 
 <!-- CITATIONS : core extension -->
 <xsl:template match="dcterms:isReferencedBy[@rdf:resource]">
- <field name="cites_str_mv">
-     <xsl:value-of select="@rdf:resource"/>
- </field>
+ <field name="cites_str_mv"><xsl:value-of select="@rdf:resource"/></field>
 </xsl:template>
 
-<!-- old : sequenced -->
-<xsl:template match="dcterms:isReferencedBy[1][not(@rdf:resource)]">
-  <xsl:apply-templates select="rdf:Seq"/>
+<xsl:template match="dcterms:isReferencedBy[not(@rdf:resource)]">
+  <xsl:apply-templates select="dcterms:BibliographicResource"/>
 </xsl:template>
 
-<xsl:template match="dcterms:isReferencedBy/rdf:Seq">
-  <xsl:apply-templates select="rdf:li"/>
-</xsl:template>
-
-<xsl:template match="dcterms:isReferencedBy/rdf:Seq/rdf:li">
- <field name="cites_str_mv">
-     <xsl:value-of select="@rdf:resource"/>
- </field>
+<xsl:template match="dcterms:isReferencedBy/dcterms:BibliographicResource">
+ <field name="cites_str_mv"><xsl:value-of select="@rdf:about"/></field>
 </xsl:template>
 
 <!-- CALLNUMBER : uri part -->
@@ -703,19 +711,22 @@
 </xsl:template>
 
 <!-- make sure that bibliographic resources are identified -->
-<xsl:template match="dcterms:BibliographicResource" mode="spec">
-  <xsl:choose>
-   <xsl:when test="count(dcterms:identifier[starts-with(text(),'ppn:')])=1">
-      <field name="recordtype">opac</field>
-      <field name="id"><xsl:value-of select="dcterms:identifier"/></field>
-   </xsl:when>
-   <xsl:when test="count(dcterms:identifier[starts-with(text(),'urn:')])=0
-                   and count(dcterms:identifier)=1">
-      <field name="recordtype">opus</field>
-      <field name="id"><xsl:value-of select="dcterms:identifier"/></field>
-   </xsl:when>
-  </xsl:choose>
+<xsl:template match="dcterms:BibliographicResource[count(dcterms:identifier[starts-with(text(),'urn:')])=0][count(dcterms:identifier[starts-with(text(),'ppn:')])=0]" mode="spec">
+  <field name="recordtype">opus</field>
+  <field name="id"><xsl:value-of select="dcterms:identifier[1]"/></field>
+  <field name="url"><xsl:value-of select="@rdf:about"/></field>
+</xsl:template>
 
+<xsl:template match="dcterms:BibliographicResource[count(dcterms:identifier[starts-with(text(),'urn:')])=1][count(dcterms:identifier[starts-with(text(),'ppn:')])=0]" mode="spec">
+  <xsl:variable name="urn"><xsl:call-template name="identity">
+      <xsl:with-param name="id" 
+          select="dcterms:identifier[starts-with(text(),'urn:')]"/>
+  </xsl:call-template></xsl:variable>
+  <field name="recordtype">opus</field>
+  <field name="id"><xsl:value-of select="$urn"/></field>
+  <field name="urn_str">
+      <xsl:value-of select="dcterms:identifier[starts-with(text(),'urn:')]"/>
+  </field>
   <xsl:choose>
    <xsl:when test="dcterms:hasPart"><!--parts have their own urls--></xsl:when>
    <xsl:when test="dcterms:source[@rdf:resource]"><!-- OJS issues-->
@@ -743,22 +754,30 @@
   </xsl:when>
   </xsl:choose>
 
- <xsl:choose>
+  <xsl:choose>
   <xsl:when test="contains(@rdf:about,'/eb/2014/10')">
-      <field name="series2">
+      <field name="series">
           <xsl:value-of select="'Semesterapparat Bohde WS 2014/15 Fotobücher'"/>
       </field>
-  </xsl:when>
-  <xsl:when test="contains(@rdf:about,'/eb/')"></xsl:when>
-  <xsl:otherwise>
+   </xsl:when>
+   <xsl:when test="contains(@rdf:about,'/eb/')"></xsl:when>
+   <xsl:otherwise>
       <field name="oai_set_str_mv">
           <xsl:value-of select="'xMetaDissPlus'"/>
       </field>
-  </xsl:otherwise>
- </xsl:choose>
+   </xsl:otherwise>
+  </xsl:choose>
+  <xsl:apply-templates select="." mode="call"/>
+</xsl:template>
+
+<!-- opac -->
+<xsl:template match="dcterms:BibliographicResource[count(dcterms:identifier[starts-with(text(),'ppn:')])=1]" mode="spec">
+    <field name="recordtype">opac</field>
+    <field name="id"><xsl:value-of select="substring-after(dcterms:identifier[starts-with(text(),'ppn:')],'ppn:')"/></field>
 </xsl:template>
 
 <!-- suppress emptyness -->
 <xsl:template match="*" priority="-1"/>
+<xsl:template match="*" mode="hierarchy" priority="-1"/>
 
 </xsl:stylesheet>

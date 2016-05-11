@@ -20,7 +20,6 @@ import java.util.logging.Logger;
 
 /**
   @license http://www.apache.org/licenses/LICENSE-2.0
-  @author Goetz Hatop 
   @title A File Scanner to create a very basic Model 
   @date 2012-10-23
 */

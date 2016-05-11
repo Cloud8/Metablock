@@ -4,17 +4,9 @@ PREFIX  dctypes: <http://purl.org/dc/dcmitype/>
 PREFIX  foaf:  <http://xmlns.com/foaf/0.1/>
 PREFIX  aiiso: <http://purl.org/vocab/aiiso/schema#>
 PREFIX  void: <http://rdfs.org/ns/void#>
-# PREFIX  fabio: <http://purl.org/spar/fabio/>
-# PREFIX  frbr: <http://purl.org/vocab/frbr/core#>
-# PREFIX  pica: <http://localhost/view/>
-# PREFIX  daia: <http://purl.org/ontology/daia/>
-# PREFIX  pro: <http://purl.org/spar/pro/>
-# PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
-# PREFIX  prism: <http://prismstandard.org/namespaces/basic/2.0/>
-# PREFIX  cito: <http://purl.org/spar/cito/>
-# PREFIX  ore: <http://www.openarchives.org/ore/terms/>
+PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
 
-## six levels of hierarchy
+## six levels of hierarchy without circles
 construct {
     <subject> ?b ?c .
     ?c ?d ?e .
@@ -38,7 +30,10 @@ construct {
       }
       FILTER (?b NOT IN (dcterms:isPartOf))
       FILTER (?b NOT IN (dcterms:hasPart))
+      FILTER (?b NOT IN (dcterms:references))
       FILTER (?b NOT IN (dcterms:isReferencedBy))
+      # FILTER (?b NOT IN (dcterms:abstract))
+      # FILTER (?b NOT IN (dcterms:subject))
       FILTER (NOT EXISTS { ?c a void:Dataset})
     } union {
       <subject> ?b ?c .
@@ -53,19 +48,47 @@ construct {
       }
     } union {
       <subject> ?b ?c .
-      values ?b { dcterms:hasPart dcterms:isReferencedBy}
+      values ?b { dcterms:hasPart }
+      optional { 
+        { ?c a dctypes:Text }
+          union { ?c a dctypes:Dataset }
+          union { ?c a dctypes:Collection }
+          union { ?c a dctypes:Image }
+          union { ?c a dctypes:MovingImage }
+          optional {
+            ?c ?d ?e .
+             optional {
+               ?e ?f ?g .
+            }
+          }
+        }
     } union {
       <subject> ?b ?c .
-      values ?b { dcterms:hasPart }
-      { ?c a dctypes:Text }
-        union { ?c a dctypes:Dataset }
-        union { ?c a dctypes:Collection }
-        union { ?c a dctypes:Image }
-        union { ?c a dctypes:MovingImage }
+      values ?b { dcterms:isReferencedBy }
       optional {
         ?c ?d ?e .
-         optional {
-             ?e ?f ?g .
+        values ?d { rdf:type dcterms:title dcterms:creator dcterms:created }
+        optional {
+            values ?d { dcterms:creator }
+            ?e ?f ?g
+        }
+      }
+    } union {
+      <subject> ?b ?c .
+      values ?b { dcterms:references }
+      optional {
+        ?c ?d ?e .
+        optional {
+            ?e ?f ?g
+            values ?f { rdf:type dcterms:title dcterms:creator 
+                        dcterms:date dcterms:bibliographicCitation }
+            optional {
+                values ?f { dcterms:creator }
+                ?g ?h ?i .
+                optional {
+                  ?i ?j ?k .
+                }
+            }
         }
       }
     } 

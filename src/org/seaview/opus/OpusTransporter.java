@@ -14,6 +14,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Seq;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.sparql.vocabulary.FOAF;
+import org.apache.jena.riot.system.IRIResolver;
 
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -99,15 +100,37 @@ public class OpusTransporter implements MetaCrawl.Transporter {
     }
 
     @Override
-    public int index(String fname) {
-        if (Files.isRegularFile(Paths.get(fname))) {
-            String index = FileUtil.read(fname);
+    public int index(String search) {
+        if (Files.isRegularFile(Paths.get(search))) {
+            String index = FileUtil.read(search);
             if (index.contains("select")) { //not mistaken
                 series = null;
                 opus.index = index;
-                log("index # " + fname);
+                log("index # " + search);
                 return 1;
             }
+        } else if (search.matches("[0-9]+")) {
+            opus.index = "select " + search;
+            series = null;
+            return 1;
+        } else if (search.matches("[0-9\\-]+")) {
+            opus.index = "select source_opus, date from statistics"
+                + " where uri is not null and date> '" + search + "'";
+            series = null;
+            log("search date # [" + search + "]");
+            return 1;
+        } else if (search.matches("[0-9a-zA-Z]+")) {
+            opus.index = "select source_opus from opus"
+                + " where title like '%" + search.replace("[\\s]+","%") + "%'";
+            series = null;
+            log("search title # [" + search + "]");
+            return 1;
+        } else if (search.startsWith("urn:")) {
+            opus.index = "select source_opus from statistics"
+                + " where urn='" + search + "'";
+            series = null;
+            log("search urn # [" + search + "]");
+            return 1;
         }
         return 0;
     }
@@ -142,9 +165,12 @@ public class OpusTransporter implements MetaCrawl.Transporter {
 
     private Resource readOpus(String oid) {
         Resource rc = opus.read(oid);
+        if (rc==null) {
+            return rc;
+        }
         addReferences(rc, oid);
         addCitations(rc, oid);
-        if (dump) {
+        if (dump && opus.document!=null) {
             dump(opus.document, rc.getURI(), oid);
         }
         return rc;
@@ -185,9 +211,14 @@ public class OpusTransporter implements MetaCrawl.Transporter {
             }
         }
         if (results.size()==0) {
-            // log("getIdentifiers " + off + " " + limit);
+            log("getIdentifiers : " + off + " " + limit);
+        } else if (results.size()==1) {
+            log("getIdentifiers " + off + " " + limit + " " + results.size());
+            results.add((String)null); // stop crawler
+        } else if (results.size() < limit) {
+            log("getIdentifiers " + off + " " + limit + " " + results.size());
+            results.add((String)null); // stop crawler
         }
-        // log("getIdentifiers " + off + " " + limit + " " + results.size());
         return results;
     }
 
@@ -257,7 +288,7 @@ public class OpusTransporter implements MetaCrawl.Transporter {
             if (rs.isBeforeFirst() ) {
                 Seq seq = rc.getModel().createSeq(rc.getURI() + "/References");
                 while (rs.next()) {
-                    String uri = rs.getString(1);
+                    String uri = rs.getString(1).trim();
                     if (uri.startsWith( // truth maintenance
                         rc.getURI().substring(0, rc.getURI().indexOf("/",8)))) {
                         seq.add(rc.getModel().createResource(uri));
@@ -266,19 +297,32 @@ public class OpusTransporter implements MetaCrawl.Transporter {
                             log("skip " + uri);
                             continue;
                         }
+                        //if (!uri.startsWith("http://")) {
+                        //    log("skip " + uri);
+                        //    continue;
+                        //}
+                        //try (IRIResolver.validateIRI(uri)) {
+                        //    continue;
+                        //} catch(IRIException e) {
+                        //    log("bad iri " + uri);
+                        //}
                         Resource ref = rc.getModel()
                             .createResource(uri, DCTerms.BibliographicResource);
-                        if (rs.getString(2)!=null) {
-                            ref.addProperty(DCTerms.identifier, "ref:" + rs.getString(2));
-                        }
-                        if (rs.getString(3)!=null)
+                        //if (rs.getString(2)!=null) {
+                        //    ref.addProperty(DCTerms.identifier, "ref:" + rs.getString(2));
+                        //}
+                        if (rs.getString(3)!=null) {
                             ref.addProperty(DCTerms.title, rs.getString(3));
-                        if (rs.getString(4)!=null)
+                        }
+                        if (rs.getString(4)!=null) {
                             ref.addProperty(DCTerms.date, rs.getString(4));
-                        if (rs.getString(5)!=null)
+                        }
+                        if (rs.getString(5)!=null) {
                             ref.addProperty(DCTerms.bibliographicCitation, rs.getString(5));
+                        }
                         if (rs.getString(6)!=null) {
                             String[] authors = rs.getString(6).split(" ; ");
+                            //log(authors.toString());
                             ref = injectAuthors(ref, authors);
                         }
                         //if (rs.getString(7)!=null) { //GH2015
@@ -314,11 +358,12 @@ public class OpusTransporter implements MetaCrawl.Transporter {
         if (authors.length==0 || rc.hasProperty(DCTerms.creator)) {
             return rc;
         }
-        Seq seq = rc.getModel().createSeq();
+        // Model model = ModelFactory.createDefaultModel();
+        Seq seq = null;
         int index = 1;
         List<String> list = new ArrayList<String>();
         for (String aut : authors) {
-            if (aut==null) continue;
+            if (aut==null || aut.length()==0) continue;
             String uri = "http://localhost/aut/"
                        + aut.replaceAll("[^a-zA-Z0-9\\:\\.]","");
             if (list.contains(uri)) {
@@ -327,10 +372,13 @@ public class OpusTransporter implements MetaCrawl.Transporter {
                 list.add(uri);
                 Resource prs = rc.getModel().createResource(uri, FOAF.Person);
                 prs.addProperty(FOAF.name, aut);
+                if (seq==null) {
+                    seq = rc.getModel().createSeq();
+                }
                 seq.add(index++, prs);
             }
         }
-        if (seq.size()>0) {
+        if (seq!=null && seq.size()>0) {
             rc.addProperty(DCTerms.creator, seq);
         }
         return rc;

@@ -128,7 +128,10 @@ public final class ModelUtil {
         StmtIterator si = rc.listProperties(DCTerms.identifier);
         while (si.hasNext()) {
             String literal = si.nextStatement().getString();
-            if (literal.startsWith(prefix)) {
+            if (literal.startsWith(prefix) && prefix.equals("urn:")) {
+                id = literal;
+                break;
+            } else if (literal.startsWith(prefix)) {
                 id = literal.substring(prefix.length());;
                 break;
             }

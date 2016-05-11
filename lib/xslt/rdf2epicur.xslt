@@ -7,7 +7,7 @@
      xmlns:urn="http://www.d-nb.de/standards/urn/"
      version="1.0">
 
-<!-- UB Marburg 2013 / 2016 -->
+<!-- UB Marburg 2013 / 2016 http://www.persistent-identifier.de/?link=210 -->
 <xsl:output method="xml" encoding="UTF-8" indent="yes" />
 
 <xsl:template match="rdf:RDF">
@@ -32,7 +32,6 @@
    </identifier>
    <resource>
     <identifier scheme="url" type="frontpage" role="primary">
-       <xsl:value-of select="@rdf:about" />
      <xsl:choose><!-- meta journal -->
       <xsl:when test="contains(dcterms:source/@rdf:resource,'meta')">
        <xsl:value-of select="dcterms:source/@rdf:resource"/>

@@ -229,21 +229,23 @@
               ../nlm:article-meta/nlm:volume, ' (', $year ,')')"/>
         </dcterms:title>
       </xsl:when>
-      <xsl:otherwise>
+      <xsl:when test="../nlm:article-meta/nlm:issue">
         <dcterms:title><xsl:value-of select="concat($year, ', ', ../nlm:article-meta/nlm:issue)"/></dcterms:title>
+      </xsl:when>
+      <xsl:otherwise>
       </xsl:otherwise>
       </xsl:choose>
-      <xsl:apply-templates select="nlm:journal-id"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:issue-title"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:issue-id"/>
       <xsl:apply-templates select="../nlm:article-meta/nlm:pub-date"/>
-      <xsl:apply-templates select="nlm:publisher">
-        <xsl:with-param name="uri" select="$uri"/>
-      </xsl:apply-templates>
       <dcterms:isPartOf>
         <dcterms:BibliographicResource rdf:about="{$uri}">
           <dcterms:type rdf:resource="http://purl.org/spar/fabio/Journal"/>
           <xsl:apply-templates select="nlm:journal-title"/>
+          <xsl:apply-templates select="nlm:journal-id"/>
+          <xsl:apply-templates select="nlm:publisher">
+            <xsl:with-param name="uri" select="$uri"/>
+          </xsl:apply-templates>
         </dcterms:BibliographicResource>
       </dcterms:isPartOf>
   </dcterms:BibliographicResource>
