@@ -106,7 +106,8 @@ public class FileTransporter implements MetaCrawl.Transporter {
         if (Files.isDirectory(path)) {
             // this.directory = resource;
         } else if (Files.isRegularFile(path)) {
-            // crawl(path, 0);
+            // single file not detected ?
+            log("regular file " + path);
         } else {
             String home = System.getProperty("user.home");
             path = Paths.get(home + "/" + resource);

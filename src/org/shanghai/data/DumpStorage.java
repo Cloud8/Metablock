@@ -2,6 +2,11 @@ package org.shanghai.data;
 
 import org.shanghai.rdf.XMLTransformer;
 import org.shanghai.crawl.MetaCrawl;
+import org.shanghai.util.FileUtil;
+import org.shanghai.util.DocUtil;
+
+import org.w3c.dom.Document;
+
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import java.util.logging.Logger;
@@ -13,6 +18,7 @@ import java.io.OutputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.nio.charset.Charset;
+import java.io.StringWriter;
 
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -25,10 +31,13 @@ import org.apache.jena.riot.RDFLanguages;
 */
 public class DumpStorage implements MetaCrawl.Storage {
 
-    private Model dump = null;
+    private Document document = null;
     private String dumpFile = null;
-    private OutputStream os;
     private XMLTransformer transformer = null;
+    private OutputStream os;
+    private int count;
+    private StringWriter sw;
+    private DocUtil docUtil;
 
     public DumpStorage(String dumpFile) {
         this.dumpFile = dumpFile;
@@ -39,24 +48,27 @@ public class DumpStorage implements MetaCrawl.Storage {
     }
 
     public DumpStorage(String dumpFile, String xslt) {
-        this.dumpFile = dumpFile;
-        this.transformer = new XMLTransformer(xslt);
+        this(dumpFile);
+        createTransformer(xslt);
     }
 
     public DumpStorage(OutputStream os, String xslt) {
-        this.os = os;
-        this.transformer = new XMLTransformer(xslt);
+        this(os);
+        createTransformer(xslt);
     }
 
     @Override
     public void create() {
+        sw = new StringWriter();
+        docUtil = new DocUtil().create();
+        count = 0;
         if (dumpFile==null) {
-            //
+            // nothing
         } else try {
             os = new FileOutputStream(dumpFile);
         } catch(FileNotFoundException e) { log(e); }
         if (transformer==null) {
-            //
+		    // nothing
         } else {
             transformer.create();
         }
@@ -64,17 +76,18 @@ public class DumpStorage implements MetaCrawl.Storage {
 
     @Override
     public void dispose() {
-        try {
+	    finish();
+        docUtil.dispose();
+        if (dumpFile==null) try {
             os.close();
+            log(" dumped " + count + " records.");
         } catch(IOException ex) { log(ex); }
-        log("disposed [" + dumpFile + "]");
-        if (transformer!=null) {
-            transformer.dispose();
-        }
+        else log("see " + dumpFile + " # " + count + " records.");
     }
 
     @Override
     public boolean test(Resource rc) {
+        count++;
         System.out.println("console test: " + rc.getURI());
         return true;
     }
@@ -87,13 +100,44 @@ public class DumpStorage implements MetaCrawl.Storage {
 
     @Override
     public boolean write(Resource rc) {
-        if (transformer==null) {
-            RDFDataMgr.write(os, rc.getModel(), RDFLanguages.RDFXML) ;
-        } else try {
-            String xml = transformer.transform(rc);
-            os.write(xml.getBytes(Charset.forName("UTF-8")));
-        } catch(IOException e) { log(e); }
+        if (transformer==null) { 
+            // RDFDataMgr.write(os, rc.getModel(), RDFLanguages.RDFXML) ;
+            document = docUtil.append(document, rc);
+        } else {
+            //String xml = transformer.transform(rc);
+            //if (os==null) log("zero os ? created ?");
+            //os.write(xml.getBytes(Charset.forName("UTF-8")));
+            document = docUtil.append(document, rc);
+        } // catch(IOException e) { log(e); }
+        count++;
         return true;
+    }
+
+    private void finish() {
+        try { 
+		    if (transformer==null) {
+                os.write(docUtil.asString(document).getBytes("UTF-8"));
+            } else {
+                os.write(transformer._transform(document).getBytes("UTF-8"));
+                transformer.dispose();
+		    }
+		} catch(IOException ex) { log(ex); }
+	}
+
+    // unused -- concat subsequent RDF based on string manipulation
+    private void writeCut(Resource rc) {
+        sw.getBuffer().setLength(0);
+        try {
+            RDFDataMgr.write(sw, rc.getModel(), RDFLanguages.RDFXML) ;
+            StringBuffer sb = sw.getBuffer();
+            if (count==0) {
+                sb = sb.delete(sb.length() - 10, sb.length());
+            } else {
+                sb = sb.delete(sb.length() - 10, sb.length());
+                sb = sb.delete(0, sb.indexOf("<",1)+1);
+            }
+            os.write(sw.toString().getBytes()); 
+        } catch(IOException e) { log(e); }
     }
 
     @Override
@@ -106,6 +150,15 @@ public class DumpStorage implements MetaCrawl.Storage {
                 log("destroyed " + dumpFile + " ;-)"); 
                 dumpFile=null;
             } catch(IOException e) { log(e); }
+        }
+    }
+
+    // make some guess on whether this is a filename or already xslt
+    private void createTransformer(String xslt) {
+        if (xslt.startsWith("/")) {
+            this.transformer = new  XMLTransformer(FileUtil.read(xslt));
+        } else {
+            this.transformer = new XMLTransformer(xslt);
         }
     }
 

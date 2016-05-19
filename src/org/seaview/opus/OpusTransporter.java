@@ -42,7 +42,6 @@ import org.w3c.dom.NodeList;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Never Mind
     @title Opus Database Transporter
     @date 2013-07-07
 */
@@ -127,7 +126,7 @@ public class OpusTransporter implements MetaCrawl.Transporter {
             return 1;
         } else if (search.startsWith("urn:")) {
             opus.index = "select source_opus from statistics"
-                + " where urn='" + search + "'";
+                + " where urn like '" + search + "%'";
             series = null;
             log("search urn # [" + search + "]");
             return 1;

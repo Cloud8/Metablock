@@ -106,7 +106,7 @@
 <xsl:template match="nlm:article-meta/nlm:title-group/nlm:trans-title">
   <xsl:variable name="smallcase" select="'abcdefghijklmnopqrstuvwxyz'" />
   <xsl:variable name="uppercase" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'" />
-  <dcterms:language rdf:resource="{concat('http://www.lexvo.org/id/iso639-1/',
+  <dcterms:language rdf:resource="{concat('http://id.loc.gov/vocabulary/iso639-1/',
                         translate(@xml:lang,$uppercase,$smallcase))}"/>
 </xsl:template>
 

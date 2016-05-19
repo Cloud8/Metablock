@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
@@ -137,6 +138,19 @@ public final class ModelUtil {
             }
         }
         return id;
+    }
+
+    public static String asString(Resource rc) {
+        StringWriter sw = new StringWriter();
+        Model model = ModelUtil.prefix(rc.getModel());
+        try {
+            model.write(sw, "RDF/XML-ABBREV");
+        } catch(Exception e) {
+            model.write(System.out,"RDF/XML-ABBREV");
+            e.printStackTrace();
+        } finally {
+            return sw.toString();
+        }
     }
 
     private static final Logger log = Logger.getLogger(ModelUtil.class.getName());

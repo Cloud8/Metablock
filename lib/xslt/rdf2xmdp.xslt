@@ -96,7 +96,7 @@
 <xsl:template match="dcterms:title[not(@xml:lang)]">
   <xsl:variable name="lang">
    <xsl:call-template name="getlang">
-    <xsl:with-param name="input" select="substring-after(../dcterms:language/@rdf:resource,'http://www.lexvo.org/id/iso639-1/')"/>
+    <xsl:with-param name="input" select="substring-after(../dcterms:language/@rdf:resource,'iso639-1/')"/>
    </xsl:call-template>
   </xsl:variable>
   <dc:title xsi:type="ddb:titleISO639-2" lang="{$lang}">
@@ -258,7 +258,7 @@
 <xsl:template match="dcterms:abstract[not(@xml:lang)]">
   <xsl:variable name="lang">
    <xsl:call-template name="getlang">
-    <xsl:with-param name="input" select="substring-after(../dcterms:language/@rdf:resource,'http://www.lexvo.org/id/iso639-1/')"/>
+    <xsl:with-param name="input" select="substring-after(../dcterms:language/@rdf:resource,'iso639-1/')"/>
    </xsl:call-template>
   </xsl:variable>
  <dcterms:abstract xsi:type="ddb:contentISO639-2" lang="{$lang}">
@@ -377,7 +377,7 @@
 <xsl:template match="dcterms:language[@rdf:resource]">
  <xsl:variable name="lang">
    <xsl:call-template name="getlang">
-    <xsl:with-param name="input" select="substring-after(@rdf:resource,'http://www.lexvo.org/id/iso639-1/')"/>
+    <xsl:with-param name="input" select="substring-after(@rdf:resource,'iso639-1/')"/>
    </xsl:call-template>
  </xsl:variable>
  <dc:language xsi:type="dcterms:ISO639-2">

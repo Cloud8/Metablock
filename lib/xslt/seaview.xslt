@@ -28,7 +28,7 @@
     <xsl:apply-templates select="foaf:img"/>
     <field name="allfields"><xsl:value-of 
            select="(substring-after(substring-after(@rdf:about,'//'),'/'))"/>
-           <xsl:for-each select="dcterms:*"><xsl:value-of 
+           <xsl:for-each select="//*/dcterms:*"><xsl:value-of 
            select="concat(' ', normalize-space(text()))"/></xsl:for-each>
            <xsl:for-each select="dcterms:*/foaf:*/*[text()]"><xsl:value-of 
            select="concat(' ', normalize-space(text()))"/></xsl:for-each>
@@ -162,12 +162,36 @@
    <field name="author_corporate_role"><xsl:value-of select="."/></field>
 </xsl:template>
 
+<!-- opus -->
 <xsl:template match="dcterms:provenance">
    <!-- <xsl:comment><xsl:value-of select="' provenance '"/></xsl:comment> -->
    <xsl:apply-templates select="aiiso:Faculty" />
    <xsl:apply-templates select="aiiso:Center" />
    <xsl:apply-templates select="aiiso:Division" />
    <xsl:apply-templates select="aiiso:Institute" />
+</xsl:template>
+
+<!-- opac -->
+<xsl:template match="dcterms:medium">
+   <xsl:apply-templates select="rdf:Seq/rdf:li/dcterms:PhysicalResource" />
+</xsl:template>
+
+<xsl:template match="dcterms:PhysicalResource">
+   <xsl:apply-templates select="dcterms:spatial/dcterms:Location" />
+</xsl:template>
+
+<xsl:template match="dcterms:PhysicalResource/dcterms:spatial/dcterms:Location">
+  <xsl:apply-templates select="foaf:name"/>
+  <xsl:apply-templates select="rdfs:label"/>
+  <xsl:apply-templates select="dcterms:identifier"/>
+</xsl:template>
+
+<xsl:template match="dcterms:spatial/dcterms:Location/foaf:name">
+  <field name="institution"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:spatial/dcterms:Location/rdfs:label">
+  <field name="callnumber-raw"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:publisher">
@@ -212,7 +236,7 @@
 <xsl:template match="dcterms:language[@rdf:resource]">
  <xsl:call-template name="language">
    <xsl:with-param name="lang" select="substring-after(
-    ../dcterms:language/@rdf:resource, 'http://www.lexvo.org/id/iso639-1/')"/>
+    ../dcterms:language/@rdf:resource, 'iso639-1/')"/>
  </xsl:call-template>
 </xsl:template>
 
@@ -244,8 +268,8 @@
 </xsl:template>
 
 <xsl:template name="getlang">
-  <xsl:value-of select="substring-after(../dcterms:language/@rdf:resource,
-                       'http://www.lexvo.org/id/iso639-1/')"/>
+  <xsl:value-of 
+    select="substring-after(../dcterms:language/@rdf:resource, 'iso639-1/')"/>
 </xsl:template>
 
 <xsl:template match="dcterms:modified[1]">

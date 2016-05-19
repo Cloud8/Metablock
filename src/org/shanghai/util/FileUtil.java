@@ -70,7 +70,7 @@ public class FileUtil {
                 content = new String(Files.readAllBytes(Paths.get(path)));
 		    } catch(IOException e) { log(e); log(path); }
         } else {
-		    log("readResource " + path);
+		    // log("readResource " + path);
             content = readResource(path);
         }
         return content;

@@ -1,9 +1,11 @@
 package org.seaview.pdf;
 
 import pl.edu.icm.cermine.ContentExtractor;
+import pl.edu.icm.cermine.structure.model.BxDocument;
 import pl.edu.icm.cermine.metadata.model.DocumentMetadata;
 import pl.edu.icm.cermine.metadata.model.DocumentAuthor;
-import pl.edu.icm.cermine.structure.model.BxDocument;
+import pl.edu.icm.cermine.metadata.model.DocumentAffiliation;
+
 import pl.edu.icm.cermine.exception.AnalysisException;
 import pl.edu.icm.cermine.bibref.model.BibEntry;
 import pl.edu.icm.cermine.ComponentConfiguration;
@@ -22,6 +24,8 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.Seq;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.SKOS;
+import org.apache.jena.vocabulary.VCARD;
+import org.apache.jena.sparql.vocabulary.FOAF;
 
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -50,15 +54,12 @@ import com.google.common.collect.Lists;
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
     @title Wrapper to use CERMINE for metadata / reference extrcation
-    @date 2015-05-08
+    @date 2016-05-13
     see : cermine-impl/src/main/java/pl/edu/icm/cermine/RDFGenerator.java
  */
 public class Cermine extends AbstractExtractor {
 
 	private ContentExtractor cermine;
-	//private PdfBxStructureExtractor cermine;
-    //private PdfNLMMetadataExtractor   bibExtractor;
-    //private PdfNLMReferencesExtractor refExtractor;
     private BxDocument bxdoc;
 
     public Cermine(boolean title, boolean refs) {
@@ -67,6 +68,8 @@ public class Cermine extends AbstractExtractor {
 
     @Override
     public void dispose() {
+        cermine = null;
+        bxdoc = null;
     }
 
     @Override
@@ -104,10 +107,8 @@ public class Cermine extends AbstractExtractor {
     @Override
     public void extractReferences(Resource rc, String fname, int threshold) {
         try {
-            //Element[] refArray = refExtractor.extractReferencesAsNLM(bxdoc); 
             List<BibEntry> references = cermine.getReferences();
             count += references.size();
-		    // readReferences(refArray, rc, threshold);
 		    readReferences(references, rc, threshold);
         } catch(AnalysisException e) { e.printStackTrace(); log(e);}
         // GH20151231 bonus : test cermines citation sentiment analysis
@@ -120,9 +121,7 @@ public class Cermine extends AbstractExtractor {
         } catch(AnalysisException e) { e.printStackTrace(); log(e);}
     }
 
-    protected Resource readCermine(DocumentMetadata dm, Resource rc) 
-        // throws AnalysisException 
-    {
+    protected Resource readCermine(DocumentMetadata dm, Resource rc) {
         if (dm.getTitle()==null || rc.hasProperty(DCTerms.title)) {
             //
         } else {
@@ -136,15 +135,87 @@ public class Cermine extends AbstractExtractor {
         }
         rc = injectAuthors(rc, aut);
 
-        String abstract_ = null; // no abstract from cermine ?
+        String abstract_ = dm.getAbstrakt();
         if (abstract_==null || rc.hasProperty(DCTerms.abstract_)) {
             //
         } else {
             rc.addProperty(DCTerms.abstract_, abstract_);
         }
+
+        if (dm.getPublisher()==null || rc.hasProperty(DCTerms.publisher)) {
+            // nothing
+        } else {
+            Resource publisher = rc.getModel().createResource(FOAF.Organization);
+            publisher.addProperty(FOAF.name, dm.getPublisher());
+            rc.addProperty(DCTerms.publisher, publisher);
+        }
+
+        List<String> kws = dm.getKeywords();
+        if (kws!=null) {
+            for (String kw : kws) {
+                Resource skos = rc.getModel().createResource(SKOS.Concept);
+                skos.addProperty(SKOS.prefLabel, kw.trim());
+                rc.addProperty(DCTerms.subject, skos);
+            }
+        }
+
+        for (DocumentAuthor docAuthor : dm.getAuthors()) {
+            readAffiliations(docAuthor, rc);
+        }
+
+        // GH201605 : getIssue() getJournal() getVolume() getJournalISSN()
         return rc;
     }
 
+    // GH20160619 : TBD -- for now, just log affiliations
+    protected Resource readAffiliations(DocumentAuthor docAuthor, Resource rc) {
+        String prefix = "http://example.org/";
+        Model model = rc.getModel();
+        String docURI = rc.getURI() + "/affiliations";
+        Resource docRes = model.createResource(docURI);
+        int affId = 0;
+        int autId = 0;
+        for (DocumentAffiliation docAffiliation : docAuthor.getAffiliations()) {
+            //String affURI = prefix + "affiliation/" + volDoc + "_" + affId;
+            String affURI = prefix + "affiliation#" + affId;
+            String autURI = prefix + "author/" + docAuthor.getName().replaceAll("\\s", "-");
+            String countryName = docAffiliation.getCountry();
+            if (countryName == null) {
+                countryName = "";
+            }
+            String countryURI = prefix + "country/" + countryName.replaceAll("\\s", "-");
+            String org = docAffiliation.getOrganization();
+            if (org == null) {
+                org = "";
+            } else {
+                log("found affilliation " + org);
+            }
+
+            // Resource affiliation = model.createResource(affURI);
+            // affiliation.addProperty(VCARD.Orgname, org);
+            // Resource author = model.createResource(autURI);
+            // author.addProperty(VCARD.FN, docAuthor.getName());
+            // affiliation.addProperty(DCTerms.contributor, author);
+            // if (!countryName.isEmpty()) {
+            //     Resource country = model.createResource(countryURI);
+            //     country.addProperty(VCARD.NAME, countryName);
+            //     affiliation.addProperty(VCARD.Country, country);
+            // }
+
+            // docRes.addProperty(DCTerms.creator, affiliation);
+            affId++;
+        }
+        autId++;
+        //List<DocumentAffiliation> daffs = dm.getAffiliations();
+        //if (daffs!=null) {
+        //    for (DocumentAffiliation daff : daffs) {
+        //        log("found affiliation [" + daff + "]");
+        //    }
+        //}
+        return rc;
+    }
+
+    /********* old
     @SuppressWarnings("unchecked")
     protected Resource readCermine(Element metadata, Resource rc) 
         throws AnalysisException {
@@ -230,7 +301,9 @@ public class Cermine extends AbstractExtractor {
         if (test) log(metadata);
         return rc;
     }
+    ************/
 
+    // GH201605 : TBD
     private void readReferences(List<BibEntry> refs, Resource rc, int threshold)
     {
     }

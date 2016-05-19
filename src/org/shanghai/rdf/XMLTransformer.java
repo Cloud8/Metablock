@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.transform.Source;
+import javax.xml.transform.Result;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.Templates;
 import javax.xml.transform.TransformerFactory;
@@ -31,7 +32,6 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.Result;
 import javax.xml.stream.XMLStreamReader;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -63,6 +63,8 @@ import org.apache.xerces.util.SAXInputSource;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Statement;
@@ -87,15 +89,12 @@ import org.apache.jena.rdfxml.xmlinput.DOM2Model;
 public class XMLTransformer {
 
     private Templates templates;
-    private StringWriter stringWriter;
-
     private String xslt = null; 
     private static SAXTransformerFactory factory; 
     private XMLReader xr;
     private Map<String,String> params;
 
     public XMLTransformer() {
-        stringWriter = new StringWriter();
         params = new HashMap<String,String>();
     }
 
@@ -103,11 +102,6 @@ public class XMLTransformer {
         this();
         this.xslt = xslt;
     }
-
-    //public XMLTransformer(InputStream is) {
-    //    this();
-    //    xslt = FileUtil.read(is);
-    //}
 
     public void create() {
         factory = ((SAXTransformerFactory) TransformerFactory.newInstance());
@@ -137,8 +131,8 @@ public class XMLTransformer {
     }
 
     public void dispose() {
-        try { stringWriter.close(); }
-        catch(IOException e) {log(e);}
+        // try { stringWriter.close(); }
+        // catch(IOException e) {log(e);}
         if (params!=null) {
             params.clear();
         }
@@ -191,8 +185,7 @@ public class XMLTransformer {
             Result result = new StreamResult(baos);
             transformer.transform( new DOMSource(doc), result);
             rdf = new String( baos.toByteArray(), StandardCharsets.UTF_8 );
-        // } catch(Exception e) { log(e);
-        } finally {
+        } catch(Exception e) { log(e); } finally {
             return rdf;
         }
     }
@@ -236,19 +229,21 @@ public class XMLTransformer {
     }
 
     /* OpusAnalyzer */
-    public String asString(Resource rc) {
-        stringWriter.getBuffer().setLength(0);
+    public static String asString(Resource rc) {
+        // stringWriter.getBuffer().setLength(0);
+        StringWriter sw = new StringWriter();
         Model model = ModelUtil.prefix(rc.getModel());
         try {
-            model.write(stringWriter, "RDF/XML-ABBREV");
+            model.write(sw, "RDF/XML-ABBREV");
         } catch(Exception e) {
             model.write(System.out,"RDF/XML-ABBREV");
             e.printStackTrace();
         } finally {
-            return stringWriter.toString();
+            return sw.toString();
         }
     }
 
+    /*
     private static Model asModel(Document doc) {
         Model m = ModelUtil.createModel();
         RDFReader reader = new JenaReader();
@@ -266,6 +261,7 @@ public class XMLTransformer {
             return m;
         }
     }
+    */
 
     private static Model asModel(String rdf) {
         Model m = ModelUtil.createModel();
@@ -290,9 +286,6 @@ public class XMLTransformer {
         try {
             DOMSource domSource = new DOMSource(doc);
             Transformer tr= factory.newTransformer();
-            //for (String name : params.keySet()) {
-            //    tr.setParameter(name, params.get(name));
-            //}
 			tr.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
 			tr.setOutputProperty(OutputKeys.METHOD, "xml");
 			tr.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -309,14 +302,15 @@ public class XMLTransformer {
     }
 
     // transform to Document
+    /*
     public Document transformToDocument(String xml) {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             DocumentBuilder db = dbf.newDocumentBuilder();
             Document document = db.newDocument();
-            StreamSource is = new StreamSource(new StringReader(xml));
+            Source is = new StreamSource(new StringReader(xml));
             //InputSource is = new InputSource(new StringReader(xml));
-            DOMResult result = new DOMResult(document); 
+            Result result = new DOMResult(document); 
             Transformer transformer = templates.newTransformer();
             transformer.transform(is, result);
             return document;
@@ -328,6 +322,47 @@ public class XMLTransformer {
             throw new RuntimeException(e);
         }
     }
+    */
+ 
+    /*
+    public static Document asDocument(Resource rc) {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document document = db.newDocument();
+            String xml = asString(rc);
+            Source source = new StreamSource(new StringReader(xml));
+            Result result = new DOMResult(document); 
+            Transformer tr = factory.newTransformer();
+            tr.transform(source, result);
+            return document;
+        } catch (ParserConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (TransformerConfigurationException e) {
+            throw new RuntimeException(e);
+        } catch (TransformerException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    */
+
+    /*
+    public Document append(Document parent, Resource rc ) {
+        return append(parent, asDocument(rc));
+    }
+
+    public Document append(Document parent, Document child) {
+        if (parent==null) {
+            return child;
+        }
+        NodeList nodes = child.getDocumentElement().getChildNodes();
+        for (int i=0; i<nodes.getLength(); i++) {
+            Node node = parent.importNode(nodes.item(i), true);
+            parent.getDocumentElement().appendChild(node);
+        }
+        return parent;
+    }
+    */
 
     /*
     private String transformToString(Document doc) {

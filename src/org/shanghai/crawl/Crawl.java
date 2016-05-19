@@ -258,7 +258,7 @@ public class Crawl {
     public void test(String resource) {
         createCrawler();
         int found = crawler.index(resource);
-        log("crawl #" + found + " " + resource);
+        log("test # " + found + " " + resource);
         if (found==0) {
             crawler.test(resource);
         } else {
