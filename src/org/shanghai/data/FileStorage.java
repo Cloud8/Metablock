@@ -115,6 +115,10 @@ public class FileStorage implements MetaCrawl.Storage {
         }
         
         if (test) log("first path " + path);
+        if (!rc.hasProperty(RDF.type)) {
+            log(rc.getURI() + " without type ?");
+            return path.resolve("about.rdf");
+        }
         String name = rc.getPropertyResourceValue(RDF.type).getLocalName();
         if (rc.hasProperty(RDF.type, DCTerms.BibliographicResource)
             && rc.hasProperty(DCTerms.type)) {

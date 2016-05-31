@@ -209,6 +209,7 @@ public class MetaCrawl {
     public int crawl() {
         if (start==0L) {
             start = System.currentTimeMillis();
+            count = 0;
         }
         int chunkSize = 200;
         crawl(chunkSize);
@@ -234,7 +235,7 @@ public class MetaCrawl {
 
     private int crawl(int chunkSize) {
         int i = 0;
-        log("crawl chunkSize " + chunkSize);
+        // log("crawl chunkSize " + chunkSize);
         for (boolean b=true; b; b=crawl((i-1)*chunkSize, chunkSize)) {
              i++;
         }

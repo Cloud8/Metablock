@@ -23,17 +23,12 @@ import java.util.logging.Logger;
 
 /** ✪ (c) reserved.
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop
     @title REST client 
     @date 2015-10-01
 */
 public class REST {
 
     private static final String USER_AGENT = "Seaview/1.1";
-
-    //public static String post(String url, String data) {
-    //    return post(url, data, null, null);
-    //}
 
     public static String post(String url, Properties header, String data)
     {
@@ -185,11 +180,17 @@ public class REST {
     }
 
     public static String get(String url, String user, String pass) {
+        return get(url, "application/xml", user, pass);
+    }
+
+    public static String get(String url, String type, String user, String pass)
+    {
         StringBuilder sb = new StringBuilder();
         try {
             URLConnection conn = new URL(url).openConnection();
             conn.setRequestProperty("Accept-Charset", "utf-8");
             ((HttpURLConnection)conn).setRequestMethod("GET");
+            conn.setRequestProperty("Content-Type", type);
             if (user!=null && pass!=null) {
                 byte[] bytes = new String(user+":"+pass).getBytes();
                 String perm = new String(Base64.getEncoder().encode(bytes));
@@ -218,6 +219,83 @@ public class REST {
                 byte[] bytes = new String(user+":"+pass).getBytes();
                 String perm = new String(Base64.getEncoder().encode(bytes));
                 conn.setRequestProperty("Authorization", "Basic " + perm);
+            }
+            InputStream is = conn.getInputStream();
+            BufferedReader in = new BufferedReader(new InputStreamReader(is));
+            String line;
+            while ((line = in.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch(UnsupportedEncodingException e) { log(e); }
+          catch(IOException e) { log(e); }
+          finally {
+            return sb.toString();
+        }
+    }
+
+    public static int head(String url, String user, String pass) {
+        int status = 0;
+        try {
+            URLConnection conn = new URL(url).openConnection();
+            conn.setRequestProperty("Accept-Charset", "utf-8");
+            ((HttpURLConnection)conn).setRequestMethod("HEAD");
+            if (user!=null && pass!=null) {
+                byte[] bytes = new String(user+":"+pass).getBytes();
+                String perm = new String(Base64.getEncoder().encode(bytes));
+                conn.setRequestProperty("Authorization", "Basic " + perm);
+            }
+            status = ((HttpURLConnection)conn).getResponseCode();
+        } catch(UnsupportedEncodingException e) { log(e); }
+          catch(IOException e) { log(e); }
+          finally {
+            return status;
+        }
+    }
+
+    // curl -i -X PUT "http://localhost:8080/fcrepo/rest/node/to/create"
+    public static String put(String url, String user, String pass) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            URLConnection conn = new URL(url).openConnection();
+            ((HttpURLConnection)conn).setRequestMethod("PUT");
+            conn.setRequestProperty("User-Agent", USER_AGENT);
+            if (user!=null && pass!=null) {
+                byte[] bytes = new String(user+":"+pass).getBytes();
+                String perm = new String(Base64.getEncoder().encode(bytes));
+                conn.setRequestProperty("Authorization", "Basic " + perm);
+            }
+            InputStream is = conn.getInputStream();
+            BufferedReader in = new BufferedReader(new InputStreamReader(is));
+            String line;
+            while ((line = in.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch(UnsupportedEncodingException e) { log(e); }
+          catch(IOException e) { log(e); }
+          finally {
+            return sb.toString();
+        }
+    }
+
+    public static String put(String url, ByteArrayOutputStream baos, 
+        String format, String user, String pass) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            URLConnection conn = new URL(url).openConnection();
+            ((HttpURLConnection)conn).setRequestMethod("PUT");
+            conn.setRequestProperty("User-Agent", USER_AGENT);
+            conn.setRequestProperty("Accept-Charset", "utf-8");
+            conn.setRequestProperty("Content-Type", format);
+            conn.setDoInput(true);
+            conn.setDoOutput(true);
+            if (user!=null && pass!=null) {
+                byte[] bytes = new String(user+":"+pass).getBytes();
+                String perm = new String(Base64.getEncoder().encode(bytes));
+                conn.setRequestProperty("Authorization", "Basic " + perm);
+            }
+            try( DataOutputStream wr =
+                 new DataOutputStream(conn.getOutputStream())) {
+                 wr.write( baos.toByteArray() );
             }
             InputStream is = conn.getInputStream();
             BufferedReader in = new BufferedReader(new InputStreamReader(is));

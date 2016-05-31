@@ -80,7 +80,7 @@ public class DumpStorage implements MetaCrawl.Storage {
         docUtil.dispose();
         if (dumpFile==null) try {
             os.close();
-            log(" dumped " + count + " records.");
+            // log(" dumped " + count + " records.");
         } catch(IOException ex) { log(ex); }
         else log("see " + dumpFile + " # " + count + " records.");
     }

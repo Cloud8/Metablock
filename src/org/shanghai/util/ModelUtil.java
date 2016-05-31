@@ -141,8 +141,12 @@ public final class ModelUtil {
     }
 
     public static String asString(Resource rc) {
-        StringWriter sw = new StringWriter();
         Model model = ModelUtil.prefix(rc.getModel());
+        return asString(model);
+    }
+
+    public static String asString(Model model) {
+        StringWriter sw = new StringWriter();
         try {
             model.write(sw, "RDF/XML-ABBREV");
         } catch(Exception e) {

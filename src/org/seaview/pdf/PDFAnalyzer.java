@@ -95,8 +95,8 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
 
     @Override
     public Resource test(Resource rc) {
-        log("test: " + rc.getURI()); 
         String fname = create(rc);
+        log("test: " + rc.getURI() + " # " + fname); 
         if (fname==null) {
             log("test: no pdf file found for " + rc.getURI());
             return rc;

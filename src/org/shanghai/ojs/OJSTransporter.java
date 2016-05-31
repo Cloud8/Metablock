@@ -123,15 +123,16 @@ public class OJSTransporter implements MetaCrawl.Transporter {
     }
 
     @Override
-    public int index(String fname) {
-        if (Files.isRegularFile(Paths.get(fname))) {
-            String index = FileUtil.read(fname);
+    public int index(String search) {
+        log("index [" + search + "]");
+        if (Files.isRegularFile(Paths.get(search))) {
+            String index = FileUtil.read(search);
             if (index.contains("select")) { //not mistaken
-                log("not implemented : index # " + fname);
+                log("not implemented : index # " + search);
                 return 1;
             }
-        } else if (fname.startsWith("j")) {
-            String jid = fname.substring(1);
+        } else if (search.startsWith("j")) {
+            String jid = search.substring(1);
             for (DBTransporter db : ojs) {
                 int limit = db.index.indexOf("limit");
                 String before = db.index.substring(0, limit);
@@ -139,6 +140,16 @@ public class OJSTransporter implements MetaCrawl.Transporter {
                 String after = db.index.substring(limit);
                 db.index = before + journal + after;
                 // log(db.index);
+            }
+            return 1; 
+        } else if (search.matches("[0-9\\-]+")) {
+            for (DBTransporter db : ojs) {
+                int limit = db.index.indexOf("limit");
+                String before = db.index.substring(0, limit);
+                String date = " and i.date_published > '" + search + "'\n ";
+                String after = db.index.substring(limit);
+                db.index = before + date + after;
+                //log(db.index);
             }
             return 1; 
         }

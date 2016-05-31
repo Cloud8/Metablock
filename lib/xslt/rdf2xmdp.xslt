@@ -53,11 +53,19 @@
   <xsl:apply-templates select="dcterms:abstract"/>
 
   <!-- 7. publisher -->
-  <xsl:apply-templates select="dcterms:publisher"/>
-  <!-- 7. publisher journals -->
-  <xsl:if test="count(dcterms:publisher)=0">
-  <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:publisher"/>
-  </xsl:if>
+   <xsl:choose>
+   <xsl:when test="count(dcterms:isPartOf/*/*/*/dcterms:publisher)=1">
+      <xsl:apply-templates select="dcterms:isPartOf/*/*/*/dcterms:publisher"/>
+   </xsl:when>
+   <xsl:when test="count(dcterms:isPartOf/*/dcterms:publisher)=1">
+      <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:publisher"/>
+   </xsl:when>
+   <xsl:otherwise>
+      <xsl:apply-templates select="dcterms:publisher"/>
+   </xsl:otherwise>
+   </xsl:choose>
+
+  <!-- contributor -->
   <xsl:apply-templates select="dcterms:contributor"/>
 
   <!-- 9. dates -->
@@ -175,7 +183,12 @@
 </xsl:template>
 
 <xsl:template match="dcterms:contributor/foaf:Person[foaf:role]">
-  <dc:contributor xsi:type="pc:Contributor" thesis:role="{foaf:role}">
+  <xsl:variable name="role">
+   <xsl:call-template name="getrole">
+    <xsl:with-param name="input" select="foaf:role"/>
+   </xsl:call-template>
+  </xsl:variable>
+  <dc:contributor xsi:type="pc:Contributor" thesis:role="{$role}">
    <pc:person>
     <pc:name type="nameUsedByThePerson">
      <xsl:choose>
@@ -287,6 +300,14 @@
    <xsl:when test="$input='he'">heb</xsl:when>
    <xsl:when test="$input='zu'">und</xsl:when>
    <xsl:otherwise><xsl:value-of select="'und'"/></xsl:otherwise>
+ </xsl:choose>
+</xsl:template>
+
+<xsl:template name="getrole">
+ <xsl:param name="input"/>
+  <xsl:choose>
+   <xsl:when test="$input='ths'">advisor</xsl:when>
+   <xsl:when test="$input='edt'">editor</xsl:when>
  </xsl:choose>
 </xsl:template>
 

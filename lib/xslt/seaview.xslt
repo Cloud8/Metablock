@@ -173,24 +173,23 @@
 
 <!-- opac -->
 <xsl:template match="dcterms:medium">
-   <xsl:apply-templates select="rdf:Seq/rdf:li/dcterms:PhysicalResource" />
+   <xsl:apply-templates select="rdf:Seq/rdf:li/dcterms:PhysicalMedium" />
 </xsl:template>
 
-<xsl:template match="dcterms:PhysicalResource">
+<xsl:template match="dcterms:PhysicalMedium">
    <xsl:apply-templates select="dcterms:spatial/dcterms:Location" />
+   <xsl:apply-templates select="rdfs:label" />
 </xsl:template>
 
-<xsl:template match="dcterms:PhysicalResource/dcterms:spatial/dcterms:Location">
+<xsl:template match="dcterms:spatial/dcterms:Location">
   <xsl:apply-templates select="foaf:name"/>
-  <xsl:apply-templates select="rdfs:label"/>
-  <xsl:apply-templates select="dcterms:identifier"/>
 </xsl:template>
 
 <xsl:template match="dcterms:spatial/dcterms:Location/foaf:name">
   <field name="institution"><xsl:value-of select="."/></field>
 </xsl:template>
 
-<xsl:template match="dcterms:spatial/dcterms:Location/rdfs:label">
+<xsl:template match="dcterms:PhysicalResource/rdfs:label">
   <field name="callnumber-raw"><xsl:value-of select="."/></field>
 </xsl:template>
 
@@ -525,14 +524,8 @@
   <field name="url"><xsl:value-of select="@rdf:about"/></field>
 </xsl:template>
 
-<!-- TODO: to be handled by record driver -->
 <xsl:template match="dcterms:hasPart/dctypes:MovingImage">
     <field name="url"><xsl:value-of select="@rdf:about"/></field>
- <!-- record driver can handles this if extension is mp4
- <field name="url">
-    <xsl:value-of select="concat('video:',substring(@rdf:about,6))"/>
- </field>
- -->
 </xsl:template>
 
 <!-- container.zip -->
@@ -738,7 +731,9 @@
 <xsl:template match="dcterms:BibliographicResource[count(dcterms:identifier[starts-with(text(),'urn:')])=0][count(dcterms:identifier[starts-with(text(),'ppn:')])=0]" mode="spec">
   <field name="recordtype">opus</field>
   <field name="id"><xsl:value-of select="dcterms:identifier[1]"/></field>
+  <xsl:if test="count(dcterms:hasPart)=0">
   <field name="url"><xsl:value-of select="@rdf:about"/></field>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="dcterms:BibliographicResource[count(dcterms:identifier[starts-with(text(),'urn:')])=1][count(dcterms:identifier[starts-with(text(),'ppn:')])=0]" mode="spec">

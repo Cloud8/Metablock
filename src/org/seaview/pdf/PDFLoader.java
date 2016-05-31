@@ -553,6 +553,9 @@ public class PDFLoader implements Analyzer {
             return path.substring(8);
         } else if (path.startsWith("file://")) {
             path = path.substring(7);
+            if (FileUtil.exists(path)) {
+                return path;
+            }
             if (docbase!=null) {
                 if (Files.isReadable(Paths.get(docbase + "/" + path))) {
                     return docbase + "/" + path;

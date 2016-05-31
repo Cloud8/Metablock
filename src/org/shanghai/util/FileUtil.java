@@ -366,6 +366,12 @@ public class FileUtil {
     }
 
     public static synchronized ByteArrayOutputStream load(String url) {
+        if (url.startsWith("file:")) {
+            return readFile(url);
+        } else if (url.matches("[A-Za-z].*")) {
+            Path path = Paths.get(System.getProperty("user.home") + "/" + url);
+            return readFile(path);
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         InputStream is = null;
         try {
@@ -386,11 +392,29 @@ public class FileUtil {
         return baos;
     }
   
+    private static synchronized ByteArrayOutputStream readFile(String url) {
+        return readFile(getFilePath(url));
+    }
+
+    private static synchronized ByteArrayOutputStream readFile(Path path) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        try {
+            InputStream is = Files.newInputStream(path);
+            for (int readNum; (readNum = is.read(buf)) != -1;) {
+                //Writes to this byte array output stream
+                baos.write(buf, 0, readNum); 
+            }
+        } catch (IOException ex) {
+            log(ex);
+        }
+        return baos;
+    }
+
     private static Path getFilePath(String uri) {
         Path path = null;
         if (uri.startsWith("file:///")) {
             path = Paths.get(uri.substring(7));
-            //log("getFilePath " + path);
         } else if (uri.startsWith("file://")) {
             path = Paths.get(System.getProperty("user.home")
                              + "/" + uri.substring(7));
@@ -406,7 +430,7 @@ public class FileUtil {
     }
 
     private static void log(Exception e) {
-        //e.printStackTrace(); 
+        e.printStackTrace(); 
         log(e.toString());
     }
 

@@ -131,9 +131,10 @@ public class Cermine extends AbstractExtractor {
         String[] aut = new String[authors.size()];
         for (int i=0; i<authors.size(); i++) {
             DocumentAuthor author = authors.get(i);
-                aut[i++] = author.getName();
+            author = readAffiliations(author, rc, i); // add provenance
+            aut[i++] = author.getName(); //
         }
-        rc = injectAuthors(rc, aut);
+        rc = injectAuthors(rc, aut); // non-invasive
 
         String abstract_ = dm.getAbstrakt();
         if (abstract_==null || rc.hasProperty(DCTerms.abstract_)) {
@@ -159,26 +160,33 @@ public class Cermine extends AbstractExtractor {
             }
         }
 
-        for (DocumentAuthor docAuthor : dm.getAuthors()) {
-            readAffiliations(docAuthor, rc);
+        // GH201605 : getJournal() getVolume() getIssue() getJournalISSN()
+        String str = dm.getJournal();
+        String source = str==null?"":str;
+        str = dm.getVolume();
+        source = str==null?source:source + " vol. " + str;
+        str = dm.getIssue();
+        source = str==null?source:source + " no. " + str;
+        str = dm.getJournalISSN();
+        source = str==null?source:source + " issn " + str;
+        if (source.trim().length()>0 || rc.hasProperty(DCTerms.source)) {
+            rc.addProperty(DCTerms.source, source);
         }
-
-        // GH201605 : getIssue() getJournal() getVolume() getJournalISSN()
         return rc;
     }
 
-    // GH20160619 : TBD -- for now, just log affiliations
-    protected Resource readAffiliations(DocumentAuthor docAuthor, Resource rc) {
+    // GH20160619 : TBD -- for now, affiliations as provenance
+    protected DocumentAuthor readAffiliations(DocumentAuthor author, 
+        Resource rc, int autId) {
         String prefix = "http://example.org/";
         Model model = rc.getModel();
         String docURI = rc.getURI() + "/affiliations";
-        Resource docRes = model.createResource(docURI);
+        // Resource docRes = model.createResource(docURI);
         int affId = 0;
-        int autId = 0;
-        for (DocumentAffiliation docAffiliation : docAuthor.getAffiliations()) {
+        for (DocumentAffiliation docAffiliation : author.getAffiliations()) {
             //String affURI = prefix + "affiliation/" + volDoc + "_" + affId;
             String affURI = prefix + "affiliation#" + affId;
-            String autURI = prefix + "author/" + docAuthor.getName().replaceAll("\\s", "-");
+            String autURI = prefix + "author/" + author.getName().replaceAll("\\s", "-");
             String countryName = docAffiliation.getCountry();
             if (countryName == null) {
                 countryName = "";
@@ -186,33 +194,25 @@ public class Cermine extends AbstractExtractor {
             String countryURI = prefix + "country/" + countryName.replaceAll("\\s", "-");
             String org = docAffiliation.getOrganization();
             if (org == null) {
-                org = "";
+                // org = "";
             } else {
                 log("found affilliation " + org);
+                Resource affiliation = model.createResource(affURI);
+                affiliation.addProperty(VCARD.Orgname, org);
+                Resource docAuthor = model.createResource(autURI);
+                docAuthor.addProperty(VCARD.FN, author.getName());
+                affiliation.addProperty(DCTerms.contributor, docAuthor);
+                if (!countryName.isEmpty()) {
+                    Resource country = model.createResource(countryURI);
+                    country.addProperty(VCARD.NAME, countryName);
+                    affiliation.addProperty(VCARD.Country, country);
+                }
+                // docRes.addProperty(DCTerms.creator, affiliation);
+                rc.addProperty(DCTerms.provenance, affiliation);
+                affId++;
             }
-
-            // Resource affiliation = model.createResource(affURI);
-            // affiliation.addProperty(VCARD.Orgname, org);
-            // Resource author = model.createResource(autURI);
-            // author.addProperty(VCARD.FN, docAuthor.getName());
-            // affiliation.addProperty(DCTerms.contributor, author);
-            // if (!countryName.isEmpty()) {
-            //     Resource country = model.createResource(countryURI);
-            //     country.addProperty(VCARD.NAME, countryName);
-            //     affiliation.addProperty(VCARD.Country, country);
-            // }
-
-            // docRes.addProperty(DCTerms.creator, affiliation);
-            affId++;
         }
-        autId++;
-        //List<DocumentAffiliation> daffs = dm.getAffiliations();
-        //if (daffs!=null) {
-        //    for (DocumentAffiliation daff : daffs) {
-        //        log("found affiliation [" + daff + "]");
-        //    }
-        //}
-        return rc;
+        return author;
     }
 
     /********* old

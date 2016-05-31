@@ -61,7 +61,6 @@ public class Crawl {
         testFile = config.get("crawl.test");
         source = config.get("crawl.source");
         target = config.get("crawl.target");
-        //oai_counter = 0;
     }
 
     public void create(String src, String trg, String eng) {
@@ -81,9 +80,6 @@ public class Crawl {
         } else {
             int logC = config.getInt("crawl.count");
             boolean create = true; // insert statements
-            //if (engine!=null && engine.contains("del")) {
-            //    create = false; // update: delete before insert
-            //}
             if (storage==null) {
                 createStorage(target);
             } if (storage==null) {
@@ -323,7 +319,7 @@ public class Crawl {
                 continue;
             }
             dirCount++;
-            crawl(dir);
+            _crawl(dir);
         }
         long end = System.currentTimeMillis();
         if (dirCount>1 && count>1)
@@ -331,23 +327,27 @@ public class Crawl {
                        + ((double)Math.round(end - start)/1000) + " sec");
     }
 
-    public void crawl() {
-        if (crawler==null) { //GH201402: wtf.
-            createCrawler();
-        }
-        crawler.crawl();
+    public void crawl(String resource) {
+        createCrawler();
+        _crawl(resource);
     }
 
-    private void crawl(String resource) {
+    private void _crawl(String resource) {
         int found = crawler.index(resource);
-        log("crawl # " + found + " [" + resource + "] " + source);
         if (found==0) {
             found = crawler.crawl(resource);
         } else if (found>0) {
             found = crawler.crawl();
         } else {
-            log("crawl # " + found + " blocked.");
+            log("crawl # " + found + " blocked" + " [" + resource + "]");
         }
+    }
+
+    public void crawl() {
+        if (crawler==null) { //GH201402: wtf.
+            createCrawler();
+        }
+        crawler.crawl();
     }
 
     private static final Logger logger =

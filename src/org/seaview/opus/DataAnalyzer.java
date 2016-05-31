@@ -40,8 +40,8 @@ public class DataAnalyzer implements Analyzer {
 
     private Backend backend;
 
-    public DataAnalyzer(String store) {
-        this.backend = new FileBackend(store);
+    public DataAnalyzer(Backend backend) {
+        this.backend = backend;
     }
 
     @Override
@@ -144,10 +144,20 @@ public class DataAnalyzer implements Analyzer {
         }
         for(Map.Entry<Resource, String> entry : hash.entrySet()) {
             Resource obj = entry.getKey();
-            log("rename " + obj.getURI() + " to " + entry.getValue());
-            obj = ResourceUtils.renameResource(obj, entry.getValue()); 
+            log("rename " + obj.getURI() + " to [" + entry.getValue() + "]");
+            if (entry.getValue().length()>0) {
+                obj = ResourceUtils.renameResource(obj, entry.getValue()); 
+            } else {
+                log("failed to rename " + obj.getURI());
+            }
         }
         hash.clear();
+
+        // there are no parts but this may be a simple resource description
+        if (!rc.hasProperty(DCTerms.hasPart)) {
+            String uri = backend.writePart(rc, rc);
+            ResourceUtils.renameResource(rc, uri);
+        }
         return true;
     }
 
