@@ -102,15 +102,17 @@ public final class ModelUtil {
         return model.getResource(uri);
     }
 
-    public static void remove(Resource rc, Property prop) {
+    public static Resource remove(Resource rc, Property prop) {
         StmtIterator si = rc.listProperties(prop);
         while (si.hasNext()) {
+            // log("remove " + rc.getURI() + " " + prop.getLocalName());
             Statement stmt = si.nextStatement();
             if (stmt.getObject().isResource()) {
                 remove(stmt.getResource());
             }
         }
         rc.removeAll(prop);
+        return rc;
     }
 
     private static void remove(Resource rc) {

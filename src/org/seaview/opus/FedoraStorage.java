@@ -72,11 +72,11 @@ public class FedoraStorage implements MetaCrawl.Storage {
     @Override
     public boolean write(Resource rc) {
         //String resource = rc.getURI().substring(rc.getURI().indexOf("/",7));
-        String resource = FedoraTransporter.base(rc.getURI());
+        String resource = FedoraTransporter.base(base, rc.getURI());
         if (resource.endsWith(".pdf")) {
-            resource = base + resource.substring(0,resource.length()-4)+".rdf";
+            resource = resource.substring(0,resource.length()-4)+".rdf";
         } else {
-            resource = base + resource + "/about.rdf";
+            resource = resource + "/about.rdf";
         }
         //String format = "application/rdf+xml";
         String format = "application/xml";
@@ -86,7 +86,7 @@ public class FedoraStorage implements MetaCrawl.Storage {
         if (result.equals(resource)) {
             return true;
         } else if (result.length()==0) {
-            log("result [" + result + "] " + resource);
+            // log("result [" + result + "] " + resource);
             return true;
         } else {
             return false;

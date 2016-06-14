@@ -1,4 +1,4 @@
-package org.seaview.opus;
+package org.seaview.pdf;
 
 import org.seaview.opus.DataAnalyzer.Backend;
 import org.seaview.pdf.PDFLoader;
@@ -86,7 +86,7 @@ public class Cover implements Analyzer {
         } else {
             rc.removeAll(FOAF.img);
             rc.addProperty(FOAF.img, cover);
-            // log("cover " + cover);
+            log("cover " + cover);
         }
         return rc;
     }
@@ -109,18 +109,6 @@ public class Cover implements Analyzer {
             doc.close();
         } catch(IOException e) { log(e); }
         return image;
-    }
-
-    public static void main(String[] args) {
-        if (args.length==1) {
-            String store = args[0].substring(args[0].lastIndexOf("/")+1);
-            Cover cover = new Cover(new FileBackend("data"), "data");
-            cover.create();
-            cover.analyze(new TrivialScanner().create().read(args[0]));
-            cover.dispose();
-        } else {
-		    System.out.println("no argument ?");
-        }
     }
 
 	protected void log(String msg) {

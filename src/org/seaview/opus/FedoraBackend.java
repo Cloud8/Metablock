@@ -66,7 +66,7 @@ public class FedoraBackend implements Backend {
     @Override
     public String writeIndex(Resource rc, String url) {
         log("writeIndex " + rc.getURI() + " # " + url);
-        String container = base + FedoraTransporter.base(url) + "/index.html";
+        String container = FedoraTransporter.base(base, url) + "/index.html";
         ByteArrayOutputStream baos = FileUtil.load(url);
         String format = "text/html";
         String result = REST.put(container, baos, format, user, pass);
@@ -82,7 +82,7 @@ public class FedoraBackend implements Backend {
                 log(" writeCover " + source);
             } else {
                 result = writeObject(source, "image/png");
-                log("writeCover " + source + " # " + result);
+                //log("writeCover " + source + " # " + result);
 		    }
 		}
         return result;
@@ -98,7 +98,7 @@ public class FedoraBackend implements Backend {
             try {
                 ImageIO.write(image, "PNG", baos);
             } catch(IOException e) { log(e); }
-            String container = base + FedoraTransporter.base(url) + "/cover.png";
+            String container = FedoraTransporter.base(base, url) + "/cover.png";
             String format = "image/png";
             url = REST.put(container, baos, format, user, pass);
         }
@@ -108,14 +108,14 @@ public class FedoraBackend implements Backend {
     /** write DCTypes part */
     @Override
     public String writePart(Resource rc, Resource obj) {
-        log("writePart " + rc.getURI() + " # " + obj.getURI());
+        //log("writePart " + rc.getURI() + " # " + obj.getURI());
         String result = null;
         String uri = obj.getURI();
         if (obj.hasProperty(RDF.type) && obj.getProperty(RDF.type)
                .getResource().getNameSpace().equals(DCTypes.NS)) {
             // should write this part
         } else if (obj.getURI().endsWith(".pdf")) {
-            log("write " + obj.getURI());
+            // log("write " + obj.getURI());
             result = writeObject(obj.getURI(), "application/pdf");
             return result;
         } else {
@@ -130,7 +130,7 @@ public class FedoraBackend implements Backend {
         if (obj.hasProperty(DCTerms.format)) {
             String format = obj.getProperty(DCTerms.format).getResource()
                                .getProperty(RDFS.label).getString();
-            log("format " + format);
+            if (test) log("format " + format);
             switch(format) {
                 case "application/pdf":
                     result = writeObject(obj.getURI(), format);
@@ -154,23 +154,10 @@ public class FedoraBackend implements Backend {
     private String writeObject(String url, String format) {
         // log("writeObject [" + url + "]");
         ByteArrayOutputStream baos = FileUtil.load(url);
-        String container = base + FedoraTransporter.base(url);
+        String container = FedoraTransporter.base(base, url);
         String result = REST.put(container, baos, format, user, pass);
         return container;
     }
-
-    /*
-    private String base(String url) {
-        if (url.startsWith("file://")) {
-            return url.substring(7);
-        } else if (url.startsWith("http://")) {
-            return url.substring(url.indexOf("/",7));
-        } else if (url.startsWith("https://")) {
-            return url.substring(url.indexOf("/",8));
-        }
-        return url;
-    }
-    */
 
     private void log(Exception e) {
         logger.info(e.toString());

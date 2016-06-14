@@ -37,6 +37,7 @@ public class DumpStorage implements MetaCrawl.Storage {
     private OutputStream os;
     private int count;
     private StringWriter sw;
+    private String tail;
     private DocUtil docUtil;
 
     public DumpStorage(String dumpFile) {
@@ -60,6 +61,7 @@ public class DumpStorage implements MetaCrawl.Storage {
     @Override
     public void create() {
         sw = new StringWriter();
+        tail = "";
         docUtil = new DocUtil().create();
         count = 0;
         if (dumpFile==null) {
@@ -87,7 +89,6 @@ public class DumpStorage implements MetaCrawl.Storage {
 
     @Override
     public boolean test(Resource rc) {
-        count++;
         System.out.println("console test: " + rc.getURI());
         return true;
     }
@@ -101,14 +102,11 @@ public class DumpStorage implements MetaCrawl.Storage {
     @Override
     public boolean write(Resource rc) {
         if (transformer==null) { 
-            // RDFDataMgr.write(os, rc.getModel(), RDFLanguages.RDFXML) ;
-            document = docUtil.append(document, rc);
+            // document = docUtil.append(document, rc);
+            writeCut(rc);
         } else {
-            //String xml = transformer.transform(rc);
-            //if (os==null) log("zero os ? created ?");
-            //os.write(xml.getBytes(Charset.forName("UTF-8")));
             document = docUtil.append(document, rc);
-        } // catch(IOException e) { log(e); }
+        } 
         count++;
         return true;
     }
@@ -116,7 +114,8 @@ public class DumpStorage implements MetaCrawl.Storage {
     private void finish() {
         try { 
 		    if (transformer==null) {
-                os.write(docUtil.asString(document).getBytes("UTF-8"));
+                os.write(tail.getBytes("UTF-8"));
+                //os.write(docUtil.asString(document).getBytes("UTF-8"));
             } else {
                 os.write(transformer._transform(document).getBytes("UTF-8"));
                 transformer.dispose();
@@ -124,20 +123,35 @@ public class DumpStorage implements MetaCrawl.Storage {
 		} catch(IOException ex) { log(ex); }
 	}
 
-    // unused -- concat subsequent RDF based on string manipulation
+    // concat subsequent RDF based on string manipulation
     private void writeCut(Resource rc) {
-        sw.getBuffer().setLength(0);
+        StringBuffer sb = sw.getBuffer();
+        sb.setLength(0);
         try {
             RDFDataMgr.write(sw, rc.getModel(), RDFLanguages.RDFXML) ;
-            StringBuffer sb = sw.getBuffer();
-            if (count==0) {
-                sb = sb.delete(sb.length() - 10, sb.length());
-            } else {
-                sb = sb.delete(sb.length() - 10, sb.length());
-                sb = sb.delete(0, sb.indexOf("<",1)+1);
+            if (sb.length() > 0) {
+        	    int last, prev = sb.length() - 1;
+        	    while ((last = sb.lastIndexOf("\n", prev)) == prev) { 
+                    prev = last - 1; 
+                }
+        	    if (last >= 0) { 
+                    if (count==0) {
+                        tail = sb.substring(last, sb.length());
+                        sb = sb.delete(last, sb.length());
+                    } else {
+                        sb = sb.delete(last, sb.length());
+                        String test = sb.substring(0, sb.indexOf(">")+1);
+                        //log(test);
+                        sb = sb.delete(0, sb.indexOf(">")+1);
+                        //os.write(mark.getBytes());
+                    }
+                    String mark = "<!-- item " + count + " -->";
+                    sb.append(mark);
+		        }
+                os.write(sb.toString().getBytes()); 
             }
-            os.write(sw.toString().getBytes()); 
         } catch(IOException e) { log(e); }
+        // RDFDataMgr.write(os, rc.getModel(), RDFLanguages.RDFXML) ;
     }
 
     @Override

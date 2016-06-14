@@ -87,8 +87,9 @@
   </xsl:choose>
 
   <!-- 29 Hochschulschrift ist Teil von -->
-  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:identifier[starts-with(text(),'zdb:')]"/>
+  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:identifier[starts-with(text(),'zdb:')]"/>
   <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title[contains(text(),../../../dcterms:created)]"/>
+
   <!-- 39 Recht -->
   <xsl:apply-templates select="dcterms:rights"/> 
   <!-- 41 Akademischer Grad -->

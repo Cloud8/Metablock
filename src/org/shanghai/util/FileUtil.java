@@ -368,7 +368,9 @@ public class FileUtil {
     public static synchronized ByteArrayOutputStream load(String url) {
         if (url.startsWith("file:")) {
             return readFile(url);
-        } else if (url.matches("[A-Za-z].*")) {
+        } else if (url.startsWith("http")) {
+            //
+        } else if (!url.contains("://")) {
             Path path = Paths.get(System.getProperty("user.home") + "/" + url);
             return readFile(path);
         }

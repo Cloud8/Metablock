@@ -135,16 +135,20 @@ public class DataAnalyzer implements Analyzer {
         StmtIterator si = rc.listProperties(DCTerms.hasPart);
         while (si.hasNext()) {
             Resource obj = si.nextStatement().getResource();
-            String uri = backend.writePart(rc, obj);
-            if (uri==null) {
-                // nothing
+            if (obj.getURI().endsWith("/All.pdf")) {
+                // skip this
             } else {
-			    hash.put(obj, uri);
+                String uri = backend.writePart(rc, obj);
+                if (uri==null) {
+                    // nothing
+                } else {
+			        hash.put(obj, uri);
+                }
             }
         }
         for(Map.Entry<Resource, String> entry : hash.entrySet()) {
             Resource obj = entry.getKey();
-            log("rename " + obj.getURI() + " to [" + entry.getValue() + "]");
+            //log("rename " + obj.getURI() + " to [" + entry.getValue() + "]");
             if (entry.getValue().length()>0) {
                 obj = ResourceUtils.renameResource(obj, entry.getValue()); 
             } else {

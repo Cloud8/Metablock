@@ -3,7 +3,8 @@ package org.seaview.main;
 import org.shanghai.rdf.Config;
 import org.seaview.pdf.PDFAnalyzer;
 import org.seaview.pdf.PDFLoader;
-import org.seaview.pdf.SimpleCover;
+import org.seaview.pdf.Cover;
+import org.seaview.opus.FileBackend;
 import org.seaview.cite.RefAnalyzer;
 import org.seaview.cite.RefContext;
 import org.seaview.cite.RefSentiment;
@@ -77,7 +78,8 @@ public class Crawl extends org.shanghai.crawl.Crawl {
                 crawler.inject(new RefSentiment(classifier).create());
             }
             if (eng.contains("cover")) {
-                crawler.inject(new SimpleCover().create());
+                String base = config.get("files.docbase");
+                crawler.inject(new Cover(new FileBackend(base), base).create());
             }
         }
     }

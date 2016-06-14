@@ -1,6 +1,7 @@
 package org.seaview.pdf;
 
-import org.seaview.pdf.SimpleCover;
+import org.seaview.pdf.Cover;
+import org.seaview.opus.FileBackend;
 import org.shanghai.util.Language;
 import org.shanghai.util.FileUtil;
 import org.shanghai.util.ModelUtil;
@@ -39,7 +40,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
     private boolean refs;
     private int threshold;
     private PDFLoader pl;
-    private SimpleCover cover;
+    private Cover cover;
     private AbstractExtractor extractor;
     private Language language;
     public int count;
@@ -63,6 +64,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
                        String ghome, String docbase) {
         this(engine, meta, refs, ghome);
         pl = new PDFLoader(docbase);
+        cover = new Cover(new FileBackend(docbase), docbase);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
 
     @Override
     public String probe() {
-        return " " + extractor.getClass().getName();
+        return extractor.getClass().getSimpleName();
     }
 
     @Override
@@ -86,7 +88,6 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         if (pl==null) {
             pl = new PDFLoader();
         }
-        cover = new SimpleCover(pl);
         cover.create();
         language.create();
         pl.create();

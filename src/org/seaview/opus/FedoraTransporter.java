@@ -60,21 +60,25 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
 
     @Override
     public Resource read(String uri) {
-        //String container = uri.substring(uri.indexOf("/",7));
-        String resource = base + FedoraTransporter.base(uri);
+        String resource = FedoraTransporter.base(base, uri);
+        Resource rc = null;
         if (REST.head(resource, user, pass)==200) {
-            Model model = ModelUtil.createModel().read(resource);
-            return model.getResource(uri);
-        }
-        return null;
+            rc = ModelUtil.createModel().read(resource).getResource(uri);
+        } 
+        return rc;
     }
 
     @Override
     public Resource test(String uri) {
-        test = true;
-        String resource = base + base(uri, ".rdf");
-        log("read [" + resource + "] " + REST.head(resource, user, pass));
-        return read(uri);
+        Resource rc = null;
+        String resource = FedoraTransporter.base(base, uri);
+        int status = REST.head(resource, user, pass);
+        log("read [" + resource + "] " + status);
+        if (status==200) {
+            rc = ModelUtil.createModel().read(resource).getResource(uri);
+            log("found " + rc.getURI());
+        }
+        return rc;
     }
 
     @Override
@@ -94,7 +98,7 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
     @Override
     public int index(String uri) {
         indexed = true;
-        if (test) log("index " + uri);
+        log("index " + uri);
         Model model = ModelUtil.createModel().read(base);
         Resource subject = model.getResource(base);
         //FileUtil.write(testFile, ModelUtil.asString(subject));
@@ -108,10 +112,10 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
                 if (muri==null) {
                     // skip this
                 } else if (muri.startsWith(uri)) {
-                    //log("index " + muri);
+                    log("add 1 " + muri);
                     parts.add(muri);
                 } else {
-                    if (test) log("add " + muri);
+                    log("add 2 " + muri);
                     parts.add(muri);
                 }
             }
@@ -119,37 +123,34 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
         return parts.size();
     }
 
-    private String base(String url, String suffix) {
-        String resource = url;
-        if (resource.endsWith(".pdf")) {
-            resource = base + resource.substring(0,resource.length()-4)+suffix;
-        } else {
-            resource = base + resource + "/about.rdf";
-        }
-        return resource;
-    }
-
-    static String base(String url) {
-        if (url.startsWith("file://")) {
-            return url.substring(7);
+    static String base(final String base, final String url) {
+        // strip trailing slash from base
+        String uri = base.endsWith("/")?base.substring(0,base.length()-1):base;
+        if (url.startsWith("file:///")) {
+            uri = uri + url.substring(7);
+        } else if (url.startsWith("file://")) {
+            uri = uri + url.substring(6);
         } else if (url.startsWith("http://")) {
-            return url.substring(url.indexOf("/",7));
+            uri = uri + url.substring(url.indexOf("/",7));
         } else if (url.startsWith("https://")) {
-            return url.substring(url.indexOf("/",8));
+            uri = uri + url.substring(url.indexOf("/",8));
+        } else if (!url.startsWith("/")) {
+            uri = uri + "/" + url;
         }
-        return url;
+        return uri;
     }
 
     /* map from fedora uri to graph based uri */
     private String map(String uri) {
         if (uri.endsWith("/about.rdf")) {
             int x = uri.indexOf("rest/")+4;
-            return graph + uri.substring(x,uri.length()-10);
+            // return graph + uri.substring(x,uri.length()-10);
+            return graph + uri.substring(x);
         } else if (uri.endsWith(".rdf")) {
             int x = uri.indexOf("rest/")+4;
             return graph + uri.substring(x);
         } else {
-            // log("zero " + uri);
+            log("zero " + uri);
         }
         return null;
     }

@@ -4,10 +4,11 @@ import org.shanghai.rdf.XMLTransformer;
 import org.shanghai.crawl.MetaCrawl;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
+import org.shanghai.util.ModelUtil;
+import org.apache.jena.vocabulary.DCTerms;
 
 /**
   @license http://www.apache.org/licenses/LICENSE-2.0
-  @author Goetz Hatop
   @title Write Model to Console
   @date 2015-07-01
 */
@@ -36,8 +37,10 @@ public class EmptyStorage implements MetaCrawl.Storage {
 
     @Override
     public boolean test(Resource rc) {
-        if (console)
+        ModelUtil.remove(rc, DCTerms.references);
+        if (console) {
             System.out.println(transformer.asString(rc));
+        }
         System.out.println("console test: " + rc.getURI());
         return true;
     }

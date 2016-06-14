@@ -286,6 +286,7 @@ public class PDFLoader implements Analyzer {
         COSWriter writer = null;
         try
         {
+            decrypt();
             output = new FileOutputStream(filename);
             writer = new COSWriter(output);
             writer.write(document);

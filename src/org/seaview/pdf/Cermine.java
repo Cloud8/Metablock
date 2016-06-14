@@ -53,7 +53,7 @@ import com.google.common.collect.Lists;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @title Wrapper to use CERMINE for metadata / reference extrcation
+    @title Wrapper to use CERMINE for metadata and reference extraction
     @date 2016-05-13
     see : cermine-impl/src/main/java/pl/edu/icm/cermine/RDFGenerator.java
  */
@@ -123,7 +123,7 @@ public class Cermine extends AbstractExtractor {
 
     protected Resource readCermine(DocumentMetadata dm, Resource rc) {
         if (dm.getTitle()==null || rc.hasProperty(DCTerms.title)) {
-            //
+            // conservative
         } else {
             rc.addProperty(DCTerms.title, dm.getTitle());
         }
@@ -215,103 +215,25 @@ public class Cermine extends AbstractExtractor {
         return author;
     }
 
-    /********* old
-    @SuppressWarnings("unchecked")
-    protected Resource readCermine(Element metadata, Resource rc) 
-        throws AnalysisException {
-        if (metadata==null) {
-            return rc;
+    // GH201606 : TBD
+    private void readReferences(List<BibEntry> refs, Resource rc, int th) {
+        log("References: Cermine.");
+        int found = 0;
+        if (refs==null || refs.size()==0) {
+            log("No references found.");
+            return;
         }
-        Element meta = metadata;
-        meta = meta==null?null:meta.getChild("front");
-        meta = meta==null?null:meta.getChild("article-meta");
-        meta = meta==null?null:meta.getChild("title-group");
-        meta = meta==null?null:meta.getChild("article-title");
-        String title = meta==null?null:meta.getText();
-        if (title==null || rc.hasProperty(DCTerms.title)) {
-            //
-        } else {
-            rc.addProperty(DCTerms.title, title);
+        Model mod = ModelFactory.createDefaultModel();
+        Seq seq = mod.createSeq(rc.getURI() + "#References");
+        for (BibEntry ref : refs) {
+            log(ref.toString());
         }
-
-        meta = metadata;
-        meta = meta==null?null:meta.getChild("front");
-        meta = meta==null?null:meta.getChild("article-meta");
-        meta = meta==null?null:meta.getChild("contrib-group");
-        if (meta!=null && !rc.hasProperty(DCTerms.creator)) {
-            String[] authors = new String[meta.getContentSize()];
-            int i=0;
-            for (Element el : (List<Element>)meta.getChildren()) {
-                authors[i++] = el.getChildText("string-name");
-            }
-            rc = injectAuthors(rc, authors);
-        }
-
-        meta = metadata;
-        // log(meta);
-        meta = meta==null?null:meta.getChild("front");
-        meta = meta==null?null:meta.getChild("article-meta");
-        meta = meta==null?null:meta.getChild("abstract");
-        meta = meta==null?null:meta.getChild("p");
-        String abstract_ = meta==null?null:meta.getText();
-        if (abstract_==null || rc.hasProperty(DCTerms.abstract_)) {
-            //
-        } else {
-            rc.addProperty(DCTerms.abstract_, abstract_);
-        }
-
-        meta = metadata;
-        meta = meta==null?null:meta.getChild("front");
-        meta = meta==null?null:meta.getChild("article-meta");
-        meta = meta==null?null:meta.getChild("pub-date");
-        String year = meta==null?null:meta.getChild("year").getText();
-        String month = null;
-        if (meta!=null && meta.getChild("month")!=null) {
-            month = meta.getChild("month").getText();
-        }
-        String day = null;
-        if (meta!=null && meta.getChild("day")!=null) {
-            day = meta.getChild("day").getText();
-        }
-        if (test) log("year: " + year);
-        if (year==null || rc.hasProperty(DCTerms.created)) {
-            //
-        } else {
-            rc.addProperty(DCTerms.created, year);
-            if (month!=null && day !=null) {
-                String issued = year + "-" + month + "-" + day;
-                rc.addProperty(DCTerms.issued, issued);
-            }
-        }
-
-        meta = metadata;
-        meta = meta==null?null:meta.getChild("front");
-        meta = meta==null?null:meta.getChild("article-meta");
-        meta = meta==null?null:meta.getChild("kwd-group");
-        if (meta==null || rc.hasProperty(DCTerms.subject)) {
-            //
-        } else {
-            List<Element> childs = meta.getChildren("kwd");
-            for(Element kw : childs) {
-                Resource skos = rc.getModel().createResource(SKOS.Concept);
-                skos.addProperty(SKOS.prefLabel, kw.getText().trim());
-                rc.addProperty(DCTerms.subject, skos);
-            }
-        }
-        if (test) log(metadata);
-        return rc;
-    }
-    ************/
-
-    // GH201605 : TBD
-    private void readReferences(List<BibEntry> refs, Resource rc, int threshold)
-    {
     }
 
+    /**********
     @SuppressWarnings({"unchecked"})
     private void readReferences(Element[] refs, Resource rc, int threshold)
         throws AnalysisException {
-        // log("References: Cermine.");
         int found = 0;
         Model mod = ModelFactory.createDefaultModel();
         Seq seq = mod.createSeq(rc.getURI() + "#References");
@@ -366,6 +288,7 @@ public class Cermine extends AbstractExtractor {
             }
         }
     }
+    *****************/
 
     /** citation positions */
     private List<List<CitationPosition>> citationPositions;

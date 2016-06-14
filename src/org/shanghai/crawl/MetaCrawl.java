@@ -128,18 +128,19 @@ public class MetaCrawl {
         }
     }
 
-    public void test(String resource) {
+    public boolean test(String resource) {
         log("test # " + resource);
         Resource rc = transporter.test(resource);
         if (rc==null) {
             logger.severe("no model found " + resource);
-            return;
+            return false;
         }
         for (Analyzer a : analyzers) {
             rc = a.test(rc);
         }
         boolean b = storage==null?false:storage.test(rc);
-        if (!b) dump(rc);
+        // if (!b) dump(rc);
+        return b;
     }
 
     private Resource test(Resource rc) {
