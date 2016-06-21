@@ -31,7 +31,7 @@ import java.net.MalformedURLException;
     @title AbstractExtractor for pdf files
     @date 2015-05-08
  */
-public class AbstractExtractor {
+public abstract class AbstractExtractor {
 
     protected boolean title;
     protected boolean refs;
@@ -51,16 +51,14 @@ public class AbstractExtractor {
         count = 0;
     }
 
-    public void create(String fname) {
-        //log("scratch " + fname);
+    public abstract void create(String fname); // {}
+
+    public void extractMetadata(Resource rc) {
+        log("scratch metadata " + rc.getURI());
     }
 
-    public void extractMetadata(Resource rc, String fname) {
-        log("scratch " + fname + " metadata " + rc.getURI());
-    }
-
-    public void extractReferences(Resource rc, String fname, int threshold) {
-        log("scratch " + fname + " references " + rc.getURI());
+    public void extractReferences(Resource rc, int threshold) {
+        log("scratch references " + rc.getURI());
     }
 
     public String getTEI(String file) {

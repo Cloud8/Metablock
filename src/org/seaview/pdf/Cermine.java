@@ -80,10 +80,17 @@ public class Cermine extends AbstractExtractor {
         } catch(AnalysisException e) { log(e); }
     }
 
+    @Override
     public void create(String fname) {
         try {
-            InputStream is = new FileInputStream(fname);
-            cermine.setPDF(new FileInputStream(fname));
+            InputStream is = null;
+            if (fname.startsWith("http")) {
+                is = new URL(fname).openStream();
+            } else {
+                is = new FileInputStream(fname);
+            }
+            //cermine.setPDF(new FileInputStream(fname));
+            cermine.setPDF(is);
             bxdoc = cermine.getBxDocument();
             is.close();
         } catch(FileNotFoundException e) {log(e);}
@@ -97,7 +104,7 @@ public class Cermine extends AbstractExtractor {
     }
 
     @Override
-    public void extractMetadata(Resource rc, String fname) {
+    public void extractMetadata(Resource rc) {
         try {
             DocumentMetadata dm = cermine.getMetadata();
 			readCermine(dm, rc);
@@ -105,13 +112,13 @@ public class Cermine extends AbstractExtractor {
     }
 
     @Override
-    public void extractReferences(Resource rc, String fname, int threshold) {
+    public void extractReferences(Resource rc, int threshold) {
         try {
             List<BibEntry> references = cermine.getReferences();
             count += references.size();
 		    readReferences(references, rc, threshold);
         } catch(AnalysisException e) { e.printStackTrace(); log(e);}
-        // GH20151231 bonus : test cermines citation sentiment analysis
+        // GH20151231 bonus track : test cermines citation sentiment analysis
         if (test) try {
             List<CitationSentiment> sentiments = getCitationSentiments();
             for (CitationSentiment sentiment : sentiments) {
@@ -215,8 +222,7 @@ public class Cermine extends AbstractExtractor {
         return author;
     }
 
-    // GH201606 : TBD
-    private void readReferences(List<BibEntry> refs, Resource rc, int th) {
+    private void readReferences(List<BibEntry> refs, Resource rc, int thresh) {
         log("References: Cermine.");
         int found = 0;
         if (refs==null || refs.size()==0) {
@@ -226,55 +232,24 @@ public class Cermine extends AbstractExtractor {
         Model mod = ModelFactory.createDefaultModel();
         Seq seq = mod.createSeq(rc.getURI() + "#References");
         for (BibEntry ref : refs) {
-            log(ref.toString());
-        }
-    }
-
-    /**********
-    @SuppressWarnings({"unchecked"})
-    private void readReferences(Element[] refs, Resource rc, int threshold)
-        throws AnalysisException {
-        int found = 0;
-        Model mod = ModelFactory.createDefaultModel();
-        Seq seq = mod.createSeq(rc.getURI() + "#References");
-        if (refs==null || refs.length==0) {
-            log("No references found.");
-        } else {
-            //log(refs);
-            for (Element element : refs) {
-                String raw = element.getValue();
-                if ( reject(raw) ) {
-                    continue ;
-                }
-                Element titleEl = element.getChild("article-title"); 
-                if (titleEl!=null) {
-				    String title = titleEl.getValue();
-                    if (title==null) {
-                        continue;
-                    }
-                    String uri = getUri(raw, title);
-				    Resource ref = mod.createResource(uri, DCTerms.BibliographicResource);
-				    ref = inject(ref, DCTerms.bibliographicCitation, raw);
-                    ref = inject(ref, DCTerms.title, title);
-				    Element year = element.getChild("year");
-                    if (year!=null) {
-                        ref = inject(ref, DCTerms.date, year.getValue());
-                    }
-                    List<String> authors = new ArrayList<String>();
-                    for (Element el : 
-                          (List<Element>)element.getChildren("string-name")) {
-                        authors.add(el.getValue());
-                    }
-                    if (authors.size()>0) {
-                        ref = injectAuthors(ref,
-                            authors.toArray(new String[authors.size()]));
-                    }
-				    seq.add(ref);
-                    found++;
-                }
+            String raw = ref.getText();
+            String title = ref.getFirstFieldValue(BibEntry.FIELD_TITLE);
+            if (title==null) continue;
+            String uri = getUri(raw, title);
+			Resource rf = mod.createResource(uri,DCTerms.BibliographicResource);
+			rf = inject(rf, DCTerms.bibliographicCitation, raw);
+            rf = inject(rf, DCTerms.title, title);
+            String year = ref.getFirstFieldValue(BibEntry.FIELD_YEAR);
+            rf = inject(rf, DCTerms.date, year);
+            log("title " + title);
+            List<String> aut = ref.getAllFieldValues(BibEntry.FIELD_AUTHOR);
+            if (aut.size()>0) {
+                rf = injectAuthors(rf, aut.toArray(new String[aut.size()]));
             }
+			seq.add(rf);
+            found++;
         }
-        if (found>threshold && !test) {
+        if (found>thresh && !test) {
             log("added " + found + " references");
 			rc.removeAll(DCTerms.references);
 			rc.addProperty(DCTerms.references, seq);
@@ -288,7 +263,6 @@ public class Cermine extends AbstractExtractor {
             }
         }
     }
-    *****************/
 
     /** citation positions */
     private List<List<CitationPosition>> citationPositions;
@@ -364,6 +338,7 @@ public class Cermine extends AbstractExtractor {
 
     protected void log(Exception e) {
         logger.severe(e.toString());
+        e.printStackTrace();
     }
 
     protected void log(Element[] elements) {

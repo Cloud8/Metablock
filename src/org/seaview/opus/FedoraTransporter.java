@@ -112,10 +112,10 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
                 if (muri==null) {
                     // skip this
                 } else if (muri.startsWith(uri)) {
-                    log("add 1 " + muri);
+                    // log("add 1 " + muri);
                     parts.add(muri);
                 } else {
-                    log("add 2 " + muri);
+                    // log("add 2 " + muri);
                     parts.add(muri);
                 }
             }
@@ -150,7 +150,7 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
             int x = uri.indexOf("rest/")+4;
             return graph + uri.substring(x);
         } else {
-            log("zero " + uri);
+            // log("zero " + uri);
         }
         return null;
     }

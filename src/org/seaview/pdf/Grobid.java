@@ -47,6 +47,7 @@ public class Grobid extends AbstractExtractor {
     private static final Pattern nonASCII = Pattern.compile("[^a-zA-Z]");
     private Property title;
     private String home;
+    private String fname;
 
     private Engine engine;
     public  int count; 
@@ -87,17 +88,25 @@ public class Grobid extends AbstractExtractor {
         }
     }
 
+    @Override
+    public void create(String fname) {
+        if (fname.startsWith("http")) {
+            this.fname = engine.downloadPDF(fname, 
+            System.getProperty("java.io.tmpdir") + "/", "seaview.pdf");
+        } else {
+            this.fname = fname;
+        }
+    }
+
     // http://grobid.github.io/grobid-core/org/grobid/core/data/BiblioItem.html
     /** inject property title, creator, issued, abstract
         inject property references */
     @Override
-    public void extractMetadata(Resource rc, String fname) {
+    public void extractMetadata(Resource rc) {
         try {
             log("grobid title detection " + fname);
             BiblioItem bi = new BiblioItem();
             String tei = engine.processHeader(fname, false, bi);
-            //rc = inject(rc, model, "creator", bi.getFirstAuthorSurname());
-            //rc = inject(rc, model, "creator", bi.getAuthors());
             List<String> authors = new ArrayList<String>();
             if (bi.getFullAuthors()!=null) {
                 int index = 1;
@@ -163,7 +172,7 @@ public class Grobid extends AbstractExtractor {
     }
 
     @Override
-    public void extractReferences(Resource rc, String fname, int threshold) {
+    public void extractReferences(Resource rc, int threshold) {
         try {
                 File file = new File(fname);
                 List<BibDataSet> bdsl = engine.processReferences(file, false);
@@ -308,7 +317,7 @@ public class Grobid extends AbstractExtractor {
                          Logger.getLogger(Grobid.class.getName());
 
     protected void log(Exception e) {
-        //e.printStackTrace();
+        e.printStackTrace();
         logger.severe(e.toString());
     }
 

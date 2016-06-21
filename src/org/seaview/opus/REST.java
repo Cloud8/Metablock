@@ -318,6 +318,7 @@ public class REST {
 
     private static void log(Exception e) {
         log(e.toString());
+        // e.printStackTrace();
         try {
              throw(e);
         } catch(Exception ex) {}

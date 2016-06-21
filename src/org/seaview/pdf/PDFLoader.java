@@ -312,7 +312,7 @@ public class PDFLoader implements Analyzer {
 
     private void decrypt() {
         if (document.isEncrypted()) {
-            log("document.isEncrypted");
+            log("document was encrypted");
             //DecryptionMaterial dm = new StandardDecryptionMaterial("");
             //document.openProtection(dm); //GH201502 : gone ?
             document.setAllSecurityToBeRemoved(true);
@@ -514,7 +514,6 @@ public class PDFLoader implements Analyzer {
     /* used by Cover Topic */
     public String getPath(Resource rc, String suffix) {
         String path = getPath(rc);
-        //log("getPath " + suffix + " " + path);
         if (path==null) {
             log("no path " + rc.getURI());
             return null;
@@ -529,6 +528,7 @@ public class PDFLoader implements Analyzer {
             // log("no path for " + suffix + " " + path);
             return null;
         }
+        //log("getPath [" + suffix + "] " + path);
         return path;
     }
 

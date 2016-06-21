@@ -10,6 +10,7 @@
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:vcard="http://www.w3.org/2001/vcard-rdf/3.0#"
      version="1.0" >
 
 <xsl:output method="xml" encoding="UTF-8" indent="yes" />
@@ -169,6 +170,8 @@
    <xsl:apply-templates select="aiiso:Center" />
    <xsl:apply-templates select="aiiso:Division" />
    <xsl:apply-templates select="aiiso:Institute" />
+   <xsl:apply-templates select="rdf:Description/vcard:Country" />
+   <xsl:apply-templates select="rdf:Description/vcard:Orgname" />
 </xsl:template>
 
 <!-- opac -->
@@ -215,6 +218,18 @@
 
 <xsl:template match="dcterms:provenance/aiiso:Institute">
   <field name="building"><xsl:value-of select="foaf:name"/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:provenance/rdf:Description/vcard:Country">
+  <xsl:apply-templates select="rdf:Description/vcard:NAME"/>
+</xsl:template>
+
+<xsl:template match="vcard:Country/rdf:Description/vcard:NAME">
+  <field name="building"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:provenance/rdf:Description/vcard:Orgname">
+  <field name="institution"><xsl:value-of select="substring(.,0,16)"/></field>
 </xsl:template>
 
 <!-- OJS : original article URL -->

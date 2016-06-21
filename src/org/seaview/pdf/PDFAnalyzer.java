@@ -52,7 +52,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         } else if (engine.equals("grobid")) {
             extractor = new Grobid(meta, refs, ghome);
         } else {
-            extractor = new AbstractExtractor(meta, refs);
+            // extractor = new AbstractExtractor(meta, refs);
         }
         this.meta = meta;
         this.refs = refs;
@@ -106,34 +106,34 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         extractor.create(fname);
         if (meta) {
             log("scratch metadata " + rc.getURI());
-            extractMetadata(rc, fname);
+            extractMetadata(rc);
         }
         if (refs) {
             log("scratch references " + rc.getURI());
-            extractReferences(rc, fname);
+            extractReferences(rc);
         }
         return rc;
     }
 
     @Override
     public Resource analyze(Resource rc) {
-        if (refs && (rc.hasProperty(DCTerms.references))) {
-            ModelUtil.remove(rc, DCTerms.references);
-            log("removed references " + rc.getURI());
-        }
+        //if (refs && (rc.hasProperty(DCTerms.references))) {
+        //    ModelUtil.remove(rc, DCTerms.references);
+        //    log("removed references " + rc.getURI());
+        //}
         String fname = create(rc);
         if (fname==null) {
-            log("fatal: no pdf file found for " + rc.getURI());
+            log("fatal: no file for " + rc.getURI());
             return rc;
         }
 
         extractor.create(fname);
         if (meta) {
-            extractMetadata(rc, fname);
+            extractMetadata(rc);
         }
 
         if (refs) {
-            extractReferences(rc, fname);
+            extractReferences(rc);
         }
 
         cover.analyze(rc);
@@ -157,8 +157,8 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         }
     }
 
-    private void extractMetadata(Resource rc, String fname) {
-        extractor.extractMetadata(rc, fname);
+    private void extractMetadata(Resource rc) {
+        extractor.extractMetadata(rc);
 
         if (!rc.hasProperty(DCTerms.type) 
             && rc.hasProperty(RDF.type, DCTerms.BibliographicResource)) {
@@ -196,26 +196,14 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         if (!rc.hasProperty(DCTerms.created) && pl.getDate()!=null) {
             rc.addProperty(DCTerms.created, pl.getDate().substring(0,4));
         }
-
-        // GH201605 : suppressed
-        if (false && !rc.hasProperty(DCTerms.abstract_)) {
-            if (extractor.getClass().getSimpleName().equals("Grobid")) {
-                log("trying secondary abstract extractor");
-                Cermine cermine = new Cermine(true, false);
-                cermine.create();
-                cermine.create(fname);
-                cermine.extractMetadata(rc, fname);
-                cermine.dispose();
-            }
-        }
     }
 
-    private void extractReferences(Resource rc, String fname) {
+    private void extractReferences(Resource rc) {
         if (rc.hasProperty(DCTerms.references)) {
 		    return;
         }
 
-        extractor.extractReferences(rc, fname, threshold);
+        extractor.extractReferences(rc, threshold);
         if (rc.hasProperty(DCTerms.references)) {
             RDFNode node = rc.getProperty(DCTerms.references).getObject();
             if (node.isResource()) {

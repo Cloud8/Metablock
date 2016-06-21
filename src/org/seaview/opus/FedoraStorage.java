@@ -9,6 +9,12 @@ import org.shanghai.util.FileUtil;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
+
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,6 +33,7 @@ public class FedoraStorage implements MetaCrawl.Storage {
     private String base;
 
     private boolean test = false;
+    private static final String LDP = "http://www.w3.org/ns/ldp#";
 
     public FedoraStorage(String user, String pass, String base) {
         this.user= user;
@@ -73,14 +80,14 @@ public class FedoraStorage implements MetaCrawl.Storage {
     public boolean write(Resource rc) {
         //String resource = rc.getURI().substring(rc.getURI().indexOf("/",7));
         String resource = FedoraTransporter.base(base, rc.getURI());
-        if (resource.endsWith(".pdf")) {
+        if (resource.charAt(resource.length()-4)=='.') {
             resource = resource.substring(0,resource.length()-4)+".rdf";
         } else {
             resource = resource + "/about.rdf";
         }
         //String format = "application/rdf+xml";
         String format = "application/xml";
-        // log("write " + rc.getURI() + " # " + resource);
+        //log("write " + rc.getURI() + " # " + resource);
         ByteArrayOutputStream baos = ModelUtil.getBaos(rc);
         String result = REST.put(resource, baos, format, user, pass);
         if (result.equals(resource)) {
@@ -89,17 +96,22 @@ public class FedoraStorage implements MetaCrawl.Storage {
             // log("result [" + result + "] " + resource);
             return true;
         } else {
+            log("result [" + result + "] " + resource);
             return false;
         }
     }
 
     @Override
     public void destroy() {
-        FedoraTransporter fed = new FedoraTransporter(user, pass, base, base, null);
-        fed.create();
-        int size = Integer.parseInt(fed.probe());
-        for (String uri : fed.getIdentifiers(0, size)) {
-            delete(uri);
+        Model model = ModelUtil.createModel().read(base);
+        Resource subject = model.getResource(base);
+        Property contains = model.createProperty(LDP, "contains");
+        StmtIterator si = subject.listProperties(contains);
+        while(si.hasNext()) {
+            Statement st = si.nextStatement();
+            if (st.getObject().isResource()) {
+                delete(st.getResource().getURI());
+            }
         }
     }
 

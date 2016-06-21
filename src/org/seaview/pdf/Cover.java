@@ -81,12 +81,14 @@ public class Cover implements Analyzer {
                 }
             }
         }
+        // rc.removeAll(FOAF.img);
         if (cover==null) {
             log("cover failed " + rc.getURI());
+        } else if (rc.hasProperty(FOAF.img)) {
+            // nothing
         } else {
-            rc.removeAll(FOAF.img);
             rc.addProperty(FOAF.img, cover);
-            log("cover " + cover);
+            //log("cover " + cover);
         }
         return rc;
     }

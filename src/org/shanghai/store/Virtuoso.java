@@ -84,6 +84,8 @@ public class Virtuoso {
     }
 
     public void clean() {
+        log("virtuoso clear graph");
+        execute("SPARQL CLEAR GRAPH <" + graph + ">");
         log("virtuoso removeAll");
         virtmodel.removeAll();
     }

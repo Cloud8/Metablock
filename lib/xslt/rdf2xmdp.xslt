@@ -54,13 +54,14 @@
 
   <!-- 7. publisher -->
    <xsl:choose>
-   <xsl:when test="count(dcterms:isPartOf/*/*/*/dcterms:publisher)=1">
-      <xsl:apply-templates select="dcterms:isPartOf/*/*/*/dcterms:publisher"/>
+   <xsl:when test="count(dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher)=1">
+      <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher"/>
    </xsl:when>
-   <xsl:when test="count(dcterms:isPartOf/*/dcterms:publisher)=1">
+   <xsl:when test="count(dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher)=1">
       <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:publisher"/>
    </xsl:when>
    <xsl:otherwise>
+      <xsl:comment> publisher </xsl:comment>
       <xsl:apply-templates select="dcterms:publisher"/>
    </xsl:otherwise>
    </xsl:choose>
@@ -523,17 +524,12 @@
      <xsl:otherwise><xsl:value-of select="@rdf:about"/></xsl:otherwise>
    </xsl:choose>
   </ddb:identifier>
+
   <xsl:choose>
-  <xsl:when test="contains(dcterms:license/@rdf:resource,'creativecommons')">
-      <ddb:rights ddb:kind="free"/>
-  </xsl:when>
-  <!-- NLM -->
-  <xsl:when test="contains(dcterms:isPartOf/*/dcterms:license/@rdf:resource,'creativecommons')">
-      <ddb:rights ddb:kind="free"/>
-  </xsl:when>
-  <xsl:otherwise>
+  <xsl:when test="contains(dcterms:license/@rdf:resource,'adm/urhg.html')">
       <ddb:rights ddb:kind="domain"/>
-  </xsl:otherwise>
+  </xsl:when>
+  <xsl:otherwise><ddb:rights ddb:kind="free"/></xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
