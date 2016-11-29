@@ -328,7 +328,7 @@ public class PDFLoader implements Analyzer {
         String dtitle = rc.getProperty(DCTerms.title).getString();
 
         double score = TextUtil.similarity(ctitle, dtitle);
-        log("titel score " + score);
+        // log("title score " + score);
         if (score<0.9) {
             info.setTitle(dtitle);
         }
@@ -410,6 +410,8 @@ public class PDFLoader implements Analyzer {
             try {
                 date.setTime(sdf.parse(iss));
                 info.setCreationDate(date);
+                //String test = sdf.format(info.getCreationDate().getTime());
+                //log("issued " + iss + " # " + test);
             } catch (ParseException e) { log(e); }
         }
 

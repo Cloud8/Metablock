@@ -19,6 +19,9 @@ import java.net.UnknownHostException;
 import java.net.MalformedURLException;
 import java.util.Base64;
 import java.util.Properties;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /** ✪ (c) reserved.
@@ -101,6 +104,13 @@ public class REST {
         } finally {
             return result;
         }
+    }
+
+    public static String post(String url, ByteArrayOutputStream baos, 
+        String format, String user, String pass) {
+        Properties prop = new Properties();
+        prop.setProperty("Content-Type", format);
+        return post(url, prop, baos, user, pass);
     }
 
     public static String post(String url, Properties header, 
@@ -229,7 +239,40 @@ public class REST {
         } catch(UnsupportedEncodingException e) { log(e); }
           catch(IOException e) { log(e); }
           finally {
-            return sb.toString();
+              return sb.toString();
+        }
+    }
+
+    private String getHeader(URLConnection conn) {
+        StringBuilder sb = new StringBuilder();
+        Map response = conn.getHeaderFields();
+        for (Iterator it = response.keySet().iterator(); it.hasNext();) {
+            String key = (String) it.next();
+            List values = (List) response.get(key);
+            sb.append(key + ": ");
+            for (int i = 0; i < values.size(); i++) {
+                Object o = values.get(i);
+                sb.append(o + ", ");
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
+    }
+
+    /** returns (may be redirected) URL */
+    public static String head(String url) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            URLConnection conn = new URL(url).openConnection();
+            ((HttpURLConnection)conn).setRequestMethod("HEAD");
+            conn.connect();
+            InputStream is = conn.getInputStream();
+			sb.append(conn.getURL());
+            is.close();
+        } catch(UnsupportedEncodingException e) { log(e); }
+          catch(IOException e) { log(e); }
+          finally {
+              return sb.toString();
         }
     }
 
@@ -281,21 +324,26 @@ public class REST {
         String format, String user, String pass) {
         StringBuilder sb = new StringBuilder();
         try {
+            byte[] bytes = baos.toByteArray();
+            if (format.equals("video/mp4"))
+                log("put " + url + " " + format + " " + bytes.length);
             URLConnection conn = new URL(url).openConnection();
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
             ((HttpURLConnection)conn).setRequestMethod("PUT");
             conn.setRequestProperty("User-Agent", USER_AGENT);
             conn.setRequestProperty("Accept-Charset", "utf-8");
             conn.setRequestProperty("Content-Type", format);
-            conn.setDoInput(true);
-            conn.setDoOutput(true);
+            conn.setRequestProperty("Content-length", "" + bytes.length);
+            ((HttpURLConnection)conn).setChunkedStreamingMode( 0 );
             if (user!=null && pass!=null) {
-                byte[] bytes = new String(user+":"+pass).getBytes();
-                String perm = new String(Base64.getEncoder().encode(bytes));
+                byte[] pbytes = new String(user+":"+pass).getBytes();
+                String perm = new String(Base64.getEncoder().encode(pbytes));
                 conn.setRequestProperty("Authorization", "Basic " + perm);
             }
             try( DataOutputStream wr =
                  new DataOutputStream(conn.getOutputStream())) {
-                 wr.write( baos.toByteArray() );
+                 wr.write( bytes );
             }
             InputStream is = conn.getInputStream();
             BufferedReader in = new BufferedReader(new InputStreamReader(is));

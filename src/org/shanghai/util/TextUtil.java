@@ -100,6 +100,9 @@ public class TextUtil {
      * Calculates the similarity (a number within 0 and 1) between two strings.
      */
     public static double similarity(String s1, String s2) {
+        if (s1==null || s2==null) {
+            return 0.0;
+        }
         return JaroWinkler.similarity(s1, s2);
     }
 

@@ -103,15 +103,22 @@
 
 <xsl:template match="dcterms:creator/foaf:Person">
   <xsl:apply-templates select="foaf:name"/>
+  <xsl:apply-templates select="foaf:role"/>
 </xsl:template>
 
 <xsl:template match="dcterms:creator/rdf:Seq">
   <xsl:apply-templates select="rdf:li/foaf:Person"/>
+  <xsl:apply-templates select="rdf:li[@rdf:resource]"/>
 </xsl:template>
 
 <xsl:template match="dcterms:creator/rdf:Seq/rdf:li/foaf:Person">
     <xsl:apply-templates select="foaf:name"/>
     <xsl:apply-templates select="foaf:role"/>
+</xsl:template>
+
+<xsl:template match="dcterms:creator/rdf:Seq/rdf:li[@rdf:resource]">
+  <xsl:param name="about" select="@rdf:resource"/>
+  <xsl:apply-templates select="//foaf:Person[@rdf:about=$about]"/>
 </xsl:template>
 
 <xsl:template match="dcterms:creator/foaf:Person/foaf:name">
@@ -122,7 +129,7 @@
   <field name="author"><xsl:value-of select="."/></field>
 </xsl:template>
 
-<xsl:template match="dcterms:creator/rdf:Seq/rdf:li/foaf:Person/foaf:role">
+<xsl:template match="foaf:Person/foaf:role">
   <field name="author_role"><xsl:value-of select="."/></field>
 </xsl:template>
 
@@ -181,11 +188,17 @@
 
 <xsl:template match="dcterms:PhysicalMedium">
    <xsl:apply-templates select="dcterms:spatial/dcterms:Location" />
+   <xsl:apply-templates select="dcterms:spatial[@rdf:resource]" />
    <xsl:apply-templates select="rdfs:label" />
 </xsl:template>
 
 <xsl:template match="dcterms:spatial/dcterms:Location">
   <xsl:apply-templates select="foaf:name"/>
+</xsl:template>
+
+<xsl:template match="dcterms:spatial[@rdf:resource]">
+  <xsl:variable name="about" select="@rdf:resource"/>
+  <xsl:apply-templates select="//*/dcterms:Location[@rdf:about=$about]"/>
 </xsl:template>
 
 <xsl:template match="dcterms:spatial/dcterms:Location/foaf:name">
@@ -205,19 +218,19 @@
 </xsl:template>
 
 <xsl:template match="dcterms:provenance/aiiso:Faculty">
-  <field name="institution"><xsl:value-of select="foaf:name"/></field>
+  <field name="building"><xsl:value-of select="foaf:name"/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:provenance/aiiso:Center">
-  <field name="institution"><xsl:value-of select="foaf:name"/></field>
+  <field name="building"><xsl:value-of select="foaf:name"/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:provenance/aiiso:Division">
-  <field name="institution"><xsl:value-of select="foaf:name"/></field>
+  <field name="building"><xsl:value-of select="foaf:name"/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:provenance/aiiso:Institute">
-  <field name="building"><xsl:value-of select="foaf:name"/></field>
+  <field name="institution"><xsl:value-of select="foaf:name"/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:provenance/rdf:Description/vcard:Country">
@@ -234,6 +247,7 @@
 
 <!-- OJS : original article URL -->
 <xsl:template match="dcterms:source[@rdf:resource]">
+   <field name="url"><xsl:value-of select="@rdf:resource"/></field>
 </xsl:template>
 
 <!-- Opus : source_title loaded from driver -->
@@ -414,6 +428,25 @@
   <xsl:when test="$type='Article'">
     <field name="format"><xsl:value-of select="'Article'"/></field>
   </xsl:when>
+  <xsl:when test="$type='Volume'">
+    <field name="format"><xsl:value-of select="'Volume'"/></field>
+  </xsl:when>
+  <xsl:when test="$type='Database'">
+    <field name="format"><xsl:value-of select="'Database'"/></field>
+  </xsl:when>
+  <xsl:when test="$type='Film'">
+    <field name="format"><xsl:value-of select="'Video'"/></field>
+  </xsl:when>
+  <xsl:when test="$type='AudioDocument'">
+    <field name="format"><xsl:value-of select="'Audio'"/></field>
+  </xsl:when>
+  <xsl:when test="$type='Excerpt'">
+    <field name="format"><xsl:value-of select="'Excerpt'"/></field>
+  </xsl:when>
+  <xsl:when test="$type='Image'">
+    <field name="format"><xsl:value-of select="'Photo'"/></field>
+  </xsl:when>
+  <xsl:when test="$type='Dataset'"><!-- format from hasPart --></xsl:when>
   <xsl:otherwise>
     <field name="format"><xsl:value-of select="'Work'"/></field>
     <field name="oai_set_str_mv">
@@ -491,7 +524,7 @@
 <!-- contents can be multivalued -->
 <xsl:template match="dcterms:abstract">
  <xsl:variable name="lang"><xsl:call-template name="getlang"/></xsl:variable>
- <!--<xsl:comment>description <xsl:value-of select="$lang"/></xsl:comment>-->
+ <xsl:comment>description <xsl:value-of select="$lang"/></xsl:comment>
  <xsl:choose>
   <xsl:when test="@xml:lang=$lang">
      <field name="description"><xsl:value-of select="."/></field>
@@ -502,6 +535,11 @@
   <xsl:when test="count(../dcterms:abstract)=1">
      <field name="description"><xsl:value-of select="."/></field>
   </xsl:when>
+  <!-- need a solution for no abstract in document language
+  <xsl:when test="count(../dcterms:abstract)=2 and @xml:lang='en'">
+     <field name="description"><xsl:value-of select="."/></field>
+  </xsl:when>
+  -->
   <xsl:otherwise>
      <field name="contents"><xsl:value-of select="."/></field>
   </xsl:otherwise>
@@ -524,11 +562,7 @@
    </field>
   </xsl:when>
   <xsl:when test="contains(@rdf:about, '/All.pdf')"></xsl:when>
-  <xsl:when test="../../dcterms:source[@rdf:resource]">
-   <field name="url"><!-- OJS -->
-       <xsl:value-of select="../../dcterms:source/@rdf:resource"/>
-   </field>
-  </xsl:when>
+  <xsl:when test="../../dcterms:source[@rdf:resource]"><!--OJS--></xsl:when>
   <xsl:otherwise>
    <field name="url"><xsl:value-of select="@rdf:about"/></field>
   </xsl:otherwise>
@@ -578,7 +612,8 @@
 </xsl:template>
 
 <!-- Top Hierarchies -->
-<xsl:template match="dcterms:hasPart[@rdf:resource][1]"> 
+<xsl:template match="dcterms:hasPart[@rdf:resource][1][count(../dcterms:isPartOf)=0]"> 
+  <xsl:comment><xsl:value-of select="'hierarchy top'"/></xsl:comment>
   <field name="hierarchytype"></field>
   <field name="hierarchy_top_id">
     <xsl:call-template name="identity">
@@ -596,11 +631,21 @@
   <field name="is_hierarchy_title">
      <xsl:value-of select="../dcterms:title" />
   </field>
-  <field name="url"><xsl:value-of select="@rdf:resource" /></field>
 </xsl:template>
 
 <xsl:template match="dcterms:hasPart[@rdf:resource][position()>1]">
-  <field name="url"><xsl:value-of select="@rdf:resource" /></field>
+  <!-- <field name="url"><xsl:value-of select="@rdf:resource" /></field> -->
+</xsl:template>
+
+<!-- opac -->
+<xsl:template match="dcterms:tableOfContents">
+  <xsl:apply-templates select="dcterms:BibliographicResource"/>
+</xsl:template>
+
+<xsl:template match="dcterms:tableOfContents/dcterms:BibliographicResource">
+  <field name="contents">
+    <xsl:value-of select="concat('[',dcterms:title,'](',@rdf:about,')')"/>
+  </field>
 </xsl:template>
 
 <xsl:template match="dcterms:isPartOf[not(dcterms:BibliographicResource)]">
@@ -608,7 +653,7 @@
 </xsl:template>
 
 <xsl:template match="dcterms:isPartOf[dcterms:BibliographicResource]">
-  <xsl:comment><xsl:value-of select="'hierarchy level 1'"/></xsl:comment>
+  <xsl:comment><xsl:value-of select="'hierarchy level one'"/></xsl:comment>
   <field name="hierarchytype"></field>
   <field name="is_hierarchy_id">
     <xsl:call-template name="identity"><xsl:with-param name="id" 
@@ -645,6 +690,7 @@
   </field>
   <xsl:apply-templates select="dcterms:provenance"/>
   <xsl:apply-templates select="dcterms:publisher"/>
+  <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'issn:')]"/>
 </xsl:template>
 
 <!-- hierarchy with more levels to follow-->
@@ -763,11 +809,6 @@
   </field>
   <xsl:choose>
    <xsl:when test="dcterms:hasPart"><!--parts have their own urls--></xsl:when>
-   <xsl:when test="dcterms:source[@rdf:resource]"><!-- OJS issues-->
-      <field name="url">
-             <xsl:value-of select="dcterms:source/@rdf:resource"/>
-      </field>
-   </xsl:when>
    <xsl:otherwise>
       <field name="url"><xsl:value-of select="@rdf:about"/></field>
    </xsl:otherwise>

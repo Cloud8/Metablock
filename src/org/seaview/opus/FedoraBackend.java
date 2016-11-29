@@ -152,10 +152,13 @@ public class FedoraBackend implements Backend {
     }
 
     private String writeObject(String url, String format) {
-        // log("writeObject [" + url + "]");
         ByteArrayOutputStream baos = FileUtil.load(url);
         String container = FedoraTransporter.base(base, url);
         String result = REST.put(container, baos, format, user, pass);
+        if (test) log("writeObject [" + url + "] [" + result + "]");
+        try {
+            baos.close();
+        } catch(IOException e) { log(e); }
         return container;
     }
 

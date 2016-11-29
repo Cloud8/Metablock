@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<xsl:stylesheet version="1.0"
+<xsl:stylesheet
      xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
@@ -11,7 +11,9 @@
      xmlns:fabio="http://purl.org/spar/fabio/"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:daia="http://purl.org/ontology/daia#"
-     xmlns:fo="http://www.w3.org/1999/XSL/Format">
+     xmlns:fo="http://www.w3.org/1999/XSL/Format"
+     xmlns:pica="http://localhost/metacard/card/ppn/"
+     version="1.0" >
 
 <xsl:output method="xml" indent="yes"/>
 
@@ -45,8 +47,16 @@
  </fo:root>
 </xsl:template>
 
+<xsl:template match="dcterms:BibliographicResource[pica:context]">
+  <xsl:variable name="abt"
+    select="substring-after(pica:context[starts-with(text(),'abt:')],'abt:')"/>
+  <xsl:variable name="lss"
+    select="substring-after(pica:context[starts-with(text(),'lss:')],'lss:')"/>
+    <xsl:comment> abt <xsl:value-of select="$abt"/> lss <xsl:value-of select="$lss"/> </xsl:comment>
+    <xsl:apply-templates select="dcterms:medium/rdf:Seq/rdf:li/dcterms:PhysicalMedium[contains(dcterms:spatial/dcterms:Location/@rdf:about,$abt) and pica:f209B=$lss]"/>
+</xsl:template>
 
-<xsl:template match="dcterms:BibliographicResource">
+<xsl:template match="dcterms:BibliographicResource[not(pica:context)]">
     <xsl:apply-templates select="dcterms:medium" />
     <xsl:apply-templates select="dcterms:hasPart" />
 </xsl:template>
@@ -80,7 +90,7 @@
    <fo:table-row space-before="0mm">
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
         <fo:table-cell><fo:block text-align="right">
-           <xsl:apply-templates select="daia:label" />
+           <xsl:apply-templates select="rdfs:label" />
            <xsl:apply-templates select="../dcterms:identifier[starts-with(text(),'urn')]" />
            </fo:block></fo:table-cell>
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
@@ -106,6 +116,8 @@
             <fo:inline>
                 <xsl:apply-templates select="../dcterms:title"/>
                 <xsl:apply-templates select="../../../../dcterms:title"/>
+                <xsl:apply-templates select="../dcterms:alternative"/>
+                <xsl:apply-templates select="../../../../dcterms:alternative"/>
             </fo:inline>
         </fo:block>
         </fo:table-cell>
@@ -148,12 +160,13 @@
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
     </fo:table-row>
 
-    <!-- Dissertationen Vermerk : TO DO -->
+    <!-- Dissertationen Vermerk -->
     <fo:table-row space-before="0.4em">
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
         <fo:table-cell>
         <fo:block>
-            <xsl:apply-templates select="../../../../dcterms:alternative"/>
+            <xsl:apply-templates select="../../../../dcterms:coverage"/>
+            <xsl:apply-templates select="../dcterms:coverage"/>
         </fo:block>
         </fo:table-cell>
         <fo:table-cell><fo:block>
@@ -161,32 +174,29 @@
     </fo:table-row>
 
     <!-- Schriftenreihen -->
-    <!--
     <fo:table-row space-before="0.4em">
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
         <fo:table-cell>
         <fo:block>
-          <xsl:apply-templates select="../field[@key='036E']" />
+            <xsl:apply-templates select="../../../../dcterms:isPartOf"/>
+            <xsl:apply-templates select="../dcterms:isPartOf"/>
         </fo:block>
         </fo:table-cell>
         <fo:table-cell><fo:block>
         </fo:block></fo:table-cell>
     </fo:table-row>
-    -->
 
     <!-- Inventarnummer -->
-    <!--
     <fo:table-row space-before="0.4em">
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
         <fo:table-cell>
         <fo:block>
-          <xsl:apply-templates select="field[@key='209C']" />
+          <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'inv:')]" />
         </fo:block>
         </fo:table-cell>
         <fo:table-cell><fo:block>
         </fo:block></fo:table-cell>
     </fo:table-row>
-    -->
 
     <!-- Zeitschriften Bandzaehlung -->
     <!--
@@ -203,18 +213,16 @@
     -->
 
     <!-- Sonderstandorte -->
-    <!--
     <fo:table-row space-before="0.4em">
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
         <fo:table-cell>
         <fo:block text-align="right">
-          <xsl:apply-templates select="field[@key='209G']" />
+          <xsl:apply-templates select="daia:storage" />
         </fo:block>
         </fo:table-cell>
         <fo:table-cell><fo:block>
         </fo:block></fo:table-cell>
     </fo:table-row>
-    -->
 
     <!-- ppn bar -->
     <!--
@@ -257,8 +265,28 @@
     <xsl:value-of select="."/>
 </xsl:template>
 
+<xsl:template match="dcterms:alternative">
+    <xsl:value-of select="."/>
+</xsl:template>
+
+<xsl:template match="dcterms:coverage">
+    <xsl:value-of select="."/>
+</xsl:template>
+
 <xsl:template match="dcterms:identifier[starts-with(text(),'isbn:')]">
-    <xsl:value-of select="substring(.,6)"/>
+    <xsl:value-of select="concat('ISBN ', substring(.,6))"/>
+</xsl:template>
+
+<xsl:template match="dcterms:identifier[starts-with(text(),'isbn:')][count(preceding-sibling::dcterms:identifier[starts-with(text(),'isbn:')])>0]">
+    <xsl:value-of select="concat(' ', substring(.,6))"/>
+</xsl:template>
+
+<xsl:template match="dcterms:identifier[starts-with(text(),'inv:')]">
+    <xsl:value-of select="concat(substring(.,5),' ')"/>
+</xsl:template>
+
+<xsl:template match="dcterms:isPartOf">
+    <xsl:value-of select="."/>
 </xsl:template>
 
 <xsl:template match="dcterms:publisher">
@@ -267,10 +295,14 @@
 </xsl:template>
 
 <xsl:template match="dcterms:extent">
-    <xsl:value-of select="normalize-space(../../../../dcterms:extent/dcterms:SizeOrDuration)"/>
+    <xsl:value-of select="dcterms:SizeOrDuration/rdf:value"/>
 </xsl:template>
 
-<xsl:template match="daia:label">
+<xsl:template match="rdfs:label">
+    <xsl:value-of select="."/>
+</xsl:template>
+
+<xsl:template match="daia:storage">
     <xsl:value-of select="."/>
 </xsl:template>
 

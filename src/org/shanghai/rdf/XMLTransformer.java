@@ -169,7 +169,7 @@ public class XMLTransformer {
             return null;
         }
         String uri = rdf.substring(x+11, y);
-        //log("about [" + uri + "]");
+        //log(rdf + "about [" + uri + "]");
         Model model = asModel(rdf);
         return model.getResource(uri);
     }
@@ -243,27 +243,7 @@ public class XMLTransformer {
         }
     }
 
-    /*
-    private static Model asModel(Document doc) {
-        Model m = ModelUtil.createModel();
-        RDFReader reader = new JenaReader();
-        String rdf = asString(doc);
-        //reader.setErrorHandler(new MyRDFErrorHandler(rdf));
-        try {
-            InputStream in = new ByteArrayInputStream(rdf.getBytes("UTF-8"));
-            reader.read(m, in, null);
-            in.close();
-        } catch(UnsupportedEncodingException e) {
-            throw new AssertionError("UTF-8 is unknown");
-        } catch(IOException e) {
-            log(e);
-        } finally {
-            return m;
-        }
-    }
-    */
-
-    private static Model asModel(String rdf) {
+    public static Model asModel(String rdf) {
         Model m = ModelUtil.createModel();
         RDFReader reader = new JenaReader();
         //reader.setErrorHandler(new MyRDFErrorHandler(rdf));

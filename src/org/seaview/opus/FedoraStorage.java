@@ -73,6 +73,8 @@ public class FedoraStorage implements MetaCrawl.Storage {
     public boolean delete(String resource) {
         String result = REST.delete(resource, user, pass);
         System.out.println("delete: " + resource + " [" + result + "]"); 
+        // remove tombstone too
+        result = REST.delete(resource + "/fcr:tombstone", user, pass);
         return true;
     }
 
@@ -93,7 +95,8 @@ public class FedoraStorage implements MetaCrawl.Storage {
         if (result.equals(resource)) {
             return true;
         } else if (result.length()==0) {
-            // log("result [" + result + "] " + resource);
+            //result = REST.post(resource, baos, format, user, pass);
+            log("result [" + result + "] " + resource);
             return true;
         } else {
             log("result [" + result + "] " + resource);

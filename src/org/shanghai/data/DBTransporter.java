@@ -67,10 +67,6 @@ public class DBTransporter implements MetaCrawl.Transporter {
             cal.add(Calendar.DATE, 0-days);
             DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
             index = index.replace("<date>", df.format(cal.getTime()));
-            //if (b) log(df.format(cal.getTime()));
-            //if (days>0) {
-            //    log(index);
-            //}
         }
     }
 
@@ -78,7 +74,7 @@ public class DBTransporter implements MetaCrawl.Transporter {
     public void create() {
         database.create();
         table = table(index);
-        //log("guessed table [" + table + "]");
+        //log("table [" + table + "]");
         if (transformer!=null)
             transformer.create();
         identifier = null;
@@ -118,26 +114,17 @@ public class DBTransporter implements MetaCrawl.Transporter {
         return transformer.transform(document);
     }
 
-    //public Resource read(String oid, String uri) {
-    //    Document document = createDocument(oid);
-    //    Resource rc = transformer.transform(document, uri);
-    //    return rc;
-    //}
-
     @Override
     public List<String> getIdentifiers(int off, int count) {
         String query = index.replace("<offset>",Integer.toString(off))
                             .replace("<count>",Integer.toString(count));
         List<String> res = database.getColumn(query, count);
-        //if (res.size()<count) res.add((String)null);
-        //log(query + " # " + off + " " + count + " " + res.size());
         return res;
     }
 
     @Override
     public int index(String str) {
         identifier = str;
-        //return Integer.parseInt(super.probe());
         return 1;
     }
 

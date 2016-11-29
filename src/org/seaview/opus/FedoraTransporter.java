@@ -1,6 +1,7 @@
 package org.seaview.opus;
 
 import org.shanghai.crawl.MetaCrawl;
+import org.shanghai.rdf.XMLTransformer;
 import org.shanghai.util.FileUtil;
 import org.shanghai.util.ModelUtil;
 
@@ -52,10 +53,13 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
 
     @Override
     public String probe() {
-        if (parts.size()==0) {
-            index(graph);
-        }
-        return "" + parts.size();
+        String data = REST.get(base, "application/rdf+xml", user, pass);
+        //FileUtil.write(testFile, data);
+        //if (parts.size()==0) {
+        //    index(graph);
+        //}
+        //return "" + parts.size();
+        return data;
     }
 
     @Override
@@ -99,7 +103,10 @@ public class FedoraTransporter implements MetaCrawl.Transporter {
     public int index(String uri) {
         indexed = true;
         log("index " + uri);
+        //String data = REST.get(base, "application/rdf+xml", user, pass);
+        //FileUtil.write(testFile, data);
         Model model = ModelUtil.createModel().read(base);
+        //Model model = XMLTransformer.asModel(data);
         Resource subject = model.getResource(base);
         //FileUtil.write(testFile, ModelUtil.asString(subject));
         Property contains = model.createProperty(LDP, "contains");

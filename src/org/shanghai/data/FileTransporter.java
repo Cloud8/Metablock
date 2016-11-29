@@ -19,10 +19,9 @@ import org.apache.jena.rdf.model.Resource;
 
 /**
     @license http://www.apache.org/licenses/LICENSE-2.0
-    @author Goetz Hatop 
     @title The File Crawl Class
     @date 2013-02-19
-    @abstract Crawl the local filesytem and call delegate on every file.
+    @abstract Crawl local filesytem and call delegate on every file.
 */
 public class FileTransporter implements MetaCrawl.Transporter {
 
@@ -41,10 +40,6 @@ public class FileTransporter implements MetaCrawl.Transporter {
     private List<String> identifiers;
 
     private List<Delegate> delegates;
-
-    //public FileTransporter() {
-    //    this("rdf", 1, 1);
-    //}
 
     public FileTransporter(String suffix, int depth, int logC) {
         this.depth = depth;

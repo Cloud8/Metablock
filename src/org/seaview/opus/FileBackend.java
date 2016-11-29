@@ -221,12 +221,21 @@ public class FileBackend implements Backend {
             return dir + "/" + base;
         } else if (fname.matches("[0-9]+.rdf")) {
             return fname.substring(0, fname.lastIndexOf(".")+1) + suffix;
+        //} else if (uri.contains("fcrepo/rest/")) {
+        //    return uri.substring(uri.indexOf("/fcrepo/rest/")+13);
         } else {
-            return null;
+            //log("zero create " + uri + " " + dir + " " + suffix);
+            //log("zero create " + uri + " " + base + " " + fname 
+            //                         + " " + dir + " " + suffix);
+            return base;
         }
     }
 
     private boolean writeObject(String uri, String target) {
+        if (target==null || uri==null) {
+            //log("something is wrong " + uri + " " + target);
+            return false;
+        }
         Path out = path.resolveSibling(target);
         if (Files.isRegularFile(out)) {
             // log(" exists " + target);

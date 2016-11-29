@@ -54,8 +54,8 @@
 
   <!-- 7. publisher -->
    <xsl:choose>
-   <xsl:when test="count(dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher)=1">
-      <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher"/>
+   <xsl:when test="count(dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher)>0">
+      <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher[1]"/>
    </xsl:when>
    <xsl:when test="count(dcterms:isPartOf/dcterms:BibliographicResource/dcterms:publisher)=1">
       <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:publisher"/>

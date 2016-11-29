@@ -24,6 +24,11 @@ import org.apache.jena.rdf.model.Resource;
 public class TrivialScanner implements FileTransporter.Delegate {
 
     private XMLTransformer tr;
+    private String suffix;
+
+    public TrivialScanner(String suffix) {
+        this.suffix = suffix;
+    }
 
     public FileTransporter.Delegate create() {
         tr = new XMLTransformer();
@@ -36,8 +41,11 @@ public class TrivialScanner implements FileTransporter.Delegate {
     }
 
     public boolean canRead(String fname) {
-        if (fname.endsWith(".rdf")) {
-            return true;
+        for(String suffix : this.suffix.split(" ")) {
+            // if (fname.endsWith(".rdf") || fname.endsWith(".xml")) {
+            if (fname.endsWith(suffix)) {
+                return true;
+            }
         }
         return false;
     }

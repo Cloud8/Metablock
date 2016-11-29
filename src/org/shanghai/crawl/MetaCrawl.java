@@ -132,7 +132,7 @@ public class MetaCrawl {
         log("test # " + resource);
         Resource rc = transporter.test(resource);
         if (rc==null) {
-            logger.severe("no model found " + resource);
+            logger.severe("No model found " + resource);
             return false;
         }
         for (Analyzer a : analyzers) {

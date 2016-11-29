@@ -212,10 +212,10 @@ public class OpusTransporter implements MetaCrawl.Transporter {
         if (results.size()==0) {
             log("getIdentifiers : " + off + " " + limit);
         } else if (results.size()==1) {
-            log("getIdentifiers " + off + " " + limit + " " + results.size());
+            //log("getIdentifiers " + off + " " + limit + " " + results.size());
             results.add((String)null); // stop crawler
         } else if (results.size() < limit) {
-            log("getIdentifiers " + off + " " + limit + " " + results.size());
+            //log("getIdentifiers " + off + " " + limit + " " + results.size());
             results.add((String)null); // stop crawler
         }
         return results;
@@ -262,9 +262,6 @@ public class OpusTransporter implements MetaCrawl.Transporter {
             FileUtil.write("data/opus-"+oid+".xml", transformer.asString(doc));
         } else if (uri.indexOf("/",7)<0) {
             log("No uri for " + oid + " [" + uri + "]");
-        } else if (uri.startsWith("file://")) {
-            Path path = Paths.get(uri.substring(7)).resolve("opus-"+oid+".xml");
-            boolean b = FileUtil.write(path, transformer.asString(doc));
         } else if (Files.isDirectory(Paths.get(docbase))) {
             Path path = Paths.get(docbase + uri.substring(uri.indexOf("/",7)));
             FileUtil.mkdir(path);
@@ -273,6 +270,9 @@ public class OpusTransporter implements MetaCrawl.Transporter {
                 boolean b = FileUtil.write(out, transformer.asString(doc));
                 //if (b) log("wrote " + out.toString());
             }
+        } else if (uri.startsWith("file://")) {
+            Path path = Paths.get(uri.substring(7)).resolve("opus-"+oid+".xml");
+            boolean b = FileUtil.write(path, transformer.asString(doc));
         }
     }
 

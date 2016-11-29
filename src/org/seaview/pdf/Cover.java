@@ -86,9 +86,10 @@ public class Cover implements Analyzer {
             log("cover failed " + rc.getURI());
         } else if (rc.hasProperty(FOAF.img)) {
             // nothing
+            log("cover property exists: " + cover);
         } else {
             rc.addProperty(FOAF.img, cover);
-            //log("cover " + cover);
+            // log("cover " + cover);
         }
         return rc;
     }

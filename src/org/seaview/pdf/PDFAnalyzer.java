@@ -37,6 +37,7 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
     protected static final int MONOTHRESHOLD = 29; // minimum # references
 
     private boolean meta;
+    private boolean fulltext;
     private boolean refs;
     private int threshold;
     private PDFLoader pl;
@@ -45,8 +46,8 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
     private Language language;
     public int count;
 
-    public PDFAnalyzer(String engine, boolean meta, boolean refs, String ghome)
-    {
+    public PDFAnalyzer(String engine, boolean meta, boolean fulltext,
+                       boolean refs, String ghome) {
         if (engine.equals("cermine")) {
             extractor = new Cermine(meta, refs);
         } else if (engine.equals("grobid")) {
@@ -55,14 +56,15 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
             // extractor = new AbstractExtractor(meta, refs);
         }
         this.meta = meta;
+        this.fulltext = fulltext;
         this.refs = refs;
         language = new Language();
         pl = null;
     }
 
-    public PDFAnalyzer(String engine, boolean meta, boolean refs, 
-                       String ghome, String docbase) {
-        this(engine, meta, refs, ghome);
+    public PDFAnalyzer(String engine, boolean meta, boolean fulltext,
+                       boolean refs, String ghome, String docbase) {
+        this(engine, meta, fulltext, refs, ghome);
         pl = new PDFLoader(docbase);
         cover = new Cover(new FileBackend(docbase), docbase);
     }
@@ -112,6 +114,10 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
             log("scratch references " + rc.getURI());
             extractReferences(rc);
         }
+        if (fulltext) {
+            log("scratch fulltext " + rc.getURI());
+            extractFulltext(rc);
+        }
         return rc;
     }
 
@@ -121,6 +127,14 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
         //    ModelUtil.remove(rc, DCTerms.references);
         //    log("removed references " + rc.getURI());
         //}
+        // TODO : test wether agent has already worked on this
+        if (rc.hasProperty(DCTerms.provenance) 
+            && rc.getProperty(DCTerms.provenance).getObject().isResource()) {
+            Resource prov = rc.getProperty(DCTerms.provenance).getResource();
+            // if (prov.hasProperty(DCTerms.creator)
+            //     && prov.getProperty(DCTerms.creator).getObject()
+            // 
+        }
         String fname = create(rc);
         if (fname==null) {
             log("fatal: no file for " + rc.getURI());
@@ -134,6 +148,10 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
 
         if (refs) {
             extractReferences(rc);
+        }
+
+        if (fulltext) {
+            extractFulltext(rc);
         }
 
         cover.analyze(rc);
@@ -212,6 +230,10 @@ public class PDFAnalyzer implements MetaCrawl.Analyzer {
                 rc.getProperty(DCTerms.references).getResource().addProperty(DCTerms.provenance, provenance);
             }
         }
+    }
+
+    private void extractFulltext(Resource rc) {
+        rc.addProperty(DCTerms.description, pl.fulltext(rc));
     }
 
     private void makeTEI(Resource rc) {

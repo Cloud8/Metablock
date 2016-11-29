@@ -48,7 +48,7 @@ public class SolrPost {
     }
 
     public void dispose() {
-        log("solr commit");
+        // log("solr commit");
         try {
           client.commit();
         } catch(SolrServerException e) { log(e); }

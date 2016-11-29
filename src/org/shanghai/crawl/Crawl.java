@@ -114,8 +114,8 @@ public class Crawl {
             //if (suffix.contains(".epub")) {
             //    fc.inject(new EpubScanner().create());
             //}
-            if (suffix.contains(".rdf") || suffix.contains(".abd")) {
-                fc.inject(new TrivialScanner().create());
+            if (suffix.contains(".rdf") || suffix.contains(".xml")) {
+                fc.inject(new TrivialScanner(suffix).create());
             }
             if (suffix.contains(".nlm")) {
                 String xslt = config.get("files.nlm");
@@ -253,12 +253,20 @@ public class Crawl {
 
     public void test(String resource) {
         createCrawler();
+        //boolean b = crawler.test(resource);
+        //if (!b) {
+        //    int found = crawler.index(resource);
+        //    if (found>0) {
+        //        crawler.test(transporter.getIdentifiers(0,1).get(0));
+        //    }
+        //}
         int found = crawler.index(resource);
-        log("test # " + found + " " + resource);
         if (found==0) {
             crawler.test(resource);
-        } else {
+        } else if (found>0) {
             crawler.test(transporter.getIdentifiers(0,1).get(0));
+        } else {
+            log("crawl # " + found + " blocked" + " [" + resource + "]");
         }
     }
 

@@ -56,8 +56,10 @@ public class Crawl extends org.shanghai.crawl.Crawl {
                 boolean meta = s==null?true:s.equals("true");
                 s = config.get("pdf.references");
                 boolean refs = s==null?false:s.equals("true");
-                crawler.inject(
-                new PDFAnalyzer(extractor, meta, refs, ghome, base).create());
+                s = config.get("pdf.fulltext");
+                boolean fulltext = s==null?false:s.equals("true");
+                crawler.inject(new PDFAnalyzer(extractor, meta, fulltext,
+                    refs, ghome, base).create());
             }
             if (eng.contains("ref")) {
                 crawler.inject(new RefAnalyzer().create());

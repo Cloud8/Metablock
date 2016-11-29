@@ -289,8 +289,15 @@
   </dcterms:identifier>
 </xsl:template>
 
-<xsl:template match="nlm:article-meta/nlm:issue-title">
+<xsl:template match="nlm:article-meta/nlm:issue-title[contains(text(),../nlm:pub-date/nlm:year)]">
   <dcterms:title><xsl:value-of select="."/></dcterms:title>
+</xsl:template>
+
+<!-- pub-year in title for DNB -->
+<xsl:template match="nlm:article-meta/nlm:issue-title">
+  <dcterms:title>
+    <xsl:value-of select="concat(../nlm:pub-date/nlm:year,', ',.)"/>
+  </dcterms:title>
 </xsl:template>
 
 <xsl:template match="nlm:article-meta/nlm:article-id[@pub-id-type='doi']">

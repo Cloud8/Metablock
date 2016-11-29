@@ -25,7 +25,7 @@
 </xsl:template>
 
 <xsl:template match="dcterms:BibliographicResource">
-  <xsl:comment> Dublin Core Transformer UB Marburg 2015 </xsl:comment>
+  <xsl:comment> Dublin Core Transformer UB Marburg 2016 </xsl:comment>
   <xsl:apply-templates select="dcterms:title[not(@xml:lang)]"/>
   <xsl:apply-templates select="dcterms:title[@xml:lang]"/>
   <xsl:apply-templates select="dcterms:creator"/>
@@ -38,8 +38,8 @@
   </xsl:if>
   <xsl:apply-templates select="dcterms:contributor"/>
 
-  <!--
   <xsl:apply-templates select="dcterms:created"/>
+  <!--
   <xsl:apply-templates select="dcterms:dateAccepted"/>
   <xsl:apply-templates select="dcterms:modified"/>
   -->
@@ -75,6 +75,11 @@
 
 <xsl:template match="dcterms:creator/rdf:Seq/rdf:li">
   <xsl:apply-templates select="foaf:Person"/>
+</xsl:template>
+
+<xsl:template match="dcterms:creator/rdf:Seq/rdf:li[@rdf:resource]">
+  <xsl:param name="about" select="@rdf:resource"/>
+  <xsl:apply-templates select="//foaf:Person[@rdf:about=$about]"/>
 </xsl:template>
 
 <xsl:template match="dcterms:creator/foaf:Person|dcterms:creator/rdf:Seq/rdf:li/foaf:Person">
@@ -161,7 +166,7 @@
 </xsl:template>
 
 <xsl:template match="dcterms:created">
-  <dc:created><xsl:value-of select="."/></dc:created>
+  <dc:date><xsl:value-of select="."/></dc:date>
 </xsl:template>
 
 <xsl:template match="dcterms:issued">
@@ -173,7 +178,8 @@
 </xsl:template>
 
 <xsl:template match="dcterms:type">
-    <dc:type><xsl:value-of select="concat('doc-type:',.)"/></dc:type>
+   <xsl:variable name="type" select="substring-after(@rdf:resource,'/fabio/')"/>
+   <dc:type><xsl:value-of select="$type"/></dc:type>
 </xsl:template>
 
 <xsl:template match="dcterms:identifier">

@@ -119,13 +119,13 @@ public class Cermine extends AbstractExtractor {
 		    readReferences(references, rc, threshold);
         } catch(AnalysisException e) { e.printStackTrace(); log(e);}
         // GH20151231 bonus track : test cermines citation sentiment analysis
-        if (test) try {
-            List<CitationSentiment> sentiments = getCitationSentiments();
-            for (CitationSentiment sentiment : sentiments) {
-                Set<CiTOProperty> properties = sentiment.getProperties();
-                log(properties.toString());
-            }
-        } catch(AnalysisException e) { e.printStackTrace(); log(e);}
+        // if (test) try {
+        //     List<CitationSentiment> sentiments = getCitationSentiments();
+        //     for (CitationSentiment sentiment : sentiments) {
+        //         Set<CiTOProperty> properties = sentiment.getProperties();
+        //         log(properties.toString());
+        //     }
+        // } catch(AnalysisException e) { e.printStackTrace(); log(e);}
     }
 
     protected Resource readCermine(DocumentMetadata dm, Resource rc) {
@@ -276,14 +276,6 @@ public class Cermine extends AbstractExtractor {
     /** raw full text */
     private String rawFullText;
 
-    private ComponentConfiguration conf;
-
-    private void createConf() throws AnalysisException {
-        if (conf==null) {
-            conf = new ComponentConfiguration();
-        }
-    }
-
     /**
      * Extracts raw text.
      * 
@@ -291,9 +283,8 @@ public class Cermine extends AbstractExtractor {
      * @throws AnalysisException 
      */
     private String getRawFullText() throws AnalysisException {
-        createConf();
         if (rawFullText == null) {
-            rawFullText = ExtractionUtils.extractRawText(conf, bxdoc);
+            rawFullText = cermine.getRawFullText();
         }
         return rawFullText;
     }
@@ -304,16 +295,19 @@ public class Cermine extends AbstractExtractor {
      * @return the locations
      * @throws AnalysisException 
      */
+    /*
     private List<List<CitationPosition>> getCitationPositions() throws AnalysisException {
         if (citationPositions == null) {
             getRawFullText();
             if (references==null) {
-                references = Lists.newArrayList(ExtractionUtils.extractReferences(conf, bxdoc));
+                // references = Lists.newArrayList(ExtractionUtils.extractRefStrings(conf, bxdoc));
+                references = Lists.newArrayList(ExtractionUtils.extractRefStrings(cermine.getConf(), bxdoc));
             }
-            citationPositions = ExtractionUtils.findCitationPositions(conf, rawFullText, references);
+            citationPositions = ExtractionUtils.findCitationPositions(cermine.getConf(), rawFullText, references);
         }
         return citationPositions;
     }
+    */
 
     /**
      * Extractes the sentiments of the document's citations.
@@ -321,13 +315,15 @@ public class Cermine extends AbstractExtractor {
      * @return the citation sentiments
      * @throws AnalysisException 
      */
+    /*
     private List<CitationSentiment> getCitationSentiments() throws AnalysisException {
         if (citationSentiments == null) {
             getCitationPositions();
-            citationSentiments = ExtractionUtils.analyzeSentimentFromPositions(conf, rawFullText, citationPositions);
+            // citationSentiments = ExtractionUtils.analyzeSentimentFromPositions(conf, rawFullText, citationPositions);
         }
         return citationSentiments;
     }
+    */
 
     private static final Logger logger =
                          Logger.getLogger(Cermine.class.getName());

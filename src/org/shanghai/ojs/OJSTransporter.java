@@ -108,18 +108,12 @@ public class OJSTransporter implements MetaCrawl.Transporter {
             index++;
             mark = off;
             log("switch " + index +"/"+ojs.size()+" "+ ojs.get(index).probe());
-            //map.remove(map.size()-1); // remove zero marker
-            //List<String> ids = ojs.get(index).getIdentifiers(off, limit);
-            //for (String oid : ids) {
             for (String oid : ojs.get(index).getIdentifiers(off-mark, limit)) {
-                //log("issue " + oid + " " + ids.size());
                 map.put(oid, index);
             }
         }
         List<String> list = new ArrayList<String>(map.keySet());
-        // for (String oid: list) log(oid + " # " + map.get(oid));
         return list; // map.keySet();
-        // return ojs.get(0).getIdentifiers(off, limit);
     }
 
     @Override
@@ -139,9 +133,30 @@ public class OJSTransporter implements MetaCrawl.Transporter {
                 String journal = " and i.journal_id=" + jid + "\n ";
                 String after = db.index.substring(limit);
                 db.index = before + journal + after;
-                // log(db.index);
+                //log(db.index);
             }
             return 1; 
+        } else if (search.startsWith("i")) { // single issue
+            String iid = search.substring(1);
+            iid = iid.startsWith("i")?iid.substring(1):iid;
+            for (DBTransporter db : ojs) {
+                int limit = db.index.indexOf("limit");
+                String before = db.index.substring(0, limit);
+                String journal = " and i.issue_id=" + iid + "\n ";
+                String after = db.index.substring(limit);
+                db.index = before + journal + after;
+                //log(db.index);
+            }
+            if (search.startsWith("ii")) {
+                index = 1;
+                return 0; // make issue resource only
+            } else {
+                return 1; // make complete issue
+            }
+        } else if (search.matches("[0-9]+")) {
+            // map.put(search, 0);
+            // log("oid " + search);
+            return 0; 
         } else if (search.matches("[0-9\\-]+")) {
             for (DBTransporter db : ojs) {
                 int limit = db.index.indexOf("limit");
@@ -161,6 +176,7 @@ public class OJSTransporter implements MetaCrawl.Transporter {
 	    count++;
         Resource rc = null;
         if (map.size()==0) {
+            oid = oid.startsWith("ii")?oid.substring(2):oid;
             rc = ojs.get(index).read(oid);
         } else {
             rc = ojs.get(map.get(oid)).read(oid);
@@ -178,6 +194,7 @@ public class OJSTransporter implements MetaCrawl.Transporter {
         if (oid.startsWith("i")) {
             index = 1;
             oid = oid.substring(1);
+            oid = oid.startsWith("i")?oid.substring(1):oid;
         } else if (oid.startsWith("j")) {
             index = 2;
             oid = oid.substring(1);
@@ -186,7 +203,8 @@ public class OJSTransporter implements MetaCrawl.Transporter {
         if (rc==null) {
             dump(ojs.get(index).document, null, oid);
         } else {
-            log("testing " + rc.getURI());
+            log("testing " + index + " " + oid + " " + rc.getURI());
+            // log(ojs.get(index).index);
             clean(rc, DCTerms.abstract_);
             dump(ojs.get(index).document, rc.getURI(), oid);
         }

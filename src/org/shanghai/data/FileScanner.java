@@ -51,6 +51,9 @@ public class FileScanner implements FileTransporter.Delegate {
         Resource rc = model.createResource(uri, DCTerms.BibliographicResource); 
         fname = fname.replace("/",":");
         fname = fname.startsWith(":") ? fname.substring(1):fname;
+        if (fname.charAt(fname.length()-4)=='.') {
+            fname = fname.substring(0,fname.length()-4);
+        }
         rc.addProperty(DCTerms.identifier, fname);
         return rc;
     }

@@ -65,6 +65,7 @@
     <xsl:apply-templates select="../dcterms:created"/>
     <xsl:apply-templates select="../dcterms:identifier[starts-with(text(),'isbn:')]"/>
     <xsl:apply-templates select="../dcterms:isPartOf"/>
+    <xsl:apply-templates select="../dcterms:coverage"/>
     <xsl:apply-templates select="dctypes:Text"/>
     <tr class="border"><td></td><td></td></tr>
 </xsl:template>
@@ -92,6 +93,7 @@
     <xsl:apply-templates select="../../../../dcterms:created"/>
     <xsl:apply-templates select="../../../../dcterms:identifier[starts-with(text(),'isbn:')]"/>
     <xsl:apply-templates select="../../../../dcterms:isPartOf"/>
+    <xsl:apply-templates select="../../../../dcterms:coverage"/>
     <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'inv:')]"/>
     <tr><td></td><td align="right"><code>
         <xsl:apply-templates select="../../../../dcterms:identifier[starts-with(text(),'num:')]"/>
@@ -171,6 +173,12 @@
   </td></tr>
 </xsl:template>
 
+<!-- Dissertationen Vermerk -->
+<xsl:template match="dcterms:coverage">
+    <tr><td></td><td><xsl:value-of select="."/></td></tr>
+</xsl:template>
+
+<!-- Schriftenreihen -->
 <!-- 028C : kann mehrfach besetzt sein; erster Autor reicht hier
 <xsl:template match="dcterms:Author">
     <tr><td></td><td>
@@ -219,14 +227,6 @@
 </xsl:template>
 -->
 
-<!-- Dissertationen Vermerk -->
-<!--
-    <tr><td></td><td>
-        <xsl:apply-templates select="../field[@key='037C']" />
-    </td></tr>
--->
-
-<!-- Schriftenreihen -->
 <!--
     <tr><td></td><td>
         <xsl:apply-templates select="../field[@key='036E']" />
