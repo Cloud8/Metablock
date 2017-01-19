@@ -301,20 +301,18 @@
 </xsl:template>
 
 <xsl:template match="dcterms:modified[1]">
+  <field name="publishDateSort"><xsl:value-of select="." /></field>
   <field name="last_indexed">
       <xsl:value-of select="concat(.,'T23:59:59Z')"/>
   </field>
 </xsl:template>
 
 <xsl:template match="dcterms:issued[1]">
-  <!--
-  <field name="publishDate"><xsl:value-of select="." /></field>
-  -->
-  <field name="publishDateSort"><xsl:value-of select="." /></field>
   <field name="first_indexed">
       <xsl:value-of select="concat(.,'T00:00:00Z')" />
   </field>
   <xsl:if test="not(../dcterms:modified)">
+  <field name="publishDateSort"><xsl:value-of select="." /></field>
   <field name="last_indexed">
       <xsl:value-of select="concat(.,'T23:59:59Z')" />
   </field>

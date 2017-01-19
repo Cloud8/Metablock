@@ -193,6 +193,7 @@ public class FileUtil {
             copy(getFilePath(url), path);
             return;
         }
+        // System.out.println("copy " + url + " to " + path);
         try {
             URL oracle = new URL(url);
             InputStream is = oracle.openStream();

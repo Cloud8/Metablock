@@ -258,10 +258,9 @@ public class OpusTransporter implements MetaCrawl.Transporter {
 		}
         if (docbase==null) {
             //FileUtil.write("opus-" + oid + ".xml", transformer.asString(doc));
-        } else if (uri==null) {
-            FileUtil.write("data/opus-"+oid+".xml", transformer.asString(doc));
-        } else if (uri.indexOf("/",7)<0) {
-            log("No uri for " + oid + " [" + uri + "]");
+        } else if (uri==null || uri.indexOf("/",7)<0) {
+            log("No uri for " + oid + " [" + uri + "] " + Paths.get(docbase));
+            FileUtil.write(Paths.get(docbase) + "/opus-"+oid+".xml", transformer.asString(doc));
         } else if (Files.isDirectory(Paths.get(docbase))) {
             Path path = Paths.get(docbase + uri.substring(uri.indexOf("/",7)));
             FileUtil.mkdir(path);

@@ -68,8 +68,10 @@ public class FileBackend implements Backend {
         if (test) {
             log(" file exists: index.html " + b);
         } else if (b) {
+            // log(" file exists: index.html " + b);
             return rc.getURI();
         } else {
+            // log(" write index.html " + url);
             FileUtil.copy(url, out);
         }
         if (Files.isRegularFile(out)) {

@@ -353,8 +353,9 @@ public class PDFLoader implements Analyzer {
                     String name = seq.getResource(i)
                                      .getProperty(FOAF.name).getString();
                     builder.append(name);
-                    if (i>1 && i<seq.size()-1) {
+                    if (i<seq.size()) {
                         builder.append(" ; ");
+                        // log("author " +i + " # " + name);
                     }
                 }
             }
@@ -362,7 +363,7 @@ public class PDFLoader implements Analyzer {
         finally {}
         info.setAuthor(builder.toString());
         //log("title: " + dtitle);
-        //log("authors: " + builder.toString());
+        log("authors: " + builder.toString());
         builder.setLength(0);
 
         if (rc.hasProperty(DCTerms.subject)) {

@@ -95,7 +95,7 @@ public class ArchiveAnalyzer implements Analyzer {
         }
         boolean b = false;
         if (store==null) { // no writes from here
-            // log("analyze " + id + " " + rc.getURI());
+            log("analyze " + rc.getURI());
         } else { 
 	        b = writeParts(store, rc); // write article
             // b = true ; // write issue only
@@ -145,14 +145,14 @@ public class ArchiveAnalyzer implements Analyzer {
         }
 
         if (Files.isRegularFile(path.resolveSibling("index.html"))) {
-            //log(" file exists: index.html"); 
+            log(" file exists: index.html"); 
         } else if (rc.hasProperty(DCTerms.source)) {
             String url = rc.getProperty(DCTerms.source).getResource().getURI();
             FileUtil.mkdir(path.getParent());
             FileUtil.copy(url, path.resolveSibling("index.html"));
             if (url.length()>32 && rc.getURI().length()>32 && 
                 url.substring(0,32).equals(rc.getURI().substring(0,32))) {
-                //log("remove " + url);
+                log("remove " + url);
             }
         }
 
@@ -170,9 +170,9 @@ public class ArchiveAnalyzer implements Analyzer {
 				    String pdf = fname.substring(0, fname.indexOf(".rdf")) + ".pdf";
                     //Path base = store.relativize(path.resolveSibling(pdf));
                     if (Files.isRegularFile(path.resolveSibling(pdf))) {
-                        //log(" file exists: " + pdf); 
+                        log(" file exists: " + pdf); 
 				    } else {
-                        //log("write " + obj.getURI() + " to " + pdf);
+                        log("write " + obj.getURI() + " to " + pdf);
                         FileUtil.mkdir(path.getParent());
                         FileUtil.copy(obj.getURI(), path.resolveSibling(pdf));
 				    }
@@ -186,7 +186,7 @@ public class ArchiveAnalyzer implements Analyzer {
 
         for(Map.Entry<Resource, String> entry : hash.entrySet()) {
             Resource obj = entry.getKey();
-            //log("rename " + obj.getURI() + " to " + entry.getValue());
+            log("rename " + obj.getURI() + " to " + entry.getValue());
             obj = ResourceUtils.renameResource(obj, entry.getValue()); 
         }
         hash.clear();
@@ -198,7 +198,7 @@ public class ArchiveAnalyzer implements Analyzer {
 		if (rc.hasProperty(FOAF.img)) {
 		    String source = rc.getProperty(FOAF.img).getString();
             if (Files.isRegularFile(path.resolveSibling(cover))) {
-                // log(" file exists: " + cover); 
+                log(" file exists: " + cover); 
 			} else {
                 FileUtil.copyIfExists(source, path.resolveSibling(cover));
 			}
