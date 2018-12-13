@@ -346,21 +346,21 @@
 
 <!-- OAI server skips records without this -->
 <xsl:template match="dcterms:modified[1]">
+  <xsl:variable name="dateX" select="'2018-12-13'"/>
+  <xsl:variable name="date" select="."/>
   <field name="last_indexed">
-      <xsl:value-of select="concat(.,'T23:59:59Z')"/>
+      <xsl:value-of select="concat($date,'T03:59:59Z')"/>
   </field>
 </xsl:template>
 
 <xsl:template match="dcterms:issued[1]">
-  <xsl:variable name="dateX" select="'2018-11-18'"/>
-  <xsl:variable name="date" select="."/>
   <field name="publishDateSort"><xsl:value-of select="." /></field>
   <field name="first_indexed">
-      <xsl:value-of select="concat($date,'T00:00:01Z')" />
+      <xsl:value-of select="concat(.,'T00:00:01Z')" />
   </field>
   <xsl:if test="count(../dcterms:modified)=0">
   <field name="last_indexed">
-      <xsl:value-of select="concat($date,'T23:59:59Z')"/>
+      <xsl:value-of select="concat(.,'T03:59:59Z')"/>
   </field>
   </xsl:if>
 </xsl:template>

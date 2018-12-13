@@ -52,12 +52,11 @@
 <xsl:template match="dcterms:hasPart[dctypes:*]">
     <tr><td></td><td></td></tr>
     <tr><td>
-         <xsl:value-of select="position()"/>
-         </td><td align="right">
-    <a href="{concat('http://nbn-resolving.de/urn/resolver.pl?urn=',
-              ../dcterms:identifier[starts-with(text(),'urn:')])}">
-    <xsl:value-of select="../dcterms:identifier[starts-with(text(),'urn:')]"/>
-    </a></td></tr>
+        <xsl:value-of select="position()"/>
+        </td><td align="right">
+        <xsl:apply-templates select="../dcterms:identifier[starts-with(text(),'urn:')]"/>
+        </td>
+    </tr>
 
     <xsl:apply-templates select="../dcterms:creator"/>
     <xsl:apply-templates select="../dcterms:title"/>
@@ -172,6 +171,12 @@
   <tr><td></td><td>
     <xsl:value-of select="substring(.,5)"/>
   </td></tr>
+</xsl:template>
+
+<xsl:template match="dcterms:identifier[starts-with(.,'urn:')][1]">
+    <a href="{concat('https://nbn-resolving.org/',.)}">
+       <xsl:value-of select="."/>
+    </a>
 </xsl:template>
 
 <!-- Dissertationen Vermerk -->
