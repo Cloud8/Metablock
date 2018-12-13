@@ -29,7 +29,7 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.loc.gov/MARC21/slim
     http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd">
-    <xsl:comment> RDF MARC Transformer UB Marburg (2016) </xsl:comment>
+    <xsl:comment> RDF MARC Transformer (2016) </xsl:comment>
     <xsl:apply-templates select="dcterms:BibliographicResource" />
  </marc:collection>
 </xsl:template>
