@@ -25,7 +25,7 @@
 </xsl:template>
 
 <xsl:template match="dcterms:BibliographicResource">
-  <xsl:comment> Dublin Core Transformer UB Marburg 2016 </xsl:comment>
+  <xsl:comment> Dublin Core Transformer 2016 </xsl:comment>
   <xsl:apply-templates select="dcterms:title[not(@xml:lang)]"/>
   <xsl:apply-templates select="dcterms:title[@xml:lang]"/>
   <xsl:apply-templates select="dcterms:creator"/>

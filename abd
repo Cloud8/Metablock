@@ -1,0 +1,26 @@
+#!/bin/sh
+
+dir=`dirname $0`
+CP=$dir/lib; for l in $dir/lib/*.jar; do CP=$CP:$l; done
+OPT="-Djava.awt.headless=true"
+
+case $1 in
+  -start|start)
+      cd $dir/war; sudo -E -u archiv sh -c "nohup java $OPT -jar \
+          jetty/start.jar STOP.PORT=8989 STOP.KEY=ABD > logs/abd.log 2>&1 &"
+    ;;
+  -stop|stop)
+      cd $dir/war; sudo -E -u archiv java -jar jetty/start.jar \
+          STOP.PORT=8989 STOP.KEY=ABD --stop
+      sudo -u archiv rm -f $dir/war/logs/abd.log
+    ;;
+  -restart|restart)
+      $0 stop ; sleep 1; $0 start
+    ;;
+  -status|status)
+      curl http://localhost/metablock/rest
+    ;;
+  *)
+      java $OPT -cp $CP org.seaview.bones.Main ${1+"$@"}
+    ;;
+esac
