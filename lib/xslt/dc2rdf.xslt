@@ -14,7 +14,6 @@
 <!-- 
  /**
   * @license http://www.apache.org/licenses/LICENSE-2.0
-  * @author Goetz Hatop
   * @title An XSLT Transformer for OAI DC to RDF
   * @date 2014-12-14
  **/ 

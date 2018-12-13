@@ -6,5 +6,5 @@ SELECT (COUNT(distinct(?s)) AS ?subject)
 WHERE { 
    ?s ?p ?o .
    ?s dcterms:identifier ?o .
-   FILTER regex(?s,'^http://archiv.ub.uni-marburg.de')
+   FILTER regex(?s,'^http://example.org')
 }
