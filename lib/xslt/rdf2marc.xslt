@@ -8,6 +8,7 @@
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+     xmlns:sco="http://schema.org/"
      xmlns:marc="http://www.loc.gov/MARC21/slim"
      xmlns:pica="http://localhost/metacat/card/ppn/"
      version="1.0" >
@@ -189,10 +190,10 @@
   <marc:controlfield tag="003"><xsl:value-of select="."/></marc:controlfield>
 </xsl:template>
 
-<xsl:template match="dcterms:identifier[starts-with(text(),'isbn:')]">
+<xsl:template match="sco:isbn">
  <!-- <xsl:comment>ISBN</xsl:comment> -->
  <marc:datafield tag="020" ind1=" " ind2=" ">
-   <marc:subfield code="a"><xsl:value-of select="substring(.,6)"/>
+   <marc:subfield code="a"><xsl:value-of select="."/>
   </marc:subfield>
  </marc:datafield>
 </xsl:template>
@@ -200,7 +201,7 @@
 <xsl:template match="dcterms:identifier[starts-with(text(),'urn:')]">
 </xsl:template>
 
-<xsl:template match="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]">
+<xsl:template match="dcterms:identifier[starts-with(text(),'https://doi.org/')]">
 </xsl:template>
 
 <xsl:template match="dcterms:language[@rdf:resource]">

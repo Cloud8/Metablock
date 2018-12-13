@@ -60,14 +60,22 @@
 </xsl:template>
 
 <xsl:template match="dc:language">
- <dcterms:language>
+ <xsl:param name="ns" select="'http://id.loc.gov/vocabulary/iso639-1/'"/>
   <xsl:choose>
-   <xsl:when test=".='ger'">de</xsl:when>
-   <xsl:when test=".='eng'">en</xsl:when>
-   <xsl:when test=".='fre'">fr</xsl:when>
-   <xsl:otherwise><xsl:value-of select="."/></xsl:otherwise>
+   <xsl:when test=".='ger'">
+     <dcterms:language rdf:resource="{concat($ns,'de')}"/>
+   </xsl:when>
+   <xsl:when test=".='eng'">
+     <dcterms:language rdf:resource="{concat($ns,'en')}"/>
+   </xsl:when>
+   <xsl:when test=".='fre'">
+     <dcterms:language rdf:resource="{concat($ns,'fr')}"/>
+   </xsl:when>
+   <xsl:otherwise>
+     <dcterms:language 
+          rdf:resource="{concat('http://id.loc.gov/vocabulary/iso639-2/',.)}"/>
+   </xsl:otherwise>
   </xsl:choose>
- </dcterms:language>
 </xsl:template>
 
 <xsl:template match="dc:publisher">
@@ -90,18 +98,29 @@
  <dcterms:abstract><xsl:value-of select="."/></dcterms:abstract>
 </xsl:template>
 
-<xsl:template match="dc:type[text()='journal']">
+<xsl:template match="dc:type[text()='doc-type:doctoralThesis']">
  <dcterms:type rdf:resource="http://purl.org/spar/fabio/Journal"/>
 </xsl:template>
 
-<xsl:template match="dc:type[text()='info:eu-repo/semantics/article']">
+<xsl:template match="dc:type[text()='doc-type:book']">
+ <dcterms:type rdf:resource="http://purl.org/spar/fabio/Book"/>
+</xsl:template>
+
+<xsl:template match="dc:type[text()='doc-type:article']">
  <dcterms:type rdf:resource="http://purl.org/spar/fabio/JournalArticle"/>
+</xsl:template>
+
+<xsl:template match="dc:type[text()='doc-type:PeriodicalPart']">
+ <dcterms:type rdf:resource="http://purl.org/spar/fabio/JournalIssue"/>
 </xsl:template>
 
 <xsl:template match="dc:date[1]">
   <xsl:choose>
   <xsl:when test="contains(.,'T')">
     <dcterms:issued><xsl:value-of select="substring-before(.,'T')"/></dcterms:issued>
+  </xsl:when>
+  <xsl:when test="string-length(.)=4">
+    <dcterms:created><xsl:value-of select="."/></dcterms:created>
   </xsl:when>
   <xsl:otherwise>
     <dcterms:issued><xsl:value-of select="."/></dcterms:issued>

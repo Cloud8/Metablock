@@ -8,88 +8,14 @@ PREFIX  skos: <http://www.w3.org/2004/02/skos/core#>
 
 ## six levels of hierarchy without circles
 construct {
-    <subject> ?b ?c .
+    ?a ?b ?c .
     ?c ?d ?e .
-    ?e ?f ?g .
-    ?g ?h ?i .
-    ?i ?j ?k .
 } where { 
+    BIND (<subject> as ?a)
     {
-      <subject> ?b ?c .
+      ?a ?b ?c .
       optional {
         ?c ?d ?e .
-         optional {
-             ?e ?f ?g .
-             optional {
-                 ?g ?h ?i .
-                 optional {
-                     ?i ?j ?k .
-                 }
-             }
-         }
-      }
-      FILTER (?b NOT IN (dcterms:isPartOf))
-      FILTER (?b NOT IN (dcterms:hasPart))
-      FILTER (?b NOT IN (dcterms:references))
-      FILTER (?b NOT IN (dcterms:isReferencedBy))
-      # FILTER (?b NOT IN (dcterms:abstract))
-      # FILTER (?b NOT IN (dcterms:subject))
-      FILTER (NOT EXISTS { ?c a void:Dataset})
-    } union {
-      <subject> ?b ?c .
-      values ?b { dcterms:isPartOf }
-      optional {
-        ?c ?d ?e .
-        FILTER (?d NOT IN (dcterms:hasPart))
-        optional {
-            ?e ?f ?g .
-            FILTER (?f NOT IN (dcterms:hasPart))
-        }
-      }
-    } union {
-      <subject> ?b ?c .
-      values ?b { dcterms:hasPart }
-      optional { 
-        { ?c a dctypes:Text }
-          union { ?c a dctypes:Dataset }
-          union { ?c a dctypes:Collection }
-          union { ?c a dctypes:Image }
-          union { ?c a dctypes:MovingImage }
-          optional {
-            ?c ?d ?e .
-             optional {
-               ?e ?f ?g .
-            }
-          }
-        }
-    } union {
-      <subject> ?b ?c .
-      values ?b { dcterms:isReferencedBy }
-      optional {
-        ?c ?d ?e .
-        values ?d { rdf:type dcterms:title dcterms:creator dcterms:created }
-        optional {
-            values ?d { dcterms:creator }
-            ?e ?f ?g
-        }
-      }
-    } union {
-      <subject> ?b ?c .
-      values ?b { dcterms:references }
-      optional {
-        ?c ?d ?e .
-        optional {
-            ?e ?f ?g
-            values ?f { rdf:type dcterms:title dcterms:creator 
-                        dcterms:date dcterms:bibliographicCitation }
-            optional {
-                values ?f { dcterms:creator }
-                ?g ?h ?i .
-                optional {
-                  ?i ?j ?k .
-                }
-            }
-        }
       }
     } 
 } 

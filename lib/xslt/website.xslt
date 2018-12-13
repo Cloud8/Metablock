@@ -20,8 +20,8 @@
 
 <xsl:template match="rdf:Description">
  <doc>
-    <xsl:apply-templates select="*"/>
     <field name="url"><xsl:value-of select="@rdf:about" /></field>
+    <xsl:apply-templates select="*"/>
  </doc>
 </xsl:template>
 
@@ -33,20 +33,49 @@
   <field name="title"><xsl:value-of select="."/></field>
 </xsl:template>
 
+<!--
 <xsl:template match="dcterms:description">
-  <field name="fulltext"><xsl:value-of select="normalize-space(.)"/></field>
+  <field name="fulltext"><xsl:value-of select="."/></field>
   <field name="description">
-      <xsl:value-of select="substring(normalize-space(.),0,256)"/>
+      <xsl:value-of select="substring(.,0,400)"/>
   </field>
+</xsl:template>
+-->
+
+<xsl:template match="dcterms:abstract">
+  <field name="fulltext"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:tableOfContents">
+  <field name="description"><xsl:value-of select="."/></field>
 </xsl:template>
 
 <xsl:template match="dcterms:subject">
-    <xsl:apply-templates select="skos:Concept"/>
+    <xsl:apply-templates select="skos:Concept/skos:prefLabel"/>
+    <xsl:apply-templates select="skos:Concept/skos:notation"/>
 </xsl:template>
 
-<xsl:template match="dcterms:subject/skos:Concept[contains(@rdf:about,'cat')]">
-  <field name="category"><xsl:value-of select="normalize-space(.)"/></field>
+<xsl:template match="dcterms:subject/skos:Concept/skos:prefLabel">
+  <field name="category"><xsl:value-of select="."/></field>
 </xsl:template>
+
+<xsl:template match="dcterms:subject/skos:Concept/skos:notation">
+  <field name="subject"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:modified">
+  <field name="last_indexed"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<xsl:template match="dcterms:issued">
+  <field name="last_modified"><xsl:value-of select="."/></field>
+</xsl:template>
+
+<!-- missing
+  <field name="first_indexed"><xsl:value-of select="."/></field>
+  <field name="keywords"><xsl:value-of select="."/></field>
+  <field name="use_count"><xsl:value-of select="."/></field>
+-->
 
 <!-- suppress emptyness -->
 <xsl:template match="text()"/>

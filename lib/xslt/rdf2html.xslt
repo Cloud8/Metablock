@@ -8,6 +8,7 @@
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:daia="http://purl.org/ontology/daia#"
+     xmlns:sco="http://schema.org/"
      xmlns:pica="http://localhost/metacard/card/ppn/"
      version="1.0" >
 
@@ -63,7 +64,7 @@
     <xsl:apply-templates select="../dcterms:publisher"/>
     <xsl:apply-templates select="../dcterms:extent"/>
     <xsl:apply-templates select="../dcterms:created"/>
-    <xsl:apply-templates select="../dcterms:identifier[starts-with(text(),'isbn:')]"/>
+    <xsl:apply-templates select="../sco:isbn"/>
     <xsl:apply-templates select="../dcterms:isPartOf"/>
     <xsl:apply-templates select="../dcterms:coverage"/>
     <xsl:apply-templates select="dctypes:Text"/>
@@ -91,7 +92,7 @@
     <xsl:apply-templates select="../../../../dcterms:publisher"/>
     <xsl:apply-templates select="../../../../dcterms:extent"/>
     <xsl:apply-templates select="../../../../dcterms:created"/>
-    <xsl:apply-templates select="../../../../dcterms:identifier[starts-with(text(),'isbn:')]"/>
+    <xsl:apply-templates select="../../../../sco:isbn"/>
     <xsl:apply-templates select="../../../../dcterms:isPartOf"/>
     <xsl:apply-templates select="../../../../dcterms:coverage"/>
     <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'inv:')]"/>
@@ -154,11 +155,11 @@
     </td></tr>
 </xsl:template>
 
-<xsl:template match="dcterms:identifier[starts-with(.,'isbn:')][1]">
+<xsl:template match="sco:isbn[1]">
     <tr><td></td><td>
          <xsl:value-of select="'ISBN '"/>
-         <xsl:for-each select="../dcterms:identifier[starts-with(.,'isbn:')]">
-            <xsl:value-of select="concat(substring(.,6),' ')"/>
+         <xsl:for-each select="../sco:isbn">
+            <xsl:value-of select="concat(.,' ')"/>
          </xsl:for-each>
     </td></tr>
 </xsl:template>

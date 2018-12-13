@@ -8,6 +8,7 @@
      xmlns:foaf="http://xmlns.com/foaf/0.1/"
      xmlns:aiiso="http://purl.org/vocab/aiiso/schema#"
      xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+     xmlns:sco="http://schema.org/"
 
      xmlns:xMetaDiss="http://www.d-nb.de/standards/xmetadissplus/"
      xmlns:cc="http://www.d-nb.de/standards/cc/"
@@ -22,7 +23,11 @@
 <xsl:output method="xml" version="1.0" encoding="UTF-8" indent="yes" />
 
 <xsl:template match="rdf:RDF">
-  <xMetaDiss:xMetaDiss
+ <xsl:apply-templates select="dcterms:BibliographicResource[dcterms:hasPart]"/>
+</xsl:template>
+
+<xsl:template match="dcterms:BibliographicResource">
+ <xMetaDiss:xMetaDiss
      xmlns="http://www.d-nb.de/standards/xmetadissplus/"
      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
      xmlns:cc="http://www.d-nb.de/standards/cc/"
@@ -36,12 +41,7 @@
      xmlns:dini="http://www.d-nb.de/standards/xmetadissplus/type/"
      xsi:schemaLocation="http://www.d-nb.de/standards/xmetadissplus/ http://files.dnb.de/standards/xmetadissplus/xmetadissplus.xsd">
 
-    <xsl:apply-templates select="dcterms:BibliographicResource" />
-  </xMetaDiss:xMetaDiss>
-</xsl:template>
-
-<xsl:template match="dcterms:BibliographicResource">
-  <xsl:comment> xMetaDissPlus Transformer UB Marburg 2016 </xsl:comment>
+  <xsl:comment> xMetaDissPlus Transformer UB Marburg 2018 </xsl:comment>
   <xsl:apply-templates select="dcterms:title[not(@xml:lang)]"/>
   <xsl:apply-templates select="dcterms:title[@xml:lang]"/>
   <xsl:apply-templates select="dcterms:creator"/>
@@ -77,19 +77,22 @@
 
   <xsl:apply-templates select="dcterms:type[@rdf:resource]"/>
   <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'urn:')]"/>
-  <!-- 21 Sprache -->
+  <!-- 21 language -->
   <xsl:choose>
   <xsl:when test="dcterms:language">
     <xsl:apply-templates select="dcterms:language"/> 
   </xsl:when>
-  <xsl:when test="dcterms:isPartOf/*/dcterms:language">
-    <xsl:apply-templates select="dcterms:isPartOf/*/dcterms:language"/> 
+  <xsl:when test="dcterms:isPartOf//dcterms:language">
+    <xsl:apply-templates select="dcterms:isPartOf//dcterms:language"/> 
   </xsl:when>
+  <xsl:otherwise>
+    <!-- <dc:language xsi:type="dcterms:ISO639-2">eng</dc:language> -->
+  </xsl:otherwise>
   </xsl:choose>
 
   <!-- 29 Hochschulschrift ist Teil von -->
-  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/dcterms:identifier[starts-with(text(),'zdb:')]"/>
-  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title[contains(text(),../../../dcterms:created)]"/>
+  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:isPartOf/dcterms:BibliographicResource/sco:leiCode"/>
+  <xsl:apply-templates select="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title" mode="isPartOf"/>
 
   <!-- 39 Recht -->
   <xsl:apply-templates select="dcterms:rights"/> 
@@ -98,9 +101,10 @@
   <!-- 46 Transfer -->
   <xsl:apply-templates select="dcterms:hasPart"/> 
   <!-- 47 Weitere Identifier-->
-  <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]"/>
+  <xsl:apply-templates select="dcterms:identifier[starts-with(text(),'https://doi.org/')]"/>
   <!-- URL LICENSE -->
   <xsl:apply-templates select="." mode="about" />
+ </xMetaDiss:xMetaDiss>
 </xsl:template>
 
 <xsl:template match="dcterms:title[not(@xml:lang)]">
@@ -117,7 +121,7 @@
 <xsl:template match="dcterms:title[@xml:lang]">
   <xsl:variable name="lang1">
    <xsl:call-template name="getlang">
-    <xsl:with-param name="input" select="../dcterms:language"/>
+    <xsl:with-param name="input" select="substring-after(../dcterms:language/@rdf:resource,'/iso639-1/')"/>
    </xsl:call-template>
   </xsl:variable>
   <xsl:variable name="lang2">
@@ -125,11 +129,13 @@
     <xsl:with-param name="input" select="@xml:lang"/>
    </xsl:call-template>
   </xsl:variable>
+  <dc:title xsi:type="ddb:titleISO639-2" lang="{$lang2}">
   <xsl:if test="$lang1!=$lang2">
-  <dc:title xsi:type="ddb:titleISO639-2" lang="{$lang2}" ddb:type="translated">
+    <xsl:attribute name="ddb:type"><xsl:value-of select="'translated'"/>
+    </xsl:attribute>
+  </xsl:if>
      <xsl:value-of select="."/>
    </dc:title>
-  </xsl:if>
 </xsl:template>
 
 <xsl:template match="dcterms:creator">
@@ -190,7 +196,11 @@
     <xsl:with-param name="input" select="foaf:role"/>
    </xsl:call-template>
   </xsl:variable>
-  <dc:contributor xsi:type="pc:Contributor" thesis:role="{$role}">
+  <dc:contributor xsi:type="pc:Contributor">
+  <xsl:if test="$role!=''">
+    <xsl:attribute name="thesis:role"><xsl:value-of select="$role"/>
+    </xsl:attribute>
+  </xsl:if>
    <pc:person>
     <pc:name type="nameUsedByThePerson">
      <xsl:choose>
@@ -393,8 +403,8 @@
   <dc:identifier xsi:type="urn:nbn"><xsl:value-of select="."/></dc:identifier>
 </xsl:template>
 
-<xsl:template match="dcterms:identifier[starts-with(text(),'http://dx.doi.org/')]">
-  <ddb:identifier ddb:type="DOI"><xsl:value-of select="substring-after(.,'http://dx.doi.org/')"/></ddb:identifier>
+<xsl:template match="dcterms:identifier[starts-with(text(),'https://doi.org/')]">
+  <ddb:identifier ddb:type="DOI"><xsl:value-of select="substring-after(.,'https://doi.org/')"/></ddb:identifier>
 </xsl:template>
 
 <xsl:template match="dcterms:language[@rdf:resource]">
@@ -435,21 +445,21 @@
  MEDREZ : ZDB-Idn 1465812-4
 -->
 
-<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:identifier[starts-with(text(),'zdb:')]">
+<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/sco:leiCode">
  <dcterms:isPartOf xsi:type="ddb:Erstkat-ID">
-     <xsl:value-of select="substring-after(.,'zdb:')"/>
- </dcterms:isPartOf>
-</xsl:template>
-
-<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title[contains(text(),../../../dcterms:created)]">
- <dcterms:isPartOf xsi:type="ddb:ZS-Ausgabe">
      <xsl:value-of select="."/>
  </dcterms:isPartOf>
 </xsl:template>
 
-<xsl:template match="dcterms:isPartOf/*/dcterms:identifier[starts-with(text(),'issn:')]">
+<xsl:template match="dcterms:isPartOf/dcterms:BibliographicResource/dcterms:title[contains(text(),../../../dcterms:created)]" mode="isPartOf">
+ <dcterms:isPartOf xsi:type="ddb:ZS-Ausgabe">
+     <xsl:value-of select="../dcterms:title"/>
+ </dcterms:isPartOf>
+</xsl:template>
+
+<xsl:template match="dcterms:isPartOf/*/sco:issn">
  <dcterms:isPartOf xsi:type="ddb:ISSN">
-    <xsl:value-of select="substring-after(.,'issn:')"/>
+    <xsl:value-of select="."/>
  </dcterms:isPartOf>
 </xsl:template>
 
@@ -493,6 +503,9 @@
   <xsl:when test="count(dctypes:Collection)=1">
       <xsl:apply-templates select="dctypes:Collection"/>
   </xsl:when>
+  <xsl:when test="count(dctypes:Image)=1">
+      <xsl:apply-templates select="dctypes:Image"/>
+  </xsl:when>
  </xsl:choose>
   <!--
   <xsl:apply-templates select="dctypes:Image"/>
@@ -503,6 +516,12 @@
 </xsl:template>
 
 <xsl:template match="dcterms:hasPart/dctypes:Text">
+  <ddb:transfer ddb:type="dcterms:URI">
+    <xsl:value-of select="@rdf:about"/>
+  </ddb:transfer>
+</xsl:template>
+
+<xsl:template match="dcterms:hasPart/dctypes:Image">
   <ddb:transfer ddb:type="dcterms:URI">
     <xsl:value-of select="@rdf:about"/>
   </ddb:transfer>
@@ -539,5 +558,6 @@
 <xsl:template match="*" priority="-1"/>
 <xsl:template match="*" mode="degree" priority="-1"/>
 <xsl:template match="*" mode="about" priority="-1"/>
+<xsl:template match="*" mode="isPartOf" priority="-1"/>
 
 </xsl:stylesheet>

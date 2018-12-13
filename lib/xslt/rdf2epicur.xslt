@@ -11,7 +11,7 @@
 <xsl:output method="xml" encoding="UTF-8" indent="yes" />
 
 <xsl:template match="rdf:RDF">
- <xsl:apply-templates select="dcterms:BibliographicResource" />
+ <xsl:apply-templates select="dcterms:BibliographicResource[dcterms:hasPart]"/>
 </xsl:template>
 
 <!-- xmlns:epicur="urn:nbn:de:1111-2004033116" -->

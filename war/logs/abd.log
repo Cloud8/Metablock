@@ -1,0 +1,45 @@
+2018-12-12 14:05:03.289:INFO::main: Logging initialized @725ms to org.eclipse.jetty.util.log.StdErrLog
+2018-12-12 14:05:03.819:INFO:oejs.Server:main: jetty-9.4.14.v20181114; built: 2018-11-14T21:20:31.478Z; git: c4550056e785fb5665914545889f21dc136ad9e6; jvm 10.0.2+13-Ubuntu-1ubuntu0.18.04.4
+2018-12-12 14:05:03.841:INFO:oejdp.ScanningAppProvider:main: Deployment monitor [file:///usr/local/home/hatop/src/autobib/war/webapps/] at interval 1
+2018-12-12 14:05:04.612:INFO:oejs.session:main: DefaultSessionIdManager workerName=node0
+2018-12-12 14:05:04.612:INFO:oejs.session:main: No SessionScavenger set, using defaults
+2018-12-12 14:05:04.614:INFO:oejs.session:main: node0 Scavenging every 660000ms
+2018-12-12 14:05:04.678:INFO:oejsh.ContextHandler:main: Started o.e.j.w.WebAppContext@4dc27487{Site.info,/metablock,file:///usr/local/home/hatop/src/autobib/war/webapps/metablock/,AVAILABLE}{/metablock}
+2018-12-12 14:05:04.699:INFO:oejs.AbstractConnector:main: Started ServerConnector@6973b5c8{HTTP/1.1,[http/1.1]}{0.0.0.0:8080}
+2018-12-12 14:05:04.744:INFO:oejus.SslContextFactory:main: x509=X509@47c4ecdc(jetty,h=[jetty.eclipse.org],w=[]) for SslContextFactory@42f33b5d[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
+2018-12-12 14:05:04.745:INFO:oejus.SslContextFactory:main: x509=X509@5c8504fd(mykey,h=[],w=[]) for SslContextFactory@42f33b5d[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
+2018-12-12 14:05:04.853:WARN:oejusS.config:main: No Client EndPointIdentificationAlgorithm configured for SslContextFactory@42f33b5d[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
+2018-12-12 14:05:04.859:INFO:oejs.AbstractConnector:main: Started ServerConnector@4ee37ca3{SSL,[ssl, http/1.1]}{0.0.0.0:8443}
+2018-12-12 14:05:04.860:INFO:oejs.Server:main: Started @2297ms
+Dez. 12, 2018 2:05:08 NACHM. org.metablock.view.MetaCard log
+INFORMATION: MetaCard Catalogue 0.55
+Dez. 12, 2018 2:05:08 NACHM. org.metablock.view.MetaCard log
+INFORMATION: search [127.0.0.1] opac html
+Dez. 12, 2018 2:05:20 NACHM. org.metablock.view.MetaCard log
+INFORMATION: search 2018-12-02 opus html 127.0.0.1
+Dez. 12, 2018 2:05:21 NACHM. org.seaview.opus.OpusTransporter log
+INFORMATION: search date # [2018-12-02] 30
+Dez. 12, 2018 2:05:21 NACHM. org.seaview.opus.OpusTransporter log
+INFORMATION: index 2018-12-02 no series.
+Dez. 12, 2018 2:05:21 NACHM. org.shanghai.crawl.MetaCrawl log
+INFORMATION: index [2018-12-02] 30 items in 0 sec.
+Dez. 12, 2018 2:05:21 NACHM. org.seaview.bones.Crawl log
+INFORMATION: crawl : 30 [2018-12-02]
+Dez. 12, 2018 2:05:21 NACHM. org.seaview.opus.OpusTransporter log
+INFORMATION: getIdentifiers # 0 800 30
+Dez. 12, 2018 2:05:21 NACHM. org.shanghai.crawl.MetaCrawl log
+INFORMATION: 7855 # 0 0 sec.
+Dez. 12, 2018 2:05:26 NACHM. org.shanghai.crawl.MetaCrawl log
+INFORMATION: crawled 30 records in 5.583 sec [6.0 rec/s]
+Dez. 12, 2018 3:13:38 NACHM. org.metablock.view.MetaCard log
+INFORMATION: search [127.0.0.1] opac html
+Dez. 13, 2018 8:12:12 VORM. org.metablock.rest.Metablock log
+INFORMATION: Metablock 0.55 Metablock REST
+Dez. 13, 2018 8:12:12 VORM. org.metablock.rest.Metablock log
+INFORMATION: rest alive.
+Dez. 13, 2018 8:12:12 VORM. org.metablock.rest.Metablock log
+INFORMATION: REST 0 -- 0 µsec. 
+Dez. 13, 2018 8:12:17 VORM. org.metablock.rest.Metablock log
+INFORMATION: rest alive.
+Dez. 13, 2018 8:12:17 VORM. org.metablock.rest.Metablock log
+INFORMATION: REST 0 -- 0 µsec. 

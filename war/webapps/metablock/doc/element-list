@@ -1,0 +1,16 @@
+org.metablock.model
+org.metablock.rest
+org.metablock.view
+org.seaview.bayes
+org.seaview.cite
+org.seaview.main
+org.seaview.opus
+org.seaview.pdf
+org.shanghai.box
+org.shanghai.crawl
+org.shanghai.data
+org.shanghai.oai
+org.shanghai.rdf
+org.shanghai.solr
+org.shanghai.store
+org.shanghai.util

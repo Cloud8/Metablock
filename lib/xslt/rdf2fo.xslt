@@ -12,7 +12,8 @@
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:daia="http://purl.org/ontology/daia#"
      xmlns:fo="http://www.w3.org/1999/XSL/Format"
-     xmlns:pica="http://localhost/metacard/card/ppn/"
+     xmlns:sco="http://schema.org/"
+     xmlns:pica="http://localhost/metablock/rest/ppn/"
      version="1.0" >
 
 <xsl:output method="xml" indent="yes"/>
@@ -39,7 +40,8 @@
             </fo:block>
         </fo:static-content>
         <fo:flow flow-name="xsl-region-body">
-            <fo:block font-family="DroidSerif" font-size="10pt">
+            <!-- DroidSerif Times-Roman Helvetica Arial -->
+            <fo:block font-family="Noto" font-size="10pt">
                 <xsl:apply-templates select="dcterms:BibliographicResource"/>
             </fo:block>
         </fo:flow>
@@ -47,13 +49,17 @@
  </fo:root>
 </xsl:template>
 
+<!-- restrict cards to search term filter -->
 <xsl:template match="dcterms:BibliographicResource[pica:context]">
   <xsl:variable name="abt"
     select="substring-after(pica:context[starts-with(text(),'abt:')],'abt:')"/>
   <xsl:variable name="lss"
     select="substring-after(pica:context[starts-with(text(),'lss:')],'lss:')"/>
-    <xsl:comment> abt <xsl:value-of select="$abt"/> lss <xsl:value-of select="$lss"/> </xsl:comment>
-    <xsl:apply-templates select="dcterms:medium/rdf:Seq/rdf:li/dcterms:PhysicalMedium[contains(dcterms:spatial/dcterms:Location/@rdf:about,$abt) and pica:f209B=$lss]"/>
+
+  <xsl:comment>
+      <xsl:value-of select="concat(' ',position(),' abt ',$abt,' lss ',$lss)"/>
+  </xsl:comment>
+  <xsl:apply-templates select="dcterms:medium[contains(rdf:Seq//dcterms:spatial/dcterms:Location/@rdf:about,$abt)][rdf:Seq//pica:f209B=$lss]"/>
 </xsl:template>
 
 <xsl:template match="dcterms:BibliographicResource[not(pica:context)]">
@@ -62,7 +68,12 @@
 </xsl:template>
 
 <xsl:template match="dcterms:medium">
-    <xsl:apply-templates select="rdf:Seq/rdf:li/dcterms:PhysicalMedium"/>
+    <xsl:apply-templates select="rdf:Seq/rdf:li"/>
+</xsl:template>
+
+<xsl:template match="dcterms:medium/rdf:Seq/rdf:li">
+    <!-- choose only records marked by lss 80 -->
+    <xsl:apply-templates select="dcterms:PhysicalMedium"/>
 </xsl:template>
 
 <xsl:template match="dcterms:hasPart|dcterms:PhysicalMedium">
@@ -112,7 +123,8 @@
     <fo:table-row>
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
         <fo:table-cell>
-        <fo:block font-family="DroidSerif-BoldItalic" font-weight="bold">
+        <!-- font-family="DroidSerif-BoldItalic" -->
+        <fo:block font-weight="bold" font-family="NotoBold" font-size="10pt">
             <fo:inline>
                 <xsl:apply-templates select="../dcterms:title"/>
                 <xsl:apply-templates select="../../../../dcterms:title"/>
@@ -153,8 +165,8 @@
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
         <fo:table-cell>
         <fo:block>
-            <xsl:apply-templates select="../../../../dcterms:identifier[starts-with(text(),'isbn:')]"/>
-            <xsl:apply-templates select="../dcterms:identifier[starts-with(text(),'isbn:')]"/>
+            <xsl:apply-templates select="../../../../sco:isbn"/>
+            <xsl:apply-templates select="../sco:isbn"/>
         </fo:block>
         </fo:table-cell>
         <fo:table-cell><fo:block></fo:block></fo:table-cell>
@@ -273,12 +285,12 @@
     <xsl:value-of select="."/>
 </xsl:template>
 
-<xsl:template match="dcterms:identifier[starts-with(text(),'isbn:')]">
-    <xsl:value-of select="concat('ISBN ', substring(.,6))"/>
+<xsl:template match="sco:isbn">
+    <xsl:value-of select="concat('ISBN ', .)"/>
 </xsl:template>
 
-<xsl:template match="dcterms:identifier[starts-with(text(),'isbn:')][count(preceding-sibling::dcterms:identifier[starts-with(text(),'isbn:')])>0]">
-    <xsl:value-of select="concat(' ', substring(.,6))"/>
+<xsl:template match="sco:isbn[count(preceding-sibling::sco:isbn)>0]">
+    <xsl:value-of select="concat(' ', .)"/>
 </xsl:template>
 
 <xsl:template match="dcterms:identifier[starts-with(text(),'inv:')]">

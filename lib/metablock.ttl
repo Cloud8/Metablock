@@ -4,16 +4,24 @@
 @prefix : <> .
 
 ## rapper -i turtle -o rdfxml-abbrev void.ttl
-<>  dcterms:modified "2015-07-17"^^xsd:date .
+<>  dcterms:modified "2018-12-12"^^xsd:date .
 
 :about dcterms:title  "Configurator" ;
-       dcterms:date   "2016-02-08" ;
+       dcterms:date   "2018-11-11" ;
        dcterms:description "A Turtle Adventure" .
 
 :crawl :source :files ;
        :target :solr1 ;
        :test   "data/crawl-test.rdf"^^xsd:string ;
        :count  "600"^^xsd:integer .
+
+:files :suffix ".rdf"^^xsd:string ;     # rdf pdf java php
+       :depth  "4"^^xsd:integer ;       # crawl depth
+       :force  "false"^^xsd:boolean ;   # read / overwrite file.rdf if exists
+       :rename "false"^^xsd:boolean ;   # rename resource parts when writing
+       :cover  "false"^^xsd:boolean ;   # create a cover if pdf part exists
+       :store  "data";                  # "/srv/archiv" "user.home"
+       :count  "300"^^xsd:integer .     # log parameter
 
 :pdf   :extractor "cermine" ; # grobid vs. cermine
        :grobid   "/usr/local/home/grobid";
@@ -30,12 +38,6 @@
 
 :schema :test "/xslt/rdfTest.xslt" ;
        :urn "urn:nbn:de:xxxxx:0X-" .
-
-:files :suffix ".rdf pdf"^^xsd:string ; # rdf pdf java php
-       :depth  "4"^^xsd:integer ;
-       :store  "data"^^xsd:string ; # /srv/archiv
-       :force  "false"^^xsd:boolean ; ## do (not) overwrite rdf files
-       :count  "300"^^xsd:integer . 
 
 :tdb   :store  "/home/data/store/jena.tdb" ;
        :probe  "/sparql/seaview-probe.sparql" ;
