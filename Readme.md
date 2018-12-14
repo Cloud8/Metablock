@@ -21,8 +21,16 @@
 ##### Compile && Configure
 
   - configured by lib/metablock.ttl 
-  - make 
-  - java -jar metablock.jar
+  - compile:
+```
+    CPATH=war/jetty/lib/servlet-api-3.1.jar:lib:lib/*
+    javac -cp $CPATH -d lib src/org/metablock/rest/*
+    jar cf lib/metablock.jar -C lib org
+```
+  - start autobib daemon:
+```
+    abd start
+```
 
 ##### Indexing : write RDF data to a Solr search index
 
