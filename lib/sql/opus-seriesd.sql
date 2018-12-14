@@ -1,9 +1,9 @@
 
 select s.sr_id, s.name, s.url, s.urn, s.doi, s.faculty, s.year, 
-       f.name organization
-from schriftenreihen s
-     left join faculty f ON s.faculty=f.nr
-     where s.sr_id=<oid>
+       f.name organization, u.universitaet, u.uni_gnd, u.instname, u.inst_gnd
+from schriftenreihen s left join faculty f ON s.faculty=f.nr, university_de u
+     where u.id=1
+       and s.sr_id=<oid>
 ;
 
 select s.uri, s.urn, s.doi, r.type, o.date_year year
@@ -14,3 +14,4 @@ where s.source_opus=os.source_opus
    and os.sr_id=<oid>
    order by o.date_year
 
+;

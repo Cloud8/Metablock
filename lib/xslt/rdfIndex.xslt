@@ -37,7 +37,9 @@
 
 <xsl:template name="body">
    <div class="header">
-    <xsl:apply-templates select="dcterms:mediator"/>
+    <a href="{../@rdf:about}">
+        <xsl:value-of select="dcterms:mediator/dcterms:Agent/rdfs:label"/>
+    </a>
    </div>
    <hr/>
 
@@ -103,15 +105,15 @@
     </TD></TR>
     </xsl:if>
 
-    <xsl:if test="dcterms:isPartOf/fabio:JournalIssue">
+    <xsl:if test="count(dcterms:isPartOf//sco:issn)>0">
     <TR><TD VALIGN="TOP"><I><B>Zeitschrift:</B></I></TD>
     <TD VALIGN="TOP">
-         <xsl:value-of select="dcterms:isPartOf/fabio:JournalIssue/dcterms:title"/>
+         <xsl:value-of select="dcterms:isPartOf//dcterms:title"/>
     </TD></TR>
     </xsl:if>
+
     <xsl:apply-templates select="dcterms:title[@xml:lang!=$lang]"/>
     </table>
-
     <hr/>
 
     <p>
@@ -138,6 +140,34 @@
 
     <xsl:apply-templates select="dcterms:abstract[@xml:lang=$lang]"/>
     <xsl:apply-templates select="dcterms:abstract[@xml:lang!=$lang]"/>
+
+    <hr/>
+    <xsl:choose>
+    <xsl:when test="dcterms:accessRights"></xsl:when>
+    <xsl:otherwise>
+        <xsl:apply-templates select="dcterms:mediator"/>
+    </xsl:otherwise>
+    </xsl:choose>
+</xsl:template>
+
+<xsl:template match="dcterms:mediator">
+    <table summary="publisher info">
+    <tr>
+        <td>
+            <img src="https://archiv.ub.example.org/img/free.png" alt="*"/>
+        </td>
+        <td valign="center">
+            <a href="https://archiv.ub.example.org/recht_1.html">
+            Das Dokument ist im Internet frei zugänglich -
+            Hinweise zu den Nutzungsrechten</a>
+        </td>
+    </tr>
+    </table>
+    <div class="footer"> &#169; 2018 
+        <a href="https://www.example.org/bis">
+            <xsl:value-of select="dcterms:Agent/foaf:name"/>
+        </a>
+    </div>
 </xsl:template>
 
 <xsl:template match="dcterms:title">
@@ -183,12 +213,6 @@
   <xsl:if test="../fabio:DoctoralThesis">
     <meta name="citation_dissertation_institution" content="{$publisher}" />
   </xsl:if>
-  <!--
-  <xsl:apply-templates select="foaf:Organization/foaf:name" mode="header"/>
-  <xsl:apply-templates select="aiiso:Faculty/foaf:name" mode="header"/>
-  <xsl:apply-templates select="aiiso:Center/foaf:name" mode="header"/>
-  <xsl:apply-templates select="aiiso:Institute/foaf:name" mode="header"/>
-  -->
 </xsl:template>
 
 <xsl:template match="dcterms:creator" mode="header">
@@ -209,22 +233,6 @@
     <meta name="DC.publisher" content="{foaf:name}" />
     </xsl:for-each>
 </xsl:template>
-
-
-<!--
-<xsl:template match="dcterms:creator/rdf:Seq">
-  <xsl:apply-templates select="rdf:li"/>
-</xsl:template>
-
-<xsl:template match="dcterms:creator/rdf:Seq/rdf:li">
-  <xsl:apply-templates select="foaf:Person/foaf:name"/>
-</xsl:template>
-
-<xsl:template match="dcterms:creator/rdf:Seq/rdf:li/foaf:Person">
-  <xsl:apply-templates select="foaf:name"/>
-  <xsl:apply-templates select="foaf:plan"/>
-</xsl:template>
--->
 
 <xsl:template match="foaf:Person/foaf:name">
   <meta name="DC.creator" content="{.}"/> 
@@ -302,17 +310,8 @@
    </TD></TR>
 </xsl:template>
 
-<!-- GH201806 : https switch -->
 <xsl:template match="foaf:img">
-  <xsl:choose>
-      <xsl:when test="starts-with(., 'http://archiv')">
-          <img height="110px" border="1" 
-              src="{concat('https:',substring-after(.,':'))}"/>
-      </xsl:when>
-      <xsl:otherwise>
-          <img height="110px" border="1" src="{.}"/>
-      </xsl:otherwise>
-  </xsl:choose>
+    <img height="110px" border="1" src="{.}"/>
 </xsl:template>
 
 <xsl:template match="dcterms:subject">
@@ -348,10 +347,6 @@
     <meta name="DC.relation.ispartof" content="{*/dcterms:title}"/> 
 </xsl:template>
 
-<xsl:template match="dcterms:mediator">
-    <a href="{../@rdf:about}"><xsl:value-of select="."/></a>
-</xsl:template>
-
 <xsl:template match="dcterms:isReferencedBy">
     <TR><TD VALIGN="TOP"><I><B>Referenziert von: </B></I></TD>
     <TD VALIGN="TOP"><a href="{.}"><xsl:value-of select="substring-after(.,'pdf/')" /></a></TD></TR>
@@ -368,11 +363,6 @@
     </td></tr>
    </xsl:for-each>
   </table>
-  <!--
-    <tr><td><i><b>Exemplar: </b></i></td><td>
-    <a href="{@rdf:resource}"><xsl:value-of select="@rdf:resource"/></a>
-    </td></tr>
-  -->
 </xsl:template>
 
 <xsl:template match="dcterms:hasPart[not(@rdf:resource)]">
@@ -408,7 +398,6 @@
   </a><br/>
 </xsl:template>
 
-<!-- since 2017-04-13 HLGL -->
 <xsl:template match="dctypes:Text[substring(@rdf:about,string-length(@rdf:about)-3)='.xml']">
   <xsl:variable name="urlenc">
     <xsl:call-template name="url-encode">
@@ -495,7 +484,6 @@
     </xsl:if>
 </xsl:template>
 
-<!-- https://scholar.google.com/intl/en/scholar/inclusion.html#indexing -->
 <xsl:template name="head">
     <meta name="ROBOTS" CONTENT="INDEX"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -560,14 +548,11 @@
   }
   div.left {
     float: left;
-    /* height: 160px; */
     width: 33%;
     margin: 9px 33px 4px 33px;
-    /* border: 1px solid black; */
     overflow: hidden;
   }
   div.wrap {
-    /* width: 420; */
     height: 170px;
     overflow: hidden;
     position: relative;
@@ -579,10 +564,8 @@
     bottom:0;
   }
   div.main {
-    /* margin: 40px 10px 60px 120px; */
     margin-top: 33px;
     margin-left: 33px;
-    /* border: 1px solid black; */
   }
   table.metadata {
     padding: .8em;

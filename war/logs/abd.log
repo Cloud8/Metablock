@@ -1,33 +1,19 @@
-2018-12-13 14:33:38.638:INFO::main: Logging initialized @769ms to org.eclipse.jetty.util.log.StdErrLog
-2018-12-13 14:33:39.112:INFO:oejs.Server:main: jetty-9.4.14.v20181114; built: 2018-11-14T21:20:31.478Z; git: c4550056e785fb5665914545889f21dc136ad9e6; jvm 10.0.2+13-Ubuntu-1ubuntu0.18.04.4
-2018-12-13 14:33:39.136:INFO:oejdp.ScanningAppProvider:main: Deployment monitor [file:///usr/local/home/hatop/src/autobib/war/webapps/] at interval 1
-2018-12-13 14:33:39.909:INFO:oejs.session:main: DefaultSessionIdManager workerName=node0
-2018-12-13 14:33:39.910:INFO:oejs.session:main: No SessionScavenger set, using defaults
-2018-12-13 14:33:39.912:INFO:oejs.session:main: node0 Scavenging every 600000ms
-2018-12-13 14:33:39.996:INFO:oejsh.ContextHandler:main: Started o.e.j.w.WebAppContext@4dc27487{Site.info,/metablock,file:///usr/local/home/hatop/src/autobib/war/webapps/metablock/,AVAILABLE}{/metablock}
-2018-12-13 14:33:40.022:INFO:oejs.AbstractConnector:main: Started ServerConnector@23463e36{HTTP/1.1,[http/1.1]}{0.0.0.0:8080}
-2018-12-13 14:33:40.088:INFO:oejus.SslContextFactory:main: x509=X509@2eced48b(jetty,h=[jetty.eclipse.org],w=[]) for SslContextFactory@47c4ecdc[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
-2018-12-13 14:33:40.090:INFO:oejus.SslContextFactory:main: x509=X509@42f33b5d(mykey,h=[],w=[]) for SslContextFactory@47c4ecdc[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
-2018-12-13 14:33:40.235:WARN:oejusS.config:main: No Client EndPointIdentificationAlgorithm configured for SslContextFactory@47c4ecdc[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
-2018-12-13 14:33:40.240:INFO:oejs.AbstractConnector:main: Started ServerConnector@5f031ebd{SSL,[ssl, http/1.1]}{0.0.0.0:8443}
-2018-12-13 14:33:40.245:INFO:oejs.Server:main: Started @2377ms
-Dez. 13, 2018 2:33:42 NACHM. org.metablock.view.MetaCard log
-INFORMATION: MetaCard Catalogue 0.55
-Dez. 13, 2018 2:33:42 NACHM. org.metablock.view.MetaCard log
-INFORMATION: search [127.0.0.1] opac html
-Dez. 13, 2018 2:33:58 NACHM. org.metablock.view.MetaCard log
-INFORMATION: search 2018-12-03 opus solr1 127.0.0.1
-Dez. 13, 2018 2:33:59 NACHM. org.seaview.opus.OpusTransporter log
-INFORMATION: search date # [2018-12-03] 29
-Dez. 13, 2018 2:33:59 NACHM. org.seaview.opus.OpusTransporter log
-INFORMATION: index 2018-12-03 no series.
-Dez. 13, 2018 2:33:59 NACHM. org.shanghai.crawl.MetaCrawl log
-INFORMATION: index [2018-12-03] 29 items in 0 sec.
-Dez. 13, 2018 2:33:59 NACHM. org.seaview.bones.Crawl log
-INFORMATION: crawl : 29 [2018-12-03]
-Dez. 13, 2018 2:33:59 NACHM. org.seaview.opus.OpusTransporter log
-INFORMATION: getIdentifiers # 0 800 29
-Dez. 13, 2018 2:33:59 NACHM. org.shanghai.crawl.MetaCrawl log
-INFORMATION: 7855 # 0 0 sec.
-Dez. 13, 2018 2:34:06 NACHM. org.shanghai.crawl.MetaCrawl log
-INFORMATION: crawled 29 records in 6.875 sec [4.833333333333333 rec/s]
+2018-12-14 14:52:48.690:INFO::main: Logging initialized @796ms to org.eclipse.jetty.util.log.StdErrLog
+2018-12-14 14:52:49.249:INFO:oejs.Server:main: jetty-9.4.14.v20181114; built: 2018-11-14T21:20:31.478Z; git: c4550056e785fb5665914545889f21dc136ad9e6; jvm 10.0.2+13-Ubuntu-1ubuntu0.18.04.4
+2018-12-14 14:52:49.268:INFO:oejdp.ScanningAppProvider:main: Deployment monitor [file:///usr/local/home/hatop/src/autobib/war/webapps/] at interval 1
+2018-12-14 14:52:50.132:INFO:oejs.session:main: DefaultSessionIdManager workerName=node0
+2018-12-14 14:52:50.132:INFO:oejs.session:main: No SessionScavenger set, using defaults
+2018-12-14 14:52:50.135:INFO:oejs.session:main: node0 Scavenging every 660000ms
+2018-12-14 14:52:50.195:INFO:oejsh.ContextHandler:main: Started o.e.j.w.WebAppContext@4dc27487{Site.info,/metablock,file:///usr/local/home/hatop/src/autobib/war/webapps/metablock/,AVAILABLE}{/metablock}
+2018-12-14 14:52:50.214:INFO:oejs.AbstractConnector:main: Started ServerConnector@dfddc9a{HTTP/1.1,[http/1.1]}{0.0.0.0:8080}
+2018-12-14 14:52:50.277:INFO:oejus.SslContextFactory:main: x509=X509@47c4ecdc(jetty,h=[jetty.eclipse.org],w=[]) for SslContextFactory@42f33b5d[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
+2018-12-14 14:52:50.278:INFO:oejus.SslContextFactory:main: x509=X509@5c8504fd(mykey,h=[],w=[]) for SslContextFactory@42f33b5d[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
+2018-12-14 14:52:50.473:WARN:oejusS.config:main: No Client EndPointIdentificationAlgorithm configured for SslContextFactory@42f33b5d[provider=null,keyStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore,trustStore=file:///usr/local/home/hatop/src/autobib/war/etc/keystore]
+2018-12-14 14:52:50.479:INFO:oejs.AbstractConnector:main: Started ServerConnector@22f5e0bf{SSL,[ssl, http/1.1]}{0.0.0.0:8443}
+2018-12-14 14:52:50.480:INFO:oejs.Server:main: Started @2586ms
+Dez. 14, 2018 2:53:19 NACHM. org.metablock.rest.Metablock log
+INFORMATION: Metablock 0.55 Metablock REST
+Dez. 14, 2018 2:53:19 NACHM. org.metablock.rest.Metablock log
+INFORMATION: rest5 ojs - rdf: 7943
+Dez. 14, 2018 2:53:21 NACHM. org.metablock.rest.Metablock log
+INFORMATION: REST 4 -- 1483 µsec. 

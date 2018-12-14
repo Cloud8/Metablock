@@ -52,6 +52,21 @@
   <sco:serialNumber>
       <xsl:value-of select="concat('opus:c',row/field[@name='sr_id'])"/>
   </sco:serialNumber>
+  <dcterms:publisher>
+      <foaf:Organization rdf:about="{row/field[@name='uni_gnd']}">
+          <foaf:name><xsl:value-of select="row/field[@name='universitaet']"/>
+          </foaf:name>
+    </foaf:Organization>
+  </dcterms:publisher>
+  <xsl:if test="count(row/field[@name='organization'])=0">
+    <dcterms:creator>
+      <aiiso:Division rdf:about="{row/field[@name='inst_gnd']}">
+          <foaf:name>
+                <xsl:value-of select="row/field[@name='instname']"/>
+          </foaf:name>
+      </aiiso:Division>
+    </dcterms:creator>
+  </xsl:if>
   <xsl:choose>
     <xsl:when test="row[1]/field[@name='type']='BookChapter'">
       <dcterms:type rdf:resource="http://purl.org/spar/fabio/Book"/>
@@ -117,16 +132,16 @@
 </xsl:template>
 
 <xsl:template match="resultset[@table='domain']/row">
-    <xsl:apply-templates select="field[@name='url']"/>
-    <xsl:apply-templates select="field[@name='longname']"/>
+    <dcterms:mediator>
+        <dcterms:Agent rdf:about="{field[@name='url']}">
+        <foaf:name><xsl:value-of select="field[@name='instname']"/></foaf:name>
+        <rdfs:label><xsl:value-of select="field[@name='longname']"/></rdfs:label>
+        </dcterms:Agent>
+    </dcterms:mediator>
 </xsl:template>
 
 <xsl:template match="resultset[@table='domain']/row/field[@name='url']">
     <void:inDataset rdf:resource="{.}"/>
-</xsl:template>
-
-<xsl:template match="resultset[@table='domain']/row/field[@name='longname']">
-    <dcterms:mediator><xsl:value-of select="normalize-space(.)"/></dcterms:mediator>
 </xsl:template>
 
 <xsl:template match="resultset[@table='opus']/row">
@@ -435,29 +450,27 @@
 
 <!-- 7 PUBLISHER -->
 <xsl:template match="field[@name='publisher_university']">
+ <dcterms:publisher>
  <xsl:choose>
- <xsl:when test="starts-with(.,'Phi')">
- <dcterms:publisher>
-  <foaf:Organization rdf:about="http://d-nb.info/gnd/2001630-X">
-   <foaf:name><xsl:value-of select="normalize-space(.)"/></foaf:name>
-  </foaf:Organization>
- </dcterms:publisher>
- </xsl:when>
- <xsl:otherwise>
- <dcterms:publisher>
-  <foaf:Organization>
-   <foaf:name><xsl:value-of select="."/></foaf:name>
-  </foaf:Organization>
- </dcterms:publisher>
- </xsl:otherwise>
+     <xsl:when test="../../../resultset[@table='domain']/row/field[@name='uni_gnd']">
+     <foaf:Organization rdf:about="{../../../resultset[@table='domain']/row/field[@name='uni_gnd']}">
+         <foaf:name><xsl:value-of select="normalize-space(.)"/></foaf:name>
+         </foaf:Organization>
+     </xsl:when>
+     <xsl:otherwise>
+         <foaf:Organization>
+             <foaf:name><xsl:value-of select="."/></foaf:name>
+         </foaf:Organization>
+     </xsl:otherwise>
  </xsl:choose>
+ </dcterms:publisher>
 </xsl:template>
 
 <!-- FAKULTAET -->
 <xsl:template match="field[@name='publisher_faculty']">
  <xsl:if test="normalize-space(../field[@name='faculty_name'])!=''">
  <dcterms:provenance>
-   <aiiso:Faculty>
+   <aiiso:Faculty rdf:about="http://www.example.org/fb{.}">
      <foaf:name>
        <xsl:value-of select="normalize-space(../field[@name='faculty_name'])"/>
      </foaf:name>

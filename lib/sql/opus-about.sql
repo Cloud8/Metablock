@@ -52,7 +52,9 @@ select distinct o.title, o.creator_corporate, o.subject_swd, o.description,
  select source_opus, uri, urn, doi, stat, ppn from statistics where source_opus=<oid>
  ;
  -- graph
- select d.url, d.longname from domain d, opus o where d.id=o.bereich_id and o.source_opus=<oid>
+ select d.url, d.longname, u.universitaet, u.uni_gnd, u.instname, u.inst_gnd 
+     from domain d left join university_de u on u.id=d.domain, opus o 
+     where d.id=o.bereich_id and o.source_opus=<oid>
  ;
  -- files
  select file,extent from files where files.source_opus=<oid>
